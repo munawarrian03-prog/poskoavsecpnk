@@ -138,9 +138,9 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .kj-main .sec { width: 100%; max-width: 1040px; flex: none; overflow: visible; }
 .kj-main .sec > .hd { padding: 10px 16px; }
 .kj-main .sec > .sc { padding: 12px 16px 14px; overflow: visible; }
-.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-@media (max-width: 1240px) { .g4 { grid-template-columns: 1fr 1fr; } }
+.g2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.g4 { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (max-width: 1240px) { .g4 { grid-template-columns: 1fr; } }
 .pc { border: 1px solid #E9EDF4; border-radius: 10px; background: #FAFBFD; padding: 9px 11px 11px; }
 .pc .pt { font-size: 10.5px; font-weight: 800; color: var(--ink); margin-bottom: 6px; letter-spacing: .3px; } .pc .pt small { font-weight: 600; color: #8A94A6; letter-spacing: 0; }
 .pc input { margin-bottom: 6px; }
