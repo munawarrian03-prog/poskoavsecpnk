@@ -171,6 +171,10 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 #hdrLokasiManual { display: none; }
 #hdrLokasiManual.show { display: flex; flex-direction: column; }
 
+/* NOMOR tetap statis sejajar, tidak turun ke baris baru saat kolom tulis lokasi muncul */
+#tbRow2 { flex-wrap: nowrap; }
+#hdrNomor { flex: none; }
+
 /* Samakan lebar Tanggal, Shift, Lokasi Kejadian, dan kolom tulis lokasi manual */
 #tglLap, #shiftLap, #lokasiKejadianSel, #lokasiKejadianManual { width: 150px; }
 .jejak { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
