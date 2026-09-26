@@ -41,8 +41,10 @@
 <option value="Malam (20:00 - 08:00) WIB">Malam (20:00 - 08:00) WIB</option>
 </select></div>
 <div class="fld" id="hdrLokasi"><label for="lokasiKejadianSel">LOKASI KEJADIAN</label>
+<div class="lokasi-stack">
 <select id="lokasiKejadianSel" onchange="lokasiKejadianPilih(this.value)"></select>
 <input type="text" id="lokasiKejadianManual" oninput="lokasiKejadianManualInput(this.value)" placeholder="Tulis lokasi kejadian" style="display:none">
+</div>
 </div>
 <span class="tsp"></span>
 <button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Sembunyikan bilah atas agar area isian lebih luas">⛶ Mode fokus</button>
