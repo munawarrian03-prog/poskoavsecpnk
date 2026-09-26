@@ -26,11 +26,18 @@
 <div id="topBar"></div>
 
 <!-- TOOLBAR -->
-<div class="toolbar" id="toolbar">
+<div class="toolbar tb-2row" id="toolbar">
+<div class="tb-row">
 <div class="seg">
 <button type="button" id="btnFormTab" class="on" onclick="switchPage('form')">Buat Laporan</button>
 <button type="button" id="btnSavedTab" onclick="switchPage('saved')">Laporan Tersimpan <span class="badge" id="cntSaved">0</span></button>
 </div>
+<span class="tsp"></span>
+<button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Sembunyikan bilah atas agar area isian lebih luas">⛶ Mode fokus</button>
+<button type="button" class="tbtn" onclick="newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
+</div>
+<div class="tb-row tb-row2" id="tbRow2">
+<div class="tb-fields">
 <span class="tdiv" id="hdrDiv"></span>
 <div class="fld" id="hdrTgl"><label for="tglLap">TANGGAL</label><input type="date" id="tglLap" data-f="tanggal" oninput="fieldChanged(this)"></div>
 <div class="fld" id="hdrShift"><label for="shiftLap">SHIFT</label>
@@ -43,14 +50,14 @@
 <select id="lokasiKejadianSel" onchange="lokasiKejadianPilih(this.value)"></select>
 <input type="text" id="lokasiKejadianManual" oninput="lokasiKejadianManualInput(this.value)" placeholder="Tulis lokasi kejadian" style="display:none">
 </div>
+</div>
 <div class="fld" id="hdrNomor"><label for="fileNumber">NOMOR</label>
 <div class="nomor-wrap" id="nomorWrap"><input type="text" id="fileNumber" data-f="fileNumber" oninput="fieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="autoTag">AUTO</span></div>
 <button type="button" class="hbtn" id="btnNomorMode" onclick="ubahModeNomor()" title="Ubah nomor secara manual">✎</button>
 <button type="button" class="hbtn" onclick="bukaUrutan()" title="Atur urutan nomor bulan ini">⚙</button>
 </div>
-<span class="tsp"></span>
-<button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Sembunyikan bilah atas agar area isian lebih luas">⛶ Mode fokus</button>
-<button type="button" class="tbtn" onclick="newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
+<div class="tb-balance"></div>
+</div>
 </div>
 <div class="strip" id="editBadge" style="display:none"></div>
 
@@ -1172,6 +1179,7 @@ function switchPage(page) {
   $('pageForm').style.display = form ? 'flex' : 'none';
   $('pageSaved').style.display = form ? 'none' : 'flex';
   $('statBar').style.display = form ? 'flex' : 'none';
+  $('tbRow2').style.display = form ? '' : 'none';
   ['hdrDiv', 'hdrTgl', 'hdrShift', 'hdrLokasi', 'hdrNomor'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
   $('btnFormTab').classList.toggle('on', form);
   $('btnSavedTab').classList.toggle('on', !form);
