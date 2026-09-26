@@ -710,6 +710,8 @@ function saveReport() {
     savedAt: new Date().toLocaleString('id-ID'), versi: 2
   };
   const reports = lsGet(STORAGE_KEY, []);
+  const dup = reports.find((r) => r.tanggal === tanggal && r.shift === shift && r.id !== reportData.id);
+  if (dup) { toast(`Laporan Personel ${formatTanggalIndo(tanggal)} shift ${shift.split(' (')[0]} sudah ada (Regu ${dup.regu}). Satu tanggal hanya boleh satu laporan Pagi dan satu Malam — ubah laporan yang sudah ada itu.`, 'err'); return; }
   const idx = reports.findIndex((r) => r.id === reportData.id);
   const lama = idx !== -1 ? reports[idx] : null;
   const perubahan = lama ? AVS.diffPersonel(normReport(lama), reportData) : [];
