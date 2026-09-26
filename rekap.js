@@ -150,8 +150,8 @@
   function tabelKejadian(daftar, penuh) {
     const rows = (penuh ? daftar : daftar.slice(0, 5));
     if (!rows.length) return '<div class="empty">Belum ada laporan kejadian<br>pada rentang ini.</div>';
-    const trs = rows.map((x, i) => `<tr><td>${i + 1}</td><td style="white-space:nowrap"><b>${E(tglPendek(x.tanggal))}</b></td><td class="nm"><a href="kejadian.html#ubah=${encodeURIComponent(x.id)}" style="color:inherit;text-decoration:none">${E(x.judul)}</a></td><td>${E(x.lokasi)}</td></tr>`).join('');
-    return `<table class="rtbl"><thead><tr><th>#</th><th>Tanggal</th><th>Ringkasan</th><th>Lokasi</th></tr></thead><tbody>${trs}</tbody></table>`;
+    const trs = rows.map((x, i) => `<tr><td>${i + 1}</td><td style="white-space:nowrap"><b>${E(tglPendek(x.tanggal))}</b></td><td class="nm"><a href="kejadian.html#ubah=${encodeURIComponent(x.id)}" style="color:inherit;text-decoration:none">${E(x.judul)}</a></td><td>${E(x.shift || '-')}</td><td>${E(x.lokasi || '-')}</td></tr>`).join('');
+    return `<table class="rtbl"><thead><tr><th>#</th><th>Tanggal</th><th>Ringkasan</th><th>Shift</th><th>Lokasi</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
   function grafikSebaranLokasi(daftar) {
     const cnt = {};
@@ -173,8 +173,7 @@
 <div class="kpi" style="--acc:#1D3A5C;--acc-bg:#E6ECF4;height:96px"><div class="lbl">Lokasi Terbanyak</div><div class="val" style="font-size:16px">${lokasiTop ? E(lokasiTop[0]) : '-'}</div><div class="ico">${svg(IC.doc)}</div></div>
 <div class="kpi" style="--acc:#157A82;--acc-bg:#E4F3F4;height:96px"><div class="lbl">Hari dengan Kejadian</div><div class="val">${hariDenganKejadian}<small>hari</small></div><div class="ico">${svg(IC.doc)}</div></div>`;
     $('rowKejadian1').innerHTML = `
-<div class="dcard c6 r250"><div class="h"><div><h3>Tren Kejadian per ${r.granularitas === 'mingguan' ? 'Minggu' : 'Hari'}</h3><div class="sub">Rentang terpilih</div></div></div>${grafikBatangVertikal(r.tren, '#E58A80')}</div>
-<div class="dcard c6 r250"><div class="h"><div><h3>Sebaran per Lokasi</h3><div class="sub">5 teratas &bull; rentang terpilih</div></div></div>${grafikSebaranLokasi(r.daftar)}</div>`;
+<div class="dcard c12 rauto"><div class="h"><div><h3>Tren Kejadian per ${r.granularitas === 'mingguan' ? 'Minggu' : 'Hari'}</h3><div class="sub">Rentang terpilih</div></div></div>${grafikBatangVertikal(r.tren, '#E58A80')}</div>`;
     $('rowKejadian2').innerHTML = `<div class="dcard c12 rauto"><div class="h"><div><h3>Daftar Kejadian</h3><div class="sub">5 terbaru \u2022 klik untuk membuka laporan</div></div><div class="sp"></div>${r.daftar.length > 5 ? `<button class="lihatsemua" onclick="Rekap.bukaLaci('kejadian')">Lihat Semua (${r.daftar.length}) \u203a</button>` : ''}</div>${tabelKejadian(r.daftar, false)}</div>`;
   }
 
