@@ -154,10 +154,14 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 /* Toolbar dua baris: baris 1 = tab halaman + Mode fokus/Laporan Baru (sejajar),
    baris 2 = Tanggal/Shift/Lokasi di kiri, Nomor di tengah (grid 3 kolom
    supaya Nomor tetap di tengah terlepas dari lebar grup kiri). */
+/* Baris 1: tab halaman, Tanggal/Shift/Lokasi, dan Mode fokus/+Laporan Baru
+   semua sejajar satu baris. Baris 2: Nomor sendiri, rata kiri sejajar
+   dengan tab (kolom kiri kedua baris sama-sama mulai dari padding toolbar).
+   Gap dipersempit & lebar field disesuaikan supaya semuanya cukup dalam
+   satu baris tanpa membungkus di lebar layar minimum (1024px). */
 .toolbar.tb-2row { flex-direction: column; align-items: stretch; flex-wrap: nowrap; padding: 8px 10px; }
-.toolbar.tb-2row .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; width: 100%; }
-.toolbar.tb-2row .tb-row2 { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
-.toolbar.tb-2row .tb-fields { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.toolbar.tb-2row .tb-balance { min-width: 0; }
+.toolbar.tb-2row .tb-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; }
+.toolbar.tb-2row .tb-row #hdrLokasi select { min-width: 118px; }
+.toolbar.tb-2row .tb-row .fld select { min-width: 118px; }
 .jejak { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .jejak .upd { background: #FFF3DC; color: #8A5A0C; border: 1px solid #F0D9A8; border-radius: 10px; padding: 1px 8px; font-weight: 800; font-size: 10px; }
