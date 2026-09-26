@@ -124,6 +124,11 @@
 <div class="rwlist" id="rwList"></div>
 <div class="rwnote">Riwayat menyimpan 30 entri terakhir per laporan (entri "Dibuat" selalu dipertahankan). Riwayat mencatat perubahan, tidak dapat mengembalikan versi lama.</div>
 </aside>
+<aside class="drawer" id="drawerLihat">
+<div class="dh"><span>LIHAT LAPORAN</span><button type="button" onclick="tutupLihat()" title="Tutup">✕</button></div>
+<div class="lhsub" id="lihatSub"></div>
+<div class="lhbody" id="lihatIsi"></div>
+</aside>
 
 
 <!-- MODAL PREVIEW LAPORAN -->
@@ -687,7 +692,7 @@ function bukaRiwayatDari(r) {
   const judul = `${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${r.tanggal ? new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'} • Laporan Personel`;
   const out = AVS.renderRiwayat(r, judul);
   $('rwSub').textContent = out.sub; $('rwList').innerHTML = out.html;
-  togglePratinjau(false); $('drawerRw').classList.add('open');
+  togglePratinjau(false); tutupLihat(); $('drawerRw').classList.add('open');
 }
 function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
 document.addEventListener('click', (e) => { const p = $('rwPop'); if (p && p.classList.contains('open') && !p.contains(e.target)) p.classList.remove('open'); });
@@ -695,7 +700,35 @@ function togglePratinjau(force) {
   const d = $('drawer'), buka = force === undefined ? !d.classList.contains('open') : !!force;
   d.classList.toggle('open', buka);
   $('hdl').style.display = buka ? 'none' : '';
+  if (buka) { tutupRiwayat(); tutupLihat(); }
 }
+
+/* ---------- Laci "Lihat" (tampilan web hanya-baca, tidak dapat diubah) ---------- */
+function bukaLihat(id) {
+  const r = getReports().find((x) => x.id === id); if (!r) return;
+  const info = hitungData(r.kategoriKekuatan, r.posPenempatan);
+  const pb = getPembuatLaporanInfo(r.posPenempatan, 'text');
+  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
+  let html = info.rows.map((row) => {
+    const judul = `${esc(labelKategori(row.k))} &mdash; Jumlah ${row.jml} &bull; Hadir ${row.hdr} &bull; Kurang ${row.krg || 0}`;
+    const isi = row.valid.length
+      ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(alasanText(p))}</span></div>`).join('')
+      : '<div class="lihat-empty">Lengkap, tidak ada yang tidak hadir.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${judul}</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada kategori kekuatan.</div>';
+  html += `<div class="lihat-total">TOTAL HADIR: <b>${info.totalHadir}</b> PERSONEL</div>`;
+  html += info.posRows.map((row) => {
+    const isi = row.valid.length
+      ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}${p.peran ? ` <small style="color:#8A94A6;font-weight:600">${esc(p.peran)}</small>` : ''}</span></div>`).join('')
+      : '<div class="lihat-empty">Nihil.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${esc(row.p.name)} &mdash; ${row.valid.length} orang</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada pos penempatan.</div>';
+  html += `<div class="lihat-total">TOTAL PENEMPATAN: <b>${info.totalPenempatan}</b> PERSONEL</div>`;
+  html += `<div class="lihat-footer">Dibuat oleh, ${esc(pb.jabatanLabel.replace(/\n/g, ' '))} &mdash; ${esc(pb.nama)}</div>`;
+  $('lihatIsi').innerHTML = html;
+  togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
+}
+function tutupLihat() { $('drawerLihat').classList.remove('open'); }
 function saveReport() {
   const tanggal = $('tanggal').value, shift = $('shift').value, regu = $('regu').value;
   if (!tanggal || !shift || !regu) { toast('Harap lengkapi Tanggal, Shift, dan Regu!', 'err'); return; }
@@ -770,9 +803,9 @@ function renderSavedReports() {
 <div class="pchips">${chBal}<span class="pchip" style="background:#E4F3F4;color:#0F5F65">Hadir ${info.totalHadir}</span><span class="pchip" style="background:${kurang ? '#FBE9E7' : '#EEF1F6'};color:${kurang ? '#A82F24' : '#5C6675'}">Tidak hadir ${kurang}</span><span class="pchip" style="background:#EEF1F6;color:#5C6675">${r.kategoriKekuatan.length} kategori</span></div>
 </div>
 <div class="saved-actions">
-<button type="button" class="btn-info" onclick="viewReport('${esc(r.id)}')">Lihat</button>
+<button type="button" class="btn-info" onclick="bukaLihat('${esc(r.id)}')">Lihat</button>
 <button type="button" class="btn-warning" onclick="editReport('${esc(r.id)}')">Ubah</button>
-<button type="button" class="btn-success btn-wa" onclick="kirimWAId('${esc(r.id)}')">Kirim WA</button>
+<button type="button" class="btn-success btn-wa" onclick="viewReport('${esc(r.id)}')">Kirim WA</button>
 <button type="button" class="btn-success" onclick="exportPDF('${esc(r.id)}')">Unduh PDF</button>
 <button type="button" class="btn-info" style="background:#EEF1F6;color:#475569" onclick="bukaRiwayatId('${esc(r.id)}')">Riwayat</button>
 <button type="button" class="btn-danger" onclick="deleteReport('${esc(r.id)}')">Hapus</button>
@@ -793,11 +826,10 @@ function closeViewModal() { $('viewModal').style.display = 'none'; }
 function copyModalReport() {
   copyText($('modalViewContent').innerText).then((ok) => toast(ok ? 'Teks laporan berhasil disalin!' : 'Gagal menyalin teks.', ok ? 'ok' : 'err'));
 }
-function kirimWAModal() { bukaWA($('modalViewContent').innerText); }
-function kirimWAId(id) {
-  const r = getReports().find((x) => x.id === id); if (!r) return;
-  if (!konfirmasi('mengirim laporan', hitungData(r.kategoriKekuatan, r.posPenempatan), r.tanggal, r.shift, r.regu)) return;
-  bukaWA(textOfReport(r));
+function kirimWAModal() {
+  const r = getReports().find((x) => x.id === modalReportId);
+  if (r && !konfirmasi('mengirim laporan', hitungData(r.kategoriKekuatan, r.posPenempatan), r.tanggal, r.shift, r.regu)) return;
+  bukaWA($('modalViewContent').innerText);
 }
 
 function editReport(id) {
