@@ -529,11 +529,11 @@ function lokasiKejadianManualInput(v) { laporan.lokasiKejadian = v; ubah(); }
 function posisiLokasiManual() {
   const hdr = $('hdrLokasiManual'), sel = $('lokasiKejadianSel'), manualInput = $('lokasiKejadianManual');
   if (!hdr || !sel || !manualInput || !hdr.classList.contains('show')) return;
-  hdr.style.marginLeft = '0px';
+  hdr.style.left = '0px';
   const selLeft = sel.getBoundingClientRect().left;
   const inputLeft = manualInput.getBoundingClientRect().left;
   const diff = selLeft - inputLeft;
-  hdr.style.marginLeft = (diff > 0 ? diff : 0) + 'px';
+  hdr.style.left = (diff > 0 ? diff : 0) + 'px';
 }
 window.addEventListener('resize', posisiLokasiManual);
 
