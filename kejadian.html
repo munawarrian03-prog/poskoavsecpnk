@@ -516,16 +516,26 @@ function syncLokasiKejadianUI() {
   const sel = $('lokasiKejadianSel'), manual = $('lokasiKejadianManual');
   if (!sel || !manual) return;
   const v = laporan.lokasiKejadian || '';
-  if (v && !daftarPosJaga().includes(v)) { sel.value = LOKASI_MANUAL_VALUE; $('hdrLokasiManual').classList.add('show'); manual.value = v; }
+  if (v && !daftarPosJaga().includes(v)) { sel.value = LOKASI_MANUAL_VALUE; $('hdrLokasiManual').classList.add('show'); manual.value = v; posisiLokasiManual(); }
   else { sel.value = v; $('hdrLokasiManual').classList.remove('show'); manual.value = ''; }
 }
 function lokasiKejadianPilih(v) {
   const manual = $('lokasiKejadianManual'), hdr = $('hdrLokasiManual');
-  if (v === LOKASI_MANUAL_VALUE) { hdr.classList.add('show'); manual.value = ''; manual.focus(); laporan.lokasiKejadian = ''; }
+  if (v === LOKASI_MANUAL_VALUE) { hdr.classList.add('show'); manual.value = ''; manual.focus(); laporan.lokasiKejadian = ''; posisiLokasiManual(); }
   else { hdr.classList.remove('show'); manual.value = ''; laporan.lokasiKejadian = v; }
   ubah();
 }
 function lokasiKejadianManualInput(v) { laporan.lokasiKejadian = v; ubah(); }
+function posisiLokasiManual() {
+  const hdr = $('hdrLokasiManual'), sel = $('lokasiKejadianSel'), manualInput = $('lokasiKejadianManual');
+  if (!hdr || !sel || !manualInput || !hdr.classList.contains('show')) return;
+  hdr.style.marginLeft = '0px';
+  const selLeft = sel.getBoundingClientRect().left;
+  const inputLeft = manualInput.getBoundingClientRect().left;
+  const diff = selLeft - inputLeft;
+  hdr.style.marginLeft = (diff > 0 ? diff : 0) + 'px';
+}
+window.addEventListener('resize', posisiLokasiManual);
 
 function isiSaran() {
   const sumber = (typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : [];
