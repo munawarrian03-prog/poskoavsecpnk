@@ -88,6 +88,7 @@
 <div class="stat" id="statBar">
 <span class="tt" id="penyusunDisplay">DISUSUN OLEH: (....................)</span>
 <span class="sp"></span>
+<button type="button" class="ket-warn" id="ketWarn" onclick="keKetKosong()" style="display:none"></button>
 <button type="button" class="sbtn ghost" onclick="togglePratinjau()">Pratinjau WA</button>
 <button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button>
 <button type="button" class="sbtn red" id="btnSimpan" onclick="saveReport()">Simpan Laporan</button>
@@ -236,6 +237,12 @@ function wajibKeterangan(it) {
   if (it.bentuk === 'C') return !it.lengkap;
   return false;
 }
+const ketKosong = (it) => wajibKeterangan(it) && !rapikan(it.keterangan);
+function daftarKetKosong() {
+  const out = [];
+  posFasilitas.forEach((p) => p.items.forEach((it) => { if (ketKosong(it)) out.push(`${p.name} › ${it.name}`); }));
+  return out;
+}
 
 /* ---------- Render rail ---------- */
 function renderRail() {
@@ -258,25 +265,25 @@ function baris_A(pid, it) {
     <span class="nm">${esc(it.name)}</span>
     <div class="fa-seg"><button type="button" class="${it.kondisi === 'Baik' ? 'on baik' : ''}" onclick="setA('${pid}','${it.id}','kondisi','Baik')">Baik</button><button type="button" class="${it.kondisi === 'Rusak' ? 'on rusak' : ''}" onclick="setA('${pid}','${it.id}','kondisi','Rusak')">Rusak</button></div>
     <div class="fa-seg"><button type="button" class="${it.status === 'Digunakan' ? 'on pakai' : ''}" onclick="setA('${pid}','${it.id}','status','Digunakan')">Digunakan</button><button type="button" class="${it.status === 'Tidak Digunakan' ? 'on tidak' : ''}" onclick="setA('${pid}','${it.id}','status','Tidak Digunakan')">Tidak</button></div>
-    <input class="ket" value="${esc(it.keterangan)}" placeholder="${wajib ? 'Wajib diisi' : '(opsional)'}" oninput="setA('${pid}','${it.id}','keterangan',this.value)">
+    <input class="ket${ketKosong(it) ? ' kosong' : ''}" value="${esc(it.keterangan)}" placeholder="${wajib ? 'Wajib diisi' : '(opsional)'}" oninput="setKet('${pid}','${it.id}',this)">
   </div>`;
 }
 function baris_B(pid, it) {
   const baik = Math.max(0, (it.jumlah || 0) - (it.rusak || 0));
   return `<div class="kt-row">
     <b>${esc(it.name)}</b>
-    <input type="number" min="0" value="${it.jumlah}" oninput="setB('${pid}','${it.id}','jumlah',this.value)">
-    <input type="number" min="0" max="${it.jumlah}" value="${it.rusak}" class="kt-rusak" oninput="setB('${pid}','${it.id}','rusak',this.value)">
+    <input type="number" min="0" value="${it.jumlah}" class="kt-jumlah" oninput="setBKetik('${pid}','${it.id}','jumlah',this)">
+    <input type="number" min="0" max="${it.jumlah}" value="${it.rusak}" class="kt-rusak" oninput="setBKetik('${pid}','${it.id}','rusak',this)">
     <input value="${baik}" class="kt-baik" readonly>
     <button type="button" class="kt-tl" onclick="setB('${pid}','${it.id}','rusak',${it.rusak}+1)">+ Tidak Layak</button>
   </div>`;
 }
 function baris_C(pid, it) {
   const wajib = wajibKeterangan(it);
-  return `<div class="fa-lengkap">
+  return `<div class="fa-lengkap${wajib ? ' wajib' : ''}">
     <span class="nm">${esc(it.name)}</span>
     <div class="fa-seg"><button type="button" class="${it.lengkap ? 'on lengkap' : ''}" onclick="setC('${pid}','${it.id}','lengkap',true)">Lengkap</button><button type="button" class="${!it.lengkap ? 'on tidaklengkap' : ''}" onclick="setC('${pid}','${it.id}','lengkap',false)">Tidak Lengkap</button></div>
-    <input class="ket" value="${esc(it.keterangan)}" placeholder="${wajib ? 'Wajib diisi' : '(opsional)'}" oninput="setC('${pid}','${it.id}','keterangan',this.value)">
+    <input class="ket${ketKosong(it) ? ' kosong' : ''}" value="${esc(it.keterangan)}" placeholder="${wajib ? 'Wajib diisi' : '(opsional)'}" oninput="setKet('${pid}','${it.id}',this)">
   </div>`;
 }
 function renderPosSection(p) {
@@ -301,11 +308,30 @@ function renderPosSection(p) {
   return html;
 }
 function renderForm() {
+  const main = $('kjMain'), top = main.scrollTop;
   $('posContainer').innerHTML = posFasilitas.map(renderPosSection).join('');
-  renderRail();
+  main.scrollTop = top;
+  renderRail(); refreshKunciKet();
 }
 
 function setA(pid, iid, field, val) { const it = findItem(pid, iid); if (!it) return; it[field] = val; markDirty(); renderForm(); refreshPratinjauLive(); }
+// Ketik keterangan / angka: perbarui data & baris ini saja. Menggambar ulang seluruh form
+// di setiap ketikan menghancurkan input yang sedang difokus (fokus hilang, halaman melompat).
+function setKet(pid, iid, el) {
+  const it = findItem(pid, iid); if (!it) return;
+  it.keterangan = el.value; markDirty();
+  el.classList.toggle('kosong', ketKosong(it));
+  refreshKunciKet(); refreshPratinjauLive();
+}
+function setBKetik(pid, iid, field, el) {
+  const it = findItem(pid, iid); if (!it) return;
+  const row = el.closest('.kt-row'), inRusak = row.querySelector('.kt-rusak');
+  let n = Math.max(0, parseInt(el.value, 10) || 0);
+  if (field === 'jumlah') { it.jumlah = n; if (it.rusak > n) { it.rusak = n; inRusak.value = n; } inRusak.max = n; }
+  else { if (n > it.jumlah) { n = it.jumlah; el.value = n; } it.rusak = n; }
+  row.querySelector('.kt-baik').value = Math.max(0, it.jumlah - it.rusak);
+  markDirty(); refreshPratinjauLive();
+}
 function setB(pid, iid, field, val) { const it = findItem(pid, iid); if (!it) return; let n = Math.max(0, parseInt(val, 10) || 0); if (field === 'jumlah' && n < it.rusak) it.rusak = n; if (field === 'rusak') n = Math.min(n, it.jumlah); it[field] = n; markDirty(); renderForm(); refreshPratinjauLive(); }
 function setC(pid, iid, field, val) { const it = findItem(pid, iid); if (!it) return; it[field] = val; markDirty(); renderForm(); refreshPratinjauLive(); }
 function findItem(pid, iid) { const p = posFasilitas.find((x) => x.id === pid); return p && p.items.find((x) => x.id === iid); }
@@ -344,18 +370,31 @@ function statusPersonel() {
   const info = AVS.infoPembuatDariPersonel(t, s, r);
   return Object.assign({ alasan: info.ada ? null : 'kosong' }, info);
 }
+function refreshKunciKet() {
+  const kosong = daftarKetKosong(), warn = $('ketWarn'), btn = $('btnSimpan');
+  const personelOk = btn.dataset.personelOk === '1';
+  warn.style.display = kosong.length ? '' : 'none';
+  warn.textContent = kosong.length ? `⚠ ${kosong.length} keterangan wajib belum diisi` : '';
+  warn.title = kosong.join('\n');
+  btn.disabled = !personelOk || kosong.length > 0;
+  btn.title = !personelOk ? 'Simpan Laporan Personel untuk shift ini terlebih dahulu'
+    : kosong.length ? 'Isi dulu keterangan wajib: ' + kosong.join(', ') : '';
+}
+function keKetKosong() {
+  const el = document.querySelector('#posContainer .ket.kosong'); if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus({ preventScroll: true });
+}
 function refreshPenyusunDanKunci() {
   const info = statusPersonel();
   const disp = $('penyusunDisplay'), btn = $('btnSimpan');
   let lockNote = document.getElementById('lockNote');
+  btn.dataset.personelOk = info.ada && info.nama ? '1' : '';
+  refreshKunciKet();
   if (info.ada && info.nama) {
     disp.textContent = `DISUSUN OLEH: ${info.jabatanLabel}, ${info.nama.toUpperCase()}`;
-    btn.disabled = false; btn.title = '';
     if (lockNote) lockNote.remove();
   } else {
     disp.textContent = 'DISUSUN OLEH: (....................)';
-    btn.disabled = true;
-    btn.title = 'Simpan Laporan Personel untuk shift ini terlebih dahulu';
     if (!lockNote && $('tanggal').value && $('shift').value && $('regu').value) {
       lockNote = document.createElement('div'); lockNote.id = 'lockNote'; lockNote.className = 'lock-note';
       lockNote.innerHTML = '<b>⚠ Belum bisa disimpan.</b> Simpan Laporan Personel untuk Tanggal, Shift, dan Regu yang sama terlebih dahulu — nama penyusun laporan ini diambil otomatis dari sana.';
@@ -416,11 +455,8 @@ function saveReport() {
   const info = statusPersonel();
   if (!info.ada || !info.nama) { toast('Simpan Laporan Personel untuk shift ini terlebih dahulu.', 'err'); return; }
   // Validasi keterangan wajib (Rusak / Tidak Digunakan / Dokumen Tidak Lengkap)
-  const belumIsi = [];
-  posFasilitas.forEach((p) => p.items.forEach((it) => {
-    if (wajibKeterangan(it) && !rapikan(it.keterangan)) belumIsi.push(`${p.name} › ${it.name}`);
-  }));
-  if (belumIsi.length) { toast(`Keterangan wajib diisi untuk: ${belumIsi.slice(0, 2).join(', ')}${belumIsi.length > 2 ? ` (+${belumIsi.length - 2} lainnya)` : ''}.`, 'err'); return; }
+  const belumIsi = daftarKetKosong();
+  if (belumIsi.length) { keKetKosong(); toast(`Keterangan wajib diisi untuk: ${belumIsi.slice(0, 2).join(', ')}${belumIsi.length > 2 ? ` (+${belumIsi.length - 2} lainnya)` : ''}.`, 'err'); return; }
   const reportData = { id: editingReportId || Date.now().toString(), tanggal, shift, regu, posFasilitas: snapshot(), savedAt: new Date().toLocaleString('id-ID'), versi: 1 };
   const reports = lsGet(STORAGE_KEY, []);
   const idx = reports.findIndex((r) => r.id === reportData.id);
