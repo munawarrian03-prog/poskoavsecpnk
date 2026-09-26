@@ -43,7 +43,6 @@
 <div class="fld" id="hdrLokasi"><label for="lokasiKejadianSel">LOKASI KEJADIAN</label>
 <div class="lokasi-stack">
 <select id="lokasiKejadianSel" onchange="lokasiKejadianPilih(this.value)"></select>
-<input type="text" id="lokasiKejadianManual" oninput="lokasiKejadianManualInput(this.value)" placeholder="Tulis lokasi kejadian" style="display:none">
 </div>
 </div>
 <span class="tsp"></span>
@@ -55,6 +54,9 @@
 <div class="nomor-wrap" id="nomorWrap"><input type="text" id="fileNumber" data-f="fileNumber" oninput="fieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="autoTag">AUTO</span></div>
 <button type="button" class="hbtn" id="btnNomorMode" onclick="ubahModeNomor()" title="Ubah nomor secara manual">✎</button>
 <button type="button" class="hbtn" onclick="bukaUrutan()" title="Atur urutan nomor bulan ini">⚙</button>
+</div>
+<div class="fld" id="hdrLokasiManual" style="display:none"><label for="lokasiKejadianManual">TULIS LOKASI</label>
+<input type="text" id="lokasiKejadianManual" oninput="lokasiKejadianManualInput(this.value)" placeholder="Tulis lokasi kejadian">
 </div>
 </div>
 </div>
@@ -514,13 +516,13 @@ function syncLokasiKejadianUI() {
   const sel = $('lokasiKejadianSel'), manual = $('lokasiKejadianManual');
   if (!sel || !manual) return;
   const v = laporan.lokasiKejadian || '';
-  if (v && !daftarPosJaga().includes(v)) { sel.value = LOKASI_MANUAL_VALUE; manual.style.display = ''; manual.value = v; }
-  else { sel.value = v; manual.style.display = 'none'; manual.value = ''; }
+  if (v && !daftarPosJaga().includes(v)) { sel.value = LOKASI_MANUAL_VALUE; $('hdrLokasiManual').classList.add('show'); manual.value = v; }
+  else { sel.value = v; $('hdrLokasiManual').classList.remove('show'); manual.value = ''; }
 }
 function lokasiKejadianPilih(v) {
-  const manual = $('lokasiKejadianManual');
-  if (v === LOKASI_MANUAL_VALUE) { manual.style.display = ''; manual.value = ''; manual.focus(); laporan.lokasiKejadian = ''; }
-  else { manual.style.display = 'none'; manual.value = ''; laporan.lokasiKejadian = v; }
+  const manual = $('lokasiKejadianManual'), hdr = $('hdrLokasiManual');
+  if (v === LOKASI_MANUAL_VALUE) { hdr.classList.add('show'); manual.value = ''; manual.focus(); laporan.lokasiKejadian = ''; }
+  else { hdr.classList.remove('show'); manual.value = ''; laporan.lokasiKejadian = v; }
   ubah();
 }
 function lokasiKejadianManualInput(v) { laporan.lokasiKejadian = v; ubah(); }

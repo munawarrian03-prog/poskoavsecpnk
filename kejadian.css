@@ -164,8 +164,12 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .toolbar.tb-2row .tb-row #hdrLokasi select { min-width: 118px; }
 .toolbar.tb-2row .tb-row .fld select { min-width: 118px; }
 
-/* Lokasi kejadian: dropdown & kolom tulis manual disusun ke bawah (bukan ke samping) */
+/* Lokasi kejadian: dropdown di baris 1 */
 #hdrLokasi .lokasi-stack { display: flex; flex-direction: column; gap: 6px; }
+
+/* Manual input di baris 2, sejajar dengan NOMOR */
+#hdrLokasiManual { display: none; }
+#hdrLokasiManual.show { display: flex; flex-direction: column; }
 
 /* Samakan lebar Tanggal, Shift, Lokasi Kejadian, dan kolom tulis lokasi manual */
 #tglLap, #shiftLap, #lokasiKejadianSel, #lokasiKejadianManual { width: 150px; }
