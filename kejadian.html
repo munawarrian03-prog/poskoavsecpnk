@@ -33,6 +33,16 @@
 </div>
 <span class="tdiv" id="hdrDiv"></span>
 <div class="fld" id="hdrTgl"><label for="tglLap">TANGGAL</label><input type="date" id="tglLap" data-f="tanggal" oninput="fieldChanged(this)"></div>
+<div class="fld" id="hdrShift"><label for="shiftLap">SHIFT</label>
+<select id="shiftLap" data-f="shift" onchange="fieldChanged(this)">
+<option value="">-</option>
+<option value="Pagi (08:00 - 20:00) WIB">Pagi (08:00 - 20:00) WIB</option>
+<option value="Malam (20:00 - 08:00) WIB">Malam (20:00 - 08:00) WIB</option>
+</select></div>
+<div class="fld" id="hdrLokasi"><label for="lokasiKejadianSel">LOKASI KEJADIAN</label>
+<select id="lokasiKejadianSel" onchange="lokasiKejadianPilih(this.value)"></select>
+<input type="text" id="lokasiKejadianManual" oninput="lokasiKejadianManualInput(this.value)" placeholder="Tulis lokasi kejadian" style="display:none">
+</div>
 <div class="fld" id="hdrNomor"><label for="fileNumber">NOMOR</label>
 <div class="nomor-wrap" id="nomorWrap"><input type="text" id="fileNumber" data-f="fileNumber" oninput="fieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="autoTag">AUTO</span></div>
 <button type="button" class="hbtn" id="btnNomorMode" onclick="ubahModeNomor()" title="Ubah nomor secara manual">✎</button>
@@ -247,6 +257,7 @@
 <script src="lib/pdfmake.min.js"></script>
 <script src="lib/fonts-carlito.js"></script>
 <script src="personel.js"></script>
+<script src="kategori.js"></script>
 <script src="kejadian-data.js"></script>
 <script src="kejadian-nomor.js"></script>
 <script src="kejadian-wa.js"></script>
@@ -354,7 +365,7 @@ const ttdDel = (key) => tx('readwrite', (s) => s.delete(key), STORE_TTD);
 /* ---------- Model ---------- */
 function modelBaru() {
   return {
-    id: null, tanggal: hariIni(), fileNumber: '', nomorOtomatis: true, nomorDikunci: false, waStatus: 'awal', tempat: TEMPAT_DEF,
+    id: null, tanggal: hariIni(), shift: '', lokasiKejadian: '', fileNumber: '', nomorOtomatis: true, nomorDikunci: false, waStatus: 'awal', tempat: TEMPAT_DEF,
     preparedBy: { nama: '', jabatan: JABATAN_DEF.preparedBy || '' },
     signedBy: { nama: '', jabatan: JABATAN_DEF.signedBy || '' },
     distribution: { nama: '', jabatan: JABATAN_DEF.distribution || '' },
@@ -474,6 +485,7 @@ function isiForm() {
     const v = getPath(laporan, el.dataset.f);
     if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v;
   });
+  syncLokasiKejadianUI();
   renderSemua();
   updateBadge();
   updateKirimState();
@@ -481,6 +493,30 @@ function isiForm() {
   renderRail(); renderWA();
 }
 function renderSemua() { renderDasar(); renderTL(); renderDR(); renderTerlampir(); renderFoto(); renderTTD(); }
+
+/* ---------- Lokasi kejadian: dropdown pos jaga + opsi tulis manual ---------- */
+const LOKASI_MANUAL_VALUE = '__manual__';
+function daftarPosJaga() { return (typeof POS_BAWAAN !== 'undefined' ? POS_BAWAAN : []).map((p) => p.name); }
+function renderLokasiKejadianOptions() {
+  const sel = $('lokasiKejadianSel'); if (!sel) return;
+  const opsi = daftarPosJaga().map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  sel.innerHTML = `<option value="">-</option>${opsi}<option value="${LOKASI_MANUAL_VALUE}">+ Lokasi lain (tulis manual)</option>`;
+}
+function syncLokasiKejadianUI() {
+  renderLokasiKejadianOptions();
+  const sel = $('lokasiKejadianSel'), manual = $('lokasiKejadianManual');
+  if (!sel || !manual) return;
+  const v = laporan.lokasiKejadian || '';
+  if (v && !daftarPosJaga().includes(v)) { sel.value = LOKASI_MANUAL_VALUE; manual.style.display = ''; manual.value = v; }
+  else { sel.value = v; manual.style.display = 'none'; manual.value = ''; }
+}
+function lokasiKejadianPilih(v) {
+  const manual = $('lokasiKejadianManual');
+  if (v === LOKASI_MANUAL_VALUE) { manual.style.display = ''; manual.value = ''; manual.focus(); laporan.lokasiKejadian = ''; }
+  else { manual.style.display = 'none'; manual.value = ''; laporan.lokasiKejadian = v; }
+  ubah();
+}
+function lokasiKejadianManualInput(v) { laporan.lokasiKejadian = v; ubah(); }
 
 function isiSaran() {
   const sumber = (typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : [];
@@ -1098,6 +1134,7 @@ async function renderTersimpan() {
 <div style="font-weight:bold;color:var(--primary);font-size:14px;">${esc(tglIndo(r.tanggal))}${r.fileNumber ? ' • No. ' + esc(r.fileNumber) : ''}</div>
 <div class="saved-cases">${esc(rapikan(r.caseInfo) || '(tanpa informasi kasus)')}</div>
 <div class="jejak">${jejakHTML(r)}</div>
+<div class="saved-meta">Shift: ${esc(r.shift || '-')} • Lokasi: ${esc(r.lokasiKejadian || '-')}</div>
 <div class="saved-meta">Disusun: ${esc((r.preparedBy && r.preparedBy.nama) || '-')} • ${(r.tindakLanjut || []).length} baris tindak lanjut • ${(r.fotos || []).length} foto</div>
 </div>
 <div class="saved-actions">
@@ -1135,7 +1172,7 @@ function switchPage(page) {
   $('pageForm').style.display = form ? 'flex' : 'none';
   $('pageSaved').style.display = form ? 'none' : 'flex';
   $('statBar').style.display = form ? 'flex' : 'none';
-  ['hdrDiv', 'hdrTgl', 'hdrNomor'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
+  ['hdrDiv', 'hdrTgl', 'hdrShift', 'hdrLokasi', 'hdrNomor'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
   $('btnFormTab').classList.toggle('on', form);
   $('btnSavedTab').classList.toggle('on', !form);
   $('hdlWA').style.display = form ? '' : 'none';
