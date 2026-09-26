@@ -20,26 +20,41 @@
   const skalaY = (maxVal) => { const mv = Math.max(4, maxVal), step = mv <= 6 ? 2 : mv <= 12 ? 4 : Math.ceil(mv / 3 / 2) * 2; return { step, max: Math.ceil(mv / step) * step }; };
 
   /* =========================================================
-     GRAFIK BATANG SEDERHANA (tren harian/mingguan & kepatuhan)
+     GRAFIK BATANG TREN (harian/mingguan/bulanan)
+     Digambar sesuai ukuran kartu sebenarnya agar memenuhi lebar & tinggi kartu.
      ========================================================= */
-  function grafikBatangVertikal(bucket, warna) {
-    const d = bucket;
-    if (!d || !d.length) return '<div class="empty" style="padding:20px">Belum ada data.</div>';
-    // Lebar kolom: maks 36px, min 8px tergantung jumlah bucket
-    const bw = Math.max(8, Math.min(36, Math.floor(320 / d.length) - 6));
-    const W = d.length * (bw + 6) + 40, H = 110, base = 80, top = 10;
-    const sk = skalaY(Math.max(0, ...d.map((x) => x.jumlah)));
-    let s = '';
-    for (let g = 0; g <= sk.max; g += sk.step) { const y = base - g / sk.max * (base - top); s += `<line x1="24" x2="${W}" y1="${y}" y2="${y}" stroke="#E9EDF4"/><text x="16" y="${y + 3.5}" text-anchor="end" font-size="8" fill="#8A94A6" font-weight="600">${g}</text>`; }
-    d.forEach((w, i) => {
-      const x = 30 + i * (bw + 6), h = sk.max ? w.jumlah / sk.max * (base - top) : 0;
-      s += w.jumlah === 0
-        ? `<rect x="${x}" y="${base - 2}" width="${bw}" height="2" rx="1" fill="#D5DCE7"/>`
-        : `<rect x="${x}" y="${base - h}" width="${bw}" height="${h}" rx="3" fill="${warna}"/><text x="${x + bw / 2}" y="${base - h - 4}" text-anchor="middle" font-size="9" font-weight="800" fill="#10243D">${w.jumlah}</text>`;
-      s += `<text x="${x + bw / 2}" y="${base + 12}" text-anchor="middle" font-size="8" font-weight="700" fill="#5C6675">${w.label}</text>`;
-    });
-    return `<svg viewBox="0 0 ${W} ${H + 8}" style="width:100%;height:auto;max-height:130px">${s}</svg>`;
+  const UNIT = { harian: 'Hari', mingguan: 'Minggu', bulanan: 'Bulan' };
+  const grafikTren = {};
+  function wadahGrafikTren(id, bucket, warna) {
+    grafikTren[id] = { bucket, warna };
+    return `<div class="grafik-tren" id="${id}"></div>`;
   }
+  function svgBatang(d, warna, W, H) {
+    if (!d || !d.length) return '<div class="empty">Belum ada data.</div>';
+    const padL = 30, padR = 6, top = 16, base = H - 20, n = d.length;
+    const slot = (W - padL - padR) / n, bw = Math.max(3, Math.min(44, slot * 0.64));
+    const sk = skalaY(Math.max(0, ...d.map((x) => x.jumlah)));
+    const lebarLabel = Math.max(...d.map((x) => String(x.label).length)) * 6 + 6, tiapLabel = Math.max(1, Math.ceil(lebarLabel / slot));
+    let s = '';
+    for (let g = 0; g <= sk.max; g += sk.step) { const y = base - g / sk.max * (base - top); s += `<line x1="${padL - 4}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="#E9EDF4"/><text x="${padL - 8}" y="${y + 3.5}" text-anchor="end" font-size="9" fill="#8A94A6" font-weight="600">${g}</text>`; }
+    d.forEach((w, i) => {
+      const cx = padL + slot * (i + 0.5), x = cx - bw / 2, h = w.jumlah / sk.max * (base - top);
+      const judul = `<title>${E(w.mulai === w.akhir ? tglPendek(w.mulai) : tglPendek(w.mulai) + ' s.d. ' + tglPendek(w.akhir))}: ${w.jumlah}</title>`;
+      s += w.jumlah === 0
+        ? `<rect x="${x}" y="${base - 2}" width="${bw}" height="2" rx="1" fill="#D5DCE7">${judul}</rect>`
+        : `<rect x="${x}" y="${base - h}" width="${bw}" height="${h}" rx="${Math.min(3, bw / 3)}" fill="${warna}">${judul}</rect>` + (slot >= 12 ? `<text x="${cx}" y="${base - h - 4}" text-anchor="middle" font-size="10" font-weight="800" fill="#10243D">${w.jumlah}</text>` : '');
+      if (i % tiapLabel === 0) s += `<text x="${cx}" y="${base + 13}" text-anchor="middle" font-size="9" font-weight="700" fill="#5C6675">${E(w.label)}</text>`;
+    });
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${s}</svg>`;
+  }
+  function gambarGrafikTren() {
+    Object.keys(grafikTren).forEach((id) => {
+      const el = $(id); if (!el || !el.clientWidth) return;
+      el.innerHTML = svgBatang(grafikTren[id].bucket, grafikTren[id].warna, el.clientWidth, el.clientHeight);
+    });
+  }
+  let rafResize = 0;
+  window.addEventListener('resize', () => { cancelAnimationFrame(rafResize); rafResize = requestAnimationFrame(gambarGrafikTren); });
   function grafikBatangHorizontal(items, w) {
     w = w || 520; const rh = 30, gap = 12, laby = 130, mx = Math.max(...items.map((x) => x.jumlah)) || 1;
     const potong = (s) => s.length > 17 ? s.slice(0, 16) + '\u2026' : s;
@@ -113,7 +128,7 @@
 <div class="kpi" style="--acc:#157A82;--acc-bg:#E4F3F4;height:96px"><div class="lbl">Rata-rata Kehadiran</div><div class="val">${r.kehadiran == null ? '-' : r.kehadiran.toFixed(1)}<small>${r.kehadiran == null ? '' : '%'}</small></div><div class="ico">${svg(IC.doc)}</div></div>
 <div class="kpi" style="--acc:#1D3A5C;--acc-bg:#E6ECF4;height:96px"><div class="lbl">Laporan Tersimpan</div><div class="val">${r.laporanTersimpan}<small>laporan</small></div><div class="ico">${svg(IC.doc)}</div></div>`;
     $('rowPersonel1').innerHTML = `
-<div class="dcard c6 r250"><div class="h"><div><h3>Tren Ketidakhadiran (${r.granularitas})</h3><div class="sub">Per ${r.granularitas === 'mingguan' ? 'minggu' : 'hari'} - rentang terpilih</div></div></div>${grafikBatangVertikal(r.tren, '#7FB9BE')}</div>
+<div class="dcard c6 r250"><div class="h"><div><h3>Tren Ketidakhadiran per ${UNIT[r.granularitas]}</h3><div class="sub">Rentang terpilih</div></div></div>${wadahGrafikTren('grafikTrenPersonel', r.tren, '#7FB9BE')}</div>
 <div class="dcard c6 r250"><div class="h"><div><h3>Alasan Ketidakhadiran</h3><div class="sub">Komposisi rentang terpilih</div></div></div>${grafikDonat(r.daftar.flatMap((x) => x.tanggal)) || '<div class="empty">Belum ada data<br>pada rentang ini.</div>'}</div>`;
     $('rowPersonel2').innerHTML = `<div class="dcard c12 rauto"><div class="h"><div><h3>Ketidakhadiran per Personel</h3><div class="sub">5 teratas - klik baris untuk lihat tanggal</div></div><div class="sp"></div>${r.daftar.length > 5 ? `<button class="lihatsemua" onclick="Rekap.bukaLaci('personel')">Lihat Semua (${r.daftar.length}) &rsaquo;</button>` : ''}</div>${tabelPersonel(r.daftar, false)}</div>`;
   }
@@ -153,28 +168,20 @@
     const trs = rows.map((x, i) => `<tr><td>${i + 1}</td><td style="white-space:nowrap"><b>${E(tglPendek(x.tanggal))}</b></td><td class="nm"><a href="kejadian.html#ubah=${encodeURIComponent(x.id)}" style="color:inherit;text-decoration:none">${E(x.judul)}</a></td><td>${E(x.shift || '-')}</td><td>${E(x.lokasiKejadian || '-')}</td></tr>`).join('');
     return `<table class="rtbl"><thead><tr><th>#</th><th>Tanggal</th><th>Ringkasan</th><th>Shift</th><th>Pos Jaga</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
-  function grafikSebaranLokasi(daftar) {
-    const cnt = {};
-    daftar.forEach((x) => { const l = x.lokasi && x.lokasi !== '-' ? x.lokasi : 'Tidak dicatat'; cnt[l] = (cnt[l] || 0) + 1; });
-    const arr = Object.entries(cnt).map(([label, jumlah]) => ({ label, jumlah })).sort((a, b) => b.jumlah - a.jumlah).slice(0, 5);
-    if (!arr.length) return '<div class="empty">Belum ada data lokasi<br>pada rentang ini.</div>';
-    const palet = ['#1D3A5C', '#157A82', '#9A5F12', '#A82F24', '#5C6675'];
-    return grafikBatangHorizontal(arr.map((x, i) => ({ label: x.label, jumlah: x.jumlah, warna: palet[i % palet.length] })));
-  }
   function renderKejadian() {
     const r = RK;
     const cntLokasi = {}; r.daftar.forEach((x) => { const l = x.lokasiKejadian && x.lokasiKejadian !== '-' ? x.lokasiKejadian : null; if (l) cntLokasi[l] = (cntLokasi[l] || 0) + 1; });
     const lokasiTop = Object.entries(cntLokasi).sort((a, b) => b[1] - a[1])[0];
     const rataPerUnit = r.tren && r.tren.length ? (r.jumlah / r.tren.length).toFixed(1) : '-';
-    const unitLabel = r.granularitas === 'bulanan' ? 'Bulan' : r.granularitas === 'mingguan' ? 'Minggu' : 'Hari';
+    const unitLabel = UNIT[r.granularitas];
     $('kpiKejadian').style.gridTemplateColumns = 'repeat(3, 1fr)';
     $('kpiKejadian').innerHTML = `
 <div class="kpi" style="--acc:#C93B2E;--acc-bg:#FBE9E7;height:96px"><div class="lbl">Jumlah Kejadian</div><div class="val">${r.jumlah}<small>kasus</small></div><div class="ico">${svg(IC.doc)}</div></div>
 <div class="kpi" style="--acc:#D98A22;--acc-bg:#FCF1DF;height:96px"><div class="lbl">Rata-rata per ${unitLabel}</div><div class="val">${rataPerUnit}<small>kasus</small></div><div class="ico">${svg(IC.doc)}</div></div>
 <div class="kpi" style="--acc:#1D3A5C;--acc-bg:#E6ECF4;height:96px"><div class="lbl">Pos Jaga Terbanyak</div><div class="val" style="font-size:16px">${lokasiTop ? E(lokasiTop[0]) : '-'}</div><div class="ico">${svg(IC.doc)}</div></div>`;
     $('rowKejadian1').innerHTML = `
-<div class="dcard c12 rauto"><div class="h"><div><h3>Tren Kejadian per ${r.granularitas === 'bulanan' ? 'Bulan' : r.granularitas === 'mingguan' ? 'Minggu' : 'Hari'}</h3><div class="sub">Rentang terpilih</div></div></div>${grafikBatangVertikal(r.tren, '#E58A80')}</div>`;
-    $('rowKejadian2').innerHTML = `<div class="dcard c12 rauto"><div class="h"><div><h3>Daftar Kejadian</h3><div class="sub">5 terbaru \u2022 klik untuk membuka laporan</div></div><div class="sp"></div>${r.daftar.length > 5 ? `<button class="lihatsemua" onclick="Rekap.bukaLaci('kejadian')">Lihat Semua (${r.daftar.length}) \u203a</button>` : ''}</div>${tabelKejadian(r.daftar, false)}</div>`;
+<div class="dcard c6 rauto"><div class="h"><div><h3>Tren Kejadian per ${unitLabel}</h3><div class="sub">Rentang terpilih</div></div></div>${wadahGrafikTren('grafikTrenKejadian', r.tren, '#E58A80')}</div>
+<div class="dcard c6 rauto"><div class="h"><div><h3>Daftar Kejadian</h3><div class="sub">5 terbaru \u2022 klik untuk membuka laporan</div></div><div class="sp"></div>${r.daftar.length > 5 ? `<button class="lihatsemua" onclick="Rekap.bukaLaci('kejadian')">Lihat Semua (${r.daftar.length}) \u203a</button>` : ''}</div>${tabelKejadian(r.daftar, false)}</div>`;
   }
 
   /* =========================================================
@@ -238,7 +245,7 @@
     RK = D.statKejadianRentang(kejadian, mulai, akhir);
     RQ = D.kepatuhanRentang(personel, fasilitas, logbook, mulai, akhir, HARI_INI);
   }
-  function renderSemua() { renderPersonel(); renderFasilitas(); renderKejadian(); renderKepatuhan(); }
+  function renderSemua() { renderPersonel(); renderFasilitas(); renderKejadian(); renderKepatuhan(); gambarGrafikTren(); }
 
   function bangunTata() {
     $('isiRekap').innerHTML = `
@@ -254,7 +261,6 @@
 <div class="blokhdr"><div class="ic" style="background:#1D3A5C">${svg(IC.doc)}</div><h2>Laporan Kejadian</h2><span>rentang terpilih (tidak dibedakan regu)</span><div class="blokline"></div></div>
 <div class="kpis" id="kpiKejadian"></div>
 <div class="grid12" id="rowKejadian1"></div>
-<div class="grid12" id="rowKejadian2"></div>
 
 <div class="blokhdr"><div class="ic" style="background:#5C6675">&#9989;</div><h2>Kepatuhan Pelaporan Shift</h2><span>seluruh 3 jenis laporan, rentang terpilih</span><div class="blokline"></div></div>
 <div class="kpis" id="kpiKepatuhan"></div>

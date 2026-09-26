@@ -133,14 +133,18 @@
       const t = pecah(r && r.tanggal); if (!t || t.y !== y || t.m !== m) return;
       laporan++;
       (r.posFasilitas || []).forEach((p) => (p.items || []).forEach((it) => {
-        let jenis = null;
-        if (it.bentuk === 'A' && it.kondisi === 'Rusak') jenis = 'Rusak';
-        else if (it.bentuk === 'A' && it.status === 'Tidak Digunakan') jenis = 'Tidak Digunakan';
-        else if (it.bentuk === 'B' && (it.rusak || 0) > 0) jenis = 'Rusak';
-        if (!jenis) return;
+        // Rusak & Tidak Digunakan dihitung terpisah, sama seperti ringkasLaporan di fasilitas.html.
+        const jenisList = [];
+        if (it.bentuk === 'A') {
+          if (it.kondisi === 'Rusak') jenisList.push('Rusak');
+          if (it.status === 'Tidak Digunakan') jenisList.push('Tidak Digunakan');
+        } else if (it.bentuk === 'B' && (it.rusak || 0) > 0) {
+          jenisList.push('Rusak');
+        }
+        if (!jenisList.length) return;
         const key = (p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
         if (!e) { e = { item: rapikan(it.name), pos: rapikan(p.name), jumlah: 0, jenis: {} }; bermasalah.set(key, e); }
-        e.jumlah++; e.jenis[jenis] = (e.jenis[jenis] || 0) + 1;
+        e.jumlah += jenisList.length; jenisList.forEach((jenis) => { e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; });
       }));
     });
     const dominan = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0][0];
@@ -187,37 +191,36 @@
      ===================================================== */
   function dalamRentang(tgl, startISO, endISO) { return tgl && tgl >= startISO && tgl <= endISO; }
 
-  // Granularitas tren otomatis: harian jika rentang <= 60 hari, mingguan jika lebih.
+  // Granularitas tren otomatis: harian (<= 31 hari), mingguan (<= 92 hari / ~3 bulan), bulanan (lebih dari itu).
   function bucketRentang(startISO, endISO) {
     const s = pecah(startISO), e = pecah(endISO);
     const sd = new Date(s.y, s.m, s.d), ed = new Date(e.y, e.m, e.d);
     const totalHari = Math.round((ed - sd) / 86400000) + 1;
-    let granularitas = 'harian', buckets = [];
-    if (totalHari >= 365) {
-      granularitas = 'bulanan';
-      let cur = new Date(sd.getFullYear(), sd.getMonth(), 1), idx = 1;
-      while (cur <= ed) {
-        const mulai = new Date(cur), akhir = new Date(cur.getFullYear(), cur.getMonth() + 1, 0);
-        if (akhir > ed) akhir.setTime(ed.getTime());
-        buckets.push({ mulai: fmtISO(mulai.getFullYear(), mulai.getMonth(), mulai.getDate()), akhir: fmtISO(akhir.getFullYear(), akhir.getMonth(), akhir.getDate()), label: 'Bl' + idx });
-        cur.setMonth(cur.getMonth() + 1); idx++;
-      }
-    } else if (totalHari > 30) {
-      granularitas = 'mingguan';
+    const iso = (d) => fmtISO(d.getFullYear(), d.getMonth(), d.getDate());
+    const granularitas = totalHari <= 31 ? 'harian' : totalHari <= 92 ? 'mingguan' : 'bulanan';
+    const buckets = [];
+    if (granularitas === 'harian') {
+      for (let i = 0; i < totalHari; i++) { const d = new Date(sd); d.setDate(d.getDate() + i); buckets.push({ mulai: iso(d), akhir: iso(d), label: String(d.getDate()) }); }
+    } else if (granularitas === 'mingguan') {
       let cur = new Date(sd), idx = 1;
       while (cur <= ed) {
         const mulai = new Date(cur), akhir = new Date(cur); akhir.setDate(akhir.getDate() + 6); if (akhir > ed) akhir.setTime(ed.getTime());
-        buckets.push({ mulai: fmtISO(mulai.getFullYear(), mulai.getMonth(), mulai.getDate()), akhir: fmtISO(akhir.getFullYear(), akhir.getMonth(), akhir.getDate()), label: 'Mg' + idx });
+        buckets.push({ mulai: iso(mulai), akhir: iso(akhir), label: 'Mg' + idx });
         cur.setDate(cur.getDate() + 7); idx++;
       }
     } else {
-      granularitas = 'harian';
-      for (let i = 0; i < totalHari; i++) { const d = new Date(sd); d.setDate(d.getDate() + i); buckets.push({ mulai: fmtISO(d.getFullYear(), d.getMonth(), d.getDate()), akhir: fmtISO(d.getFullYear(), d.getMonth(), d.getDate()), label: String(d.getDate()) }); }
+      const lintasTahun = sd.getFullYear() !== ed.getFullYear();
+      let cur = new Date(sd.getFullYear(), sd.getMonth(), 1);
+      while (cur <= ed) {
+        const mulai = cur < sd ? new Date(sd) : new Date(cur), akhir = new Date(cur.getFullYear(), cur.getMonth() + 1, 0); if (akhir > ed) akhir.setTime(ed.getTime());
+        buckets.push({ mulai: iso(mulai), akhir: iso(akhir), label: BULAN_ID[cur.getMonth()].slice(0, 3) + (lintasTahun ? " '" + String(cur.getFullYear()).slice(2) : '') });
+        cur.setMonth(cur.getMonth() + 1);
+      }
     }
     return { granularitas, totalHari, buckets };
   }
   function isiBucket(buckets, tanggalList) {
-    return buckets.map((b) => ({ label: b.label, jumlah: tanggalList.filter((t) => t >= b.mulai && t <= b.akhir).length }));
+    return buckets.map((b) => ({ label: b.label, mulai: b.mulai, akhir: b.akhir, jumlah: tanggalList.filter((t) => t >= b.mulai && t <= b.akhir).length }));
   }
 
   // Ketidakhadiran personel, per orang per hari, GABUNGAN seluruh rentang (bukan per bulan).
@@ -267,15 +270,22 @@
       laporanTersimpan++; shiftAda.add(tgl + '|' + shiftKey(r.shift));
       (r.posFasilitas || []).forEach((p) => (p.items || []).forEach((it) => {
         if (it.bentuk === 'C') { dokTotal++; if (it.lengkap) dokLengkap++; return; }
-        let jenis = null;
-        if (it.bentuk === 'A' && it.kondisi === 'Rusak') jenis = 'Rusak';
-        else if (it.bentuk === 'A' && it.status === 'Tidak Digunakan') jenis = 'Tidak Digunakan';
-        else if (it.bentuk === 'B' && (it.rusak || 0) > 0) jenis = 'Rusak';
-        if (!jenis) return;
-        totalMasalah++; if (jenis === 'Tidak Digunakan') tidakDigunakan++;
+        // Bentuk A: Rusak & Tidak Digunakan dihitung TERPISAH (satu item bisa kena keduanya
+        // sekaligus) — samakan dengan lencana kartu Laporan Tersimpan (ringkasLaporan di
+        // fasilitas.html) supaya Total Masalah di rekap cocok dengan yang tersimpan.
+        const jenisList = [];
+        if (it.bentuk === 'A') {
+          if (it.kondisi === 'Rusak') jenisList.push('Rusak');
+          if (it.status === 'Tidak Digunakan') jenisList.push('Tidak Digunakan');
+        } else if (it.bentuk === 'B' && (it.rusak || 0) > 0) {
+          jenisList.push('Rusak');
+        }
+        if (!jenisList.length) return;
+        totalMasalah += jenisList.length;
         const key = (p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
         if (!e) { e = { item: rapikan(it.name), pos: rapikan(p.name), jumlah: 0, jenis: {}, tanggal: [] }; bermasalah.set(key, e); }
-        e.jumlah++; e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; e.tanggal.push(tgl);
+        e.jumlah += jenisList.length; e.tanggal.push(tgl);
+        jenisList.forEach((jenis) => { e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; if (jenis === 'Tidak Digunakan') tidakDigunakan++; });
       }));
     });
     const dominan = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0][0];
@@ -287,7 +297,7 @@
   function statKejadianRentang(list, startISO, endISO) {
     const daftar = (list || []).filter((r) => dalamRentang(r && r.tanggal, startISO, endISO))
       .sort((a, b) => String(b.tanggal).localeCompare(String(a.tanggal)) || String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
-      .map((r) => ({ id: r.id, tanggal: r.tanggal, judul: rapikan(r.caseInfo) || '(tanpa informasi kasus)', shift: rapikan(r.shift) || '-', lokasiKejadian: rapikan(r.lokasiKejadian) || rapikan(r.tempat) || '-', fileNumber: rapikan(r.fileNumber) }));
+      .map((r) => ({ id: r.id, tanggal: r.tanggal, judul: rapikan(r.caseInfo) || '(tanpa informasi kasus)', shift: rapikan(r.shift) || '-', lokasiKejadian: rapikan(r.lokasiKejadian) || '-', fileNumber: rapikan(r.fileNumber) }));
     const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, daftar.map((x) => x.tanggal));
     return { jumlah: daftar.length, daftar, tren, granularitas: bk.granularitas };
   }

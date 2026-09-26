@@ -43,8 +43,8 @@
   }
   function tabelKejadian(daftar) {
     if (!daftar.length) return '<div style="font-size:9pt;color:#8A94A6;font-style:italic">Tidak ada laporan kejadian pada rentang ini.</div>';
-    const rows = daftar.map((x, i) => `<tr><td style="${TD};text-align:center;color:#8A94A6">${i + 1}</td><td style="${TD};white-space:nowrap"><b>${esc(tglPendek(x.tanggal))}</b></td><td style="${TD};font-weight:700;color:#10243D">${esc(x.judul)}</td><td style="${TD}">${esc(x.lokasi)}</td><td style="${TD}">${esc(x.fileNumber || '-')}</td></tr>`).join('');
-    return `<table style="width:100%;border-collapse:collapse;font-size:8pt"><tr><th style="${TH}">#</th><th style="${TH}">Tanggal</th><th style="${TH}">Ringkasan</th><th style="${TH}">Lokasi</th><th style="${TH}">No. Berkas</th></tr>${rows}</table>`;
+    const rows = daftar.map((x, i) => `<tr><td style="${TD};text-align:center;color:#8A94A6">${i + 1}</td><td style="${TD};white-space:nowrap"><b>${esc(tglPendek(x.tanggal))}</b></td><td style="${TD};font-weight:700;color:#10243D">${esc(x.judul)}</td><td style="${TD}">${esc(x.lokasiKejadian || '-')}</td><td style="${TD}">${esc(x.fileNumber || '-')}</td></tr>`).join('');
+    return `<table style="width:100%;border-collapse:collapse;font-size:8pt"><tr><th style="${TH}">#</th><th style="${TH}">Tanggal</th><th style="${TH}">Ringkasan</th><th style="${TH}">Pos Jaga</th><th style="${TH}">No. Berkas</th></tr>${rows}</table>`;
   }
   function tabelKepatuhan(daftar) {
     if (!daftar.length) return '<div style="font-size:9pt;color:#8A94A6;font-style:italic">Seluruh shift pada rentang ini sudah lengkap dilaporkan.</div>';
