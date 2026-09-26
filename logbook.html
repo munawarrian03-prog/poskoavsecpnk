@@ -112,8 +112,8 @@
 <div class="stool">
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="selectlike"><small>Regu</small><select id="fRegu" onchange="renderSavedReports()"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
-<div class="selectlike"><small>Shift</small><select id="fShift" onchange="renderSavedReports()"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
 <div style="flex:1"></div>
 </div>
 <div class="sumline" id="sumLine"></div>
@@ -146,7 +146,7 @@
 <div class="modal-overlay" id="viewModal">
 <div class="modal-container">
 <div class="modal-header"><div class="modal-title" id="modalTitle">LIHAT CATATAN</div><button class="modal-close" onclick="closeViewModal()">✕</button></div>
-<div class="modal-body"><div class="output-area" id="modalViewContent" style="height:100%;max-height:60vh;"></div></div>
+<div class="modal-body"><div class="output-area" id="modalViewContent" style="min-height:200px;max-height:60vh;"></div></div>
 <div class="modal-footer">
 <button type="button" class="btn-success btn-wa" id="modalWaBtn">Kirim ke WA</button>
 <button type="button" class="btn-info" id="modalCopyBtn">Salin Teks</button>
