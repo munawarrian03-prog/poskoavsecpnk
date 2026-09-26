@@ -258,6 +258,19 @@ function refreshPenyusunDanKunci() {
 }
 
 /* ---------- Ringkasan Otomatis (Fasilitas sinkron, Kejadian async) ---------- */
+function ringkasPersonel(tanggal, shift, regu) {
+  const rec = AVS.cariLaporanPersonel(tanggal, shift, regu);
+  if (!rec) return null;
+  const tidakHadir = [];
+  (rec.kategoriKekuatan || []).forEach((k) => {
+    (k.absen || []).forEach((p) => {
+      if (rapikan(p && p.nama) === '') return;
+      const alasan = p.alasan === 'Lainnya' ? (rapikan(p.ket) || 'Lainnya') : (p.alasan || '-');
+      tidakHadir.push({ nama: rapikan(p.nama), alasan, kategori: rapikan(k.nama) });
+    });
+  });
+  return { tidakHadir };
+}
 function ringkasFasilitas(tanggal, shift, regu) {
   const rec = lsGet('savedFasilitas', []).find((r) => r.tanggal === tanggal && r.shift === shift && r.regu === regu);
   if (!rec) return null;
@@ -272,9 +285,14 @@ async function renderRingkasanOtomatis() {
   const t = $('tanggal').value, s = $('shift').value, r = $('regu').value;
   const el = $('ringkasanOtomatis');
   if (!t || !s || !r) { el.innerHTML = '<div style="font-size:12px;color:#8A94A6;font-weight:600">Lengkapi Tanggal, Shift, dan Regu untuk melihat ringkasan.</div>'; return; }
+  const pers = ringkasPersonel(t, s, r);
   const fas = ringkasFasilitas(t, s, r);
   const kejadian = await AVS.cariKejadianTanggal(t);
   let html = '';
+  html += `<div class="lb-auto"><div class="t"><i></i>Dari Laporan Personel ${pers ? `(${pers.tidakHadir.length} tidak hadir)` : '(belum tersedia)'}</div>`;
+  if (!pers) html += '<div style="font-size:11.5px;color:#A82F24;font-weight:600">Laporan Personel untuk shift ini belum diisi.</div>';
+  else html += pers.tidakHadir.length ? pers.tidakHadir.map((p) => `<div class="lb-auto-item"><span>${esc(p.nama)}${p.kategori ? ` <small style="color:#8A94A6;font-weight:600">(${esc(p.kategori)})</small>` : ''}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(p.alasan)}</span></div>`).join('') : '<div style="font-size:11.5px;color:#8A94A6">Semua personel hadir.</div>';
+  html += '</div>';
   html += `<div class="lb-auto"><div class="t"><i></i>Dari Laporan Kejadian (${kejadian.length}) &mdash; tanggal ${esc(formatTanggalIndo(t))}</div>`;
   html += kejadian.length ? kejadian.map((k) => `<div class="lb-auto-item"><span>${esc(k.caseInfo || '(tanpa judul)')}</span>${k.fileNumber ? `<span class="lb-badge" style="background:#E6ECF4;color:#1D3A5C">${esc(k.fileNumber)}</span>` : ''}</div>`).join('') : '<div style="font-size:11.5px;color:#8A94A6">Tidak ada kejadian tercatat pada tanggal ini.</div>';
   html += '</div>';
