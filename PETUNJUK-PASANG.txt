@@ -1,0 +1,74 @@
+SISTEM PELAPORAN AVSEC SUPADIO — versi 3
+=========================================
+
+HALAMAN
+  index.html              Beranda: rekap bulanan (grafik ketidakhadiran & kejadian)
+  laporan-personel.html   Laporan Personel: Buat Laporan + Laporan Tersimpan
+  kejadian.html           Laporan Kejadian: Buat Laporan + Laporan Tersimpan
+
+BERKAS YANG BOLEH ANDA UBAH
+  personel.js       daftar nama personel (satu nama per baris)
+  kategori.js       kategori shift bawaan dan daftar pos penempatan
+  kejadian-data.js  jabatan, dasar hukum umum, penutup, dll. untuk Laporan Kejadian
+                    termasuk awalan nomor (NOMOR_AWALAN) dan angka nol di depan (NOMOR_PAD)
+
+CARA PASANG
+  1. Upload SELURUH isi folder ini ke hosting (alamat harus https), dengan struktur yang sama:
+       index.html, laporan-personel.html, kejadian.html
+       style.css, layout.css, beranda.css, laporan-personel.css, kejadian.css
+       shell.js, data.js, beranda.js, rekap-pdf.js, kejadian-pdf.js, kejadian-nomor.js, kejadian-wa.js
+       personel.js, kategori.js, kejadian-data.js
+       sw.js, manifest.json
+       fonts/  Logo/  lib/
+  2. Buka sekali dengan internet agar aplikasi tersimpan untuk pemakaian offline.
+  3. Setiap kali ada berkas yang diubah, naikkan angka versi di sw.js
+     (baris: const CACHE_NAME = 'kekuatan-app-v12';) supaya browser memakai versi baru.
+
+CATATAN
+  - Data laporan tersimpan di browser komputer yang dipakai. Gunakan Ekspor Backup secara berkala.
+  - Beranda membaca data dari kedua jenis laporan yang tersimpan di browser yang sama.
+  - Aplikasi hanya dapat dibuka dari komputer/laptop (lebar jendela minimal 1024 px).
+
+NOMOR LAPORAN KEJADIAN OTOMATIS
+  Format  : OOSC/LK/<nomor urut>/<bulan romawi>/<tahun 2 angka>   contoh: OOSC/LK/1/IX/26
+  Aturan  : nomor urut mulai dari 1 setiap bulan (mengikuti tanggal laporan); nomor tidak dipakai ulang.
+  Penting : urutan dicatat per komputer/browser. Bila laporan kejadian dibuat di lebih dari satu komputer,
+            gunakan tombol ⚙ di samping kolom nomor untuk menyamakan "nomor terakhir yang sudah dipakai".
+
+PEMBARUAN TATA LETAK & JEJAK WAKTU (v4)
+  - Bilah atas tipis di semua halaman, area isian lebih luas, laci pratinjau, dan mode fokus (tombol ⛶ / Esc).
+  - Layar kunci di HP/tablet hanya menampilkan logo AVSEC.
+  - Kirim WA (Laporan Kejadian) langsung membuka WhatsApp Web dan mengunduh PDF; lampirkan lewat ikon klip → Dokumen.
+  - Setiap laporan tersimpan mencatat waktu dibuat, waktu pembaruan terakhir, dan riwayat (tidak mencatat siapa pengubahnya).
+    Laporan lama sebelum fitur ini tidak punya riwayat perubahan.
+
+PRATINJAU & KIRIM WA LAPORAN AWAL (Laporan Kejadian)
+  - Tombol "Pratinjau WA" membuka laci berisi teks laporan (nomor, tanggal, pelapor, kasus, kronologis, tindak lanjut, status).
+    Jenis laporan (awal / lanjutan / akhir) mengubah baris STATUS. Data pihak terkait dan dasar hukum TIDAK ikut ke teks WA.
+  - "Kirim ke WA" membuka WhatsApp Web dengan teks terisi. Bila ada foto lampiran, dibuat SATU kolase (maks. 9 foto) yang
+    disalin ke clipboard (tempel dengan Ctrl+V di kolom pesan WhatsApp) dan juga diunduh sebagai berkas cadangan.
+  - Tidak perlu menyimpan laporan lebih dulu. Tombol "Kirim PDF ke WA" (laporan lengkap) tetap perlu disimpan dulu.
+
+PEMBARUAN LANJUTAN (v5 / cache v12)
+  - Tombol "Kirim PDF ke WA" (bilah bawah) dan "Kirim WA" (kartu Laporan Tersimpan) di Laporan Kejadian
+    DIHAPUS. Yang tetap ada: tombol "Kirim ke WA" di dalam laci Pratinjau WA (laporan awal + kolase foto).
+  - Pita "Ada pembaruan aplikasi" muncul otomatis di bagian atas layar saat versi baru terdeteksi
+    (dicek tiap 5 menit & saat tab aktif kembali, hanya bila online). Klik "Muat Ulang" untuk memakai
+    versi terbaru; bila ada isian belum disimpan, akan ditanya dulu.
+  - Beranda: kartu "Laporan Personel Tersimpan" kini dapat DIKLIK untuk membuka daftar shift (tanggal +
+    Pagi/Malam) yang belum ada laporannya bulan itu (shift yang baru berakhir diberi jeda 12 jam sebelum
+    dianggap kosong). Tersedia tombol "Salin Pengingat WA" untuk grup, dan daftar itu ikut ditambahkan
+    sebagai bagian "Shift Belum Dilaporkan" di PDF Rekap Bulanan.
+  - Setiap laporan tersimpan kini punya laci "Riwayat Perubahan": waktu dibuat/diperbarui LENGKAP dengan
+    rincian bagian yang berubah (format lama → baru, atau Ditambah/Diubah/Dihapus untuk daftar seperti
+    tindak lanjut, personel tidak hadir, dan penempatan). Menyimpan maks. 30 entri per laporan (entri
+    "Dibuat" tidak pernah dibuang). TIDAK mencatat siapa yang mengubah, dan TIDAK bisa mengembalikan versi
+    lama — hanya mencatat riwayatnya.
+  - Kolase foto WhatsApp (Laporan Kejadian) kini berukuran tetap rasio 4:5 (1440×1800 px, cocok pratinjau
+    WhatsApp), foto ditampilkan UTUH (tak dipotong) dengan latar kabur mengisi sisi yang kosong, dan
+    keterangan foto berada di strip tersendiri di bawah tiap foto (tak menimpa gambar).
+  - Beranda: sakelar baru "Hitung: per kejadian | per orang per hari" di samping filter Regu. Mode "per
+    orang per hari" menghitung satu orang yang tidak hadir di lebih dari satu shift pada HARI YANG SAMA
+    sebagai SATU kali (bukan dua); alasan & regu yang ditampilkan diambil dari shift paling awal hari itu
+    (Pagi sebelum Malam). Rata-rata Kehadiran (%) TIDAK berpengaruh oleh mode ini. Pilihan mode ikut
+    dipakai di PDF Rekap Bulanan dan bertahan selama sesi browser (sessionStorage).

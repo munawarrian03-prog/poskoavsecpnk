@@ -1,0 +1,32 @@
+{
+  "id": "./index.html",
+  "name": "Sistem Pelaporan AVSEC Supadio",
+  "short_name": "Avsec Supadio",
+  "description": "Rekap, laporan personel, dan laporan kejadian Aviation Security Bandara Supadio",
+  "lang": "id",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10243D",
+  "icons": [
+    {
+      "src": "Logo/AVS-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "Logo/AVS-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "Logo/AVS-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

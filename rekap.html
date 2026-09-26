@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lihat Semua Rekap - Sistem Pelaporan AVSEC Bandara Supadio</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10243D">
+<link rel="icon" type="image/png" href="Logo/AVS-192.png">
+<link rel="apple-touch-icon" href="Logo/AVS-192.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="layout.css">
+<link rel="stylesheet" href="beranda.css">
+<link rel="stylesheet" href="kejadian.css">
+<style>
+.rk-toolbar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 10px 16px; box-shadow: 0 2px 6px rgba(16,36,61,.07); flex-shrink: 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.rk-toolbar .fld2 { display: flex; flex-direction: column; gap: 2px; }
+.rk-toolbar .fld2 label { font-size: 9px; font-weight: 800; color: #8A94A6; letter-spacing: .4px; text-transform: uppercase; }
+.rk-toolbar .fld2 input, .rk-toolbar .fld2 select { height: 34px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 9px; font: 700 12px 'Inter'; color: var(--ink); }
+.rk-sp { flex: 1; }
+.rk-btn { height: 34px; padding: 0 14px; border-radius: 8px; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.rk-btn.teal { background: var(--secondary); color: #fff; }
+.rk-btn.ghost { background: #EEF1F6; color: #475569; }
+.blokhdr { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0; }
+.blokhdr .ic { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; flex: none; }
+.blokhdr h2 { font-size: 14px; font-weight: 800; color: var(--ink); }
+.blokhdr span { font-size: 11px; color: #8A94A6; font-weight: 600; }
+.blokline { flex: 1; height: 1px; background: #E3E8F0; }
+.lihatsemua { background: none; border: none; color: var(--secondary-hover); font-weight: 800; font-size: 11px; cursor: pointer; padding: 4px 0; }
+table.rtbl { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+table.rtbl th { text-align: left; font-size: 9.5px; font-weight: 800; color: #8A94A6; text-transform: uppercase; padding: 0 6px 6px; border-bottom: 1px solid #E4E9F0; }
+table.rtbl td { padding: 7px 6px; border-bottom: 1px solid #EEF1F6; font-weight: 600; color: var(--text-main); vertical-align: top; }
+table.rtbl tr.klik { cursor: pointer; }
+table.rtbl tr.klik:hover td { background: #FAFBFD; }
+.mekar { background: #FAFBFD; }
+.mekar td { padding: 8px 12px; font-size: 10.5px; color: #5C6675; }
+.mekar .tgi { display: inline-flex; align-items: center; gap: 5px; background: #fff; border: 1px solid #E3E8F0; border-radius: 7px; padding: 3px 8px; margin: 2px 4px 2px 0; }
+.mekar .tgi i { width: 6px; height: 6px; border-radius: 50%; }
+.drawer .dsub { padding: 8px 18px; font-size: 10.5px; font-weight: 700; color: #5C6675; background: #fff; border-bottom: 1px solid #E3E8F0; }
+.drawer .dbody { padding: 14px 18px; overflow-y: auto; flex: 1; }
+</style>
+</head>
+<body class="locked">
+
+<div id="lockScreen"><img src="Logo/AVS.png" alt="Logo AVSEC PNK"></div>
+
+<div class="main-wrapper">
+<div id="topBar"></div>
+
+<div class="d-wrap" id="dash">
+
+<div class="rk-toolbar">
+<div class="fld2"><label>Dari Tanggal</label><input type="date" id="fMulai"></div>
+<div class="fld2"><label>Sampai Tanggal</label><input type="date" id="fAkhir"></div>
+<div class="fld2"><label>Regu</label><select id="fRegu"><option value="all">Semua Regu</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
+<button type="button" class="rk-btn ghost" id="btnTerapkan" onclick="Rekap.terapkanFilter()">Terapkan</button>
+<div class="rk-sp"></div>
+<button type="button" class="rk-btn ghost" onclick="Rekap.bukaBackup()">⇅ Cadangkan / Pulihkan</button>
+<button type="button" class="rk-btn teal" id="btnPdf" onclick="Rekap.unduhPDF()">⬇ Unduh Rekap (PDF)</button>
+</div>
+
+<div id="isiRekap"><div class="empty" style="padding:60px 0">Memuat…</div></div>
+
+</div>
+</div>
+
+<!-- LACI: daftar lengkap (dipakai ulang utk keempat blok) -->
+<aside class="drawer" id="laciSemua">
+<div class="dh"><span id="laciJudul">DAFTAR LENGKAP</span><button type="button" onclick="Rekap.tutupLaci()">✕</button></div>
+<div class="dsub" id="laciSub"></div>
+<div class="dbody" id="laciIsi"></div>
+</aside>
+
+<!-- MODAL: CADANGKAN / PULIHKAN -->
+<div class="modal-overlay" id="backupOverlay">
+<div class="modal-container" style="max-width:480px">
+<div class="modal-header"><span class="modal-title">CADANGKAN / PULIHKAN DATA</span><button type="button" class="modal-close" onclick="Rekap.tutupBackup()">✕</button></div>
+<div class="modal-body">
+<div class="privacy-note" style="margin-bottom:14px">Mencakup SELURUH jenis laporan sekaligus: Personel, Fasilitas, Log Book, dan Kejadian — bukan satu per satu.</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<button type="button" class="btn-info" style="width:100%" onclick="Rekap.ekspor()">⬇ Cadangkan Semua Laporan (Unduh .json)</button>
+<label style="width:100%;display:block;background:#E4F3F4;color:#0F5F65;font-weight:700;font-size:12.5px;text-align:center;padding:10px;border-radius:8px;cursor:pointer">⬆ Pulihkan dari Berkas Cadangan
+<input type="file" accept="application/json" id="fileImpor" style="display:none" onchange="Rekap.impor(this)">
+</label>
+</div>
+<div id="hasilImpor" style="margin-top:12px;font-size:11.5px;color:#5C6675;font-weight:600"></div>
+</div>
+<div class="modal-footer"><button type="button" class="btn-cancel" onclick="Rekap.tutupBackup()">Tutup</button></div>
+</div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- TEMPLATE PDF TERSEMBUNYI (elemen tetap sejak halaman dimuat -- lihat catatan bug PDF kosong di RENCANA-PENGEMBANGAN.md, sama seperti fasilitas.html/logbook.html) -->
+<div id="pdfTemplate" style="position:fixed;left:-9999px;top:0;width:210mm"><div id="pdfContent"></div></div>
+
+<script src="shell.js"></script>
+<script src="data.js"></script>
+<script src="rekap.js"></script>
+</body>
+</html>

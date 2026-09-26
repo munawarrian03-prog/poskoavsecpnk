@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Personel - Sistem Pelaporan AVSEC Bandara Supadio</title>
+
+<!-- PWA Manifest & Web App Meta -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10243D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Avsec Supadio">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="Logo/AVS-192.png">
+<link rel="icon" type="image/png" href="Logo/AVS-192.png">
+
+<!-- Google Fonts (html2pdf dimuat lokal dari lib/) -->
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="layout.css">
+<link rel="stylesheet" href="laporan-personel.css">
+</head>
+
+<body class="locked">
+
+<!-- LAYAR KUNCI: aplikasi hanya untuk komputer/laptop -->
+<div id="lockScreen"><img src="Logo/AVS.png" alt="Logo AVSEC PNK"></div>
+
+<datalist id="listPersonel"></datalist>
+
+<!-- MAIN CONTENT WRAPPER -->
+<div class="main-wrapper">
+<div id="topBar"></div>
+
+<!-- TOOLBAR: tab, tanggal/shift/regu, aksi -->
+<div class="toolbar" id="toolbar">
+<div class="seg">
+<button type="button" id="btnFormTab" class="on" onclick="switchPage('form')">Buat Laporan</button>
+<button type="button" id="btnSavedTab" onclick="switchPage('saved')">Laporan Tersimpan <span class="badge" id="cntSaved">0</span></button>
+</div>
+<span class="tdiv" id="hdrDiv"></span>
+<div class="fld" id="hdrTgl"><label for="tanggal">TANGGAL</label><input type="date" id="tanggal" required onchange="headerChanged()"></div>
+<div class="fld" id="hdrShift"><label for="shift">SHIFT</label>
+<select id="shift" required onchange="headerChanged()">
+<option value="" disabled selected hidden>-</option>
+<option value="Pagi (08:00 - 20:00) WIB">Pagi (08:00 - 20:00) WIB</option>
+<option value="Malam (20:00 - 08:00) WIB">Malam (20:00 - 08:00) WIB</option>
+</select></div>
+<div class="fld" id="hdrRegu"><label for="regu">REGU</label>
+<select id="regu" required onchange="headerChanged()">
+<option value="" disabled selected hidden>-</option>
+<option value="A (Alfa)">A (Alfa)</option>
+<option value="B (Bravo)">B (Bravo)</option>
+<option value="C (Charlie)">C (Charlie)</option>
+<option value="D (Delta)">D (Delta)</option>
+</select></div>
+<span class="tsp"></span>
+<button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Sembunyikan bilah atas agar area isian lebih luas">⛶ Mode fokus</button>
+<button type="button" class="tbtn" id="btnNew" onclick="newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
+</div>
+<div class="strip" id="editBadge" style="display:none"></div>
+
+<!-- FORM: kekuatan + penempatan -->
+<div class="form-area" id="pageForm">
+<div class="pn acc-red" style="flex:1.05">
+<div class="hd"><h3>Kekuatan Personel</h3><span class="ct" id="ktInfo"></span><span class="sp"></span><button type="button" class="mn" id="btnOpenAdd" onclick="bukaTambahKategori()">+ Kategori shift</button></div>
+<div class="addwrap" id="addWrap" style="display:none">
+<div id="addPanel">
+<div class="add-row"><select id="addSelect" onchange="ubahPilihanTambah()"></select></div>
+<div id="addNew">
+<input type="text" id="addNama" placeholder="Nama kategori, mis. IASS OJT" maxlength="60" onkeydown="if(event.key==='Enter')tambahKategori()">
+<input type="time" id="addMulai" title="Jam mulai">
+<input type="time" id="addSelesai" title="Jam selesai">
+</div>
+<div class="add-row">
+<button type="button" class="btn-add" onclick="tambahKategori()">Tambah</button>
+<button type="button" class="btn-cancel" onclick="tutupTambahKategori()">Batal</button>
+<span class="hint">Hanya berlaku untuk laporan ini.</span>
+</div>
+</div>
+</div>
+<div class="sc" id="kekuatanContainer"></div>
+</div>
+<div class="pn acc-teal" style="flex:1">
+<div class="hd"><h3>Penempatan Personel</h3><span class="ct" id="posInfo"></span></div>
+<div class="sc" id="penempatanContainer"></div>
+</div>
+</div>
+
+<div class="panel-box" id="pageSaved" style="display: none; height: 100%;">
+<div class="panel-title">DAFTAR LAPORAN TERSIMPAN</div>
+<div class="stool">
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
+<div class="selectlike"><small>Regu</small><select id="fRegu" onchange="renderSavedReports()"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
+<div class="selectlike"><small>Shift</small><select id="fShift" onchange="renderSavedReports()"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<div style="flex:1"></div>
+</div>
+<div class="sumline" id="sumLine"></div>
+<div id="savedReportsList" style="flex:1; overflow-y:auto;"></div>
+</div>
+
+<!-- BILAH STATUS (tetap di bawah) -->
+<div class="stat" id="statBar">
+<span class="tt" id="totalDisplay">TOTAL HADIR: 0 PERSONEL</span>
+<span id="compStatus" class="compStatus-balance" onclick="togglePratinjau(true)" title="Klik untuk melihat catatan pemeriksaan">✓ SESUAI (BALANCE)</span>
+<span class="tt" id="totalPenempatanDisplay">TOTAL PENEMPATAN: 0 PERSONEL</span>
+<span class="sp"></span>
+<button type="button" class="sbtn ghost" onclick="togglePratinjau()">Pratinjau</button>
+<button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button>
+<button type="button" class="sbtn red" onclick="saveReport()">Simpan Laporan</button>
+</div>
+</div>
+
+<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
+<aside class="drawer" id="drawer">
+<div class="dh"><span>PRATINJAU LAPORAN</span><button type="button" onclick="copyReport()" title="Salin teks laporan" style="background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Inter';cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="issue-box" id="issueBox"></div>
+<div class="output-area" id="outputReport">Mengolah laporan...</div>
+</aside>
+<aside class="drawer" id="drawerRw">
+<div class="dh"><span>RIWAYAT PERUBAHAN</span><button type="button" onclick="tutupRiwayat()" title="Tutup">✕</button></div>
+<div class="rwsub" id="rwSub"></div>
+<div class="rwlist" id="rwList"></div>
+<div class="rwnote">Riwayat menyimpan 30 entri terakhir per laporan (entri "Dibuat" selalu dipertahankan). Riwayat mencatat perubahan, tidak dapat mengembalikan versi lama.</div>
+</aside>
+
+
+<!-- MODAL PREVIEW LAPORAN -->
+<div class="modal-overlay" id="viewModal">
+<div class="modal-container">
+<div class="modal-header">
+<div class="modal-title" id="modalTitle">PRATINJAU LAPORAN</div>
+<button class="modal-close" onclick="closeViewModal()">✕</button>
+</div>
+<div class="modal-body">
+<div class="output-area" id="modalViewContent" style="height: 100%; max-height: 60vh;"></div>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn-success btn-wa" onclick="kirimWAModal()">Kirim ke WA</button>
+<button type="button" class="btn-info" onclick="copyModalReport()">Salin Teks</button>
+<button type="button" class="btn-danger" onclick="closeViewModal()">Tutup</button>
+</div>
+</div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- TEMPLATE PDF HIDDEN -->
+<div id="pdfTemplate"><div id="pdfContent"></div></div>
+
+<script src="lib/html2pdf.bundle.min.js"></script>
+<script src="personel-pdf.js"></script>
+<script src="shell.js"></script>
+<script src="personel.js"></script>
+<script src="kategori.js"></script>
+<script>
+'use strict';
+
+/* =====================================================
+   LAPORAN KEKUATAN & PENEMPATAN PERSONEL AVSEC SUPADIO
+   Data bawaan: personel.js (nama) dan kategori.js (kategori & pos)
+   ===================================================== */
+
+const STORAGE_KEY = 'savedReports';       // sama dengan versi lama, laporan lama tetap terbaca
+const LAST_KEY = 'kategoriTerakhir';      // id kategori bawaan yang dipakai di laporan terakhir
+const MIN_LEBAR = 1024;
+
+const opsiAlasan = ['Cuti Tahunan', 'Cuti Alasan Penting', 'Cuti Melahirkan', 'Sakit', 'Dinas Luar', 'Izin', 'Tanpa Keterangan', 'Lainnya'];
+const opsiPeran = ['', '(Chief)', '(Assistant chief)', '(Supervisor)'];
+
+const KAT_BAWAAN = (typeof KATEGORI_BAWAAN !== 'undefined' && Array.isArray(KATEGORI_BAWAAN)) ? KATEGORI_BAWAAN : [];
+const POS_AWAL = (typeof POS_BAWAAN !== 'undefined' && Array.isArray(POS_BAWAAN)) ? POS_BAWAAN : [];
+
+let editingReportId = null;
+let editingCid = null;          // kategori yang sedang diubah nama/jamnya
+let kategoriKekuatan = [];      // HANYA kategori yang dipilih untuk laporan ini
+let posPenempatan = [];
+let dirty = false;
+let modalReportId = null;
+
+/* ---------- Utilitas ---------- */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const rapikan = (s) => String(s == null ? '' : s).trim().replace(/\s+/g, ' ');
+const normNama = (s) => rapikan(s).toUpperCase();
+const uid = () => 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const adaNama = (p) => rapikan(p && p.nama) !== '';
+
+function lsGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+  catch (e) { toast('Gagal menyimpan ke penyimpanan browser (penyimpanan penuh atau diblokir).', 'err'); return false; }
+}
+
+let toastTimer;
+function toast(msg, type) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (type || 'ok');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 4200);
+}
+
+function tanggalLokalISO(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+function formatTanggalIndo(ymd) {
+  if (!ymd) return '-';
+  const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const date = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(ymd);   // tanggal lokal, tidak bergeser sehari
+  if (isNaN(date)) return '-';
+  return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/* ---------- Kunci: hanya komputer/laptop ---------- */
+function cekPerangkat() {
+  const pointerOk = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
+  const lebarOk = window.innerWidth >= MIN_LEBAR;
+  document.body.classList.toggle('locked', !(pointerOk && lebarOk));
+}
+cekPerangkat();
+window.addEventListener('resize', cekPerangkat);
+
+/* ---------- Kategori shift ---------- */
+function labelKategori(k) {
+  const nama = rapikan(k.nama);
+  return (k.mulai && k.selesai) ? `${nama} (${k.mulai} - ${k.selesai}) WIB` : nama;
+}
+function alasanText(p) {
+  return p.alasan === 'Lainnya' ? (rapikan(p.ket) || 'Lainnya') : p.alasan;
+}
+function normAbsen(p) {
+  let alasan = p && p.alasan, ket = (p && p.ket) || '';
+  if (!opsiAlasan.includes(alasan)) { ket = alasan || ''; alasan = 'Lainnya'; }   // data lama: alasan bebas
+  return { nama: (p && p.nama) || '', alasan, ket };
+}
+function normKategori(k) {
+  let nama = k.nama, mulai = k.mulai || '', selesai = k.selesai || '';
+  if (nama === undefined && k.name !== undefined) {                              // format laporan lama
+    const m = String(k.name).match(/^(.*?)\s*\((\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})\)\s*WIB\s*$/);
+    if (m) { nama = m[1]; mulai = m[2]; selesai = m[3]; } else { nama = k.name; }
+  }
+  return {
+    id: k.id || uid(), nama: nama || '', mulai, selesai,
+    jml: Math.max(0, parseInt(k.jml, 10) || 0),
+    absen: (k.absen || []).map(normAbsen)
+  };
+}
+function normReport(r) {
+  return {
+    id: r.id, tanggal: r.tanggal, shift: r.shift, regu: r.regu, savedAt: r.savedAt,
+    dibuatPada: r.dibuatPada, diperbaruiPada: r.diperbaruiPada, riwayat: r.riwayat, jumlahUbah: r.jumlahUbah,
+    kategoriKekuatan: (r.kategoriKekuatan || []).map(normKategori),
+    posPenempatan: (r.posPenempatan || []).map((p) => ({ id: p.id, name: p.name, personel: (p.personel || []).map((x) => ({ nama: x.nama || '', peran: x.peran || '' })) }))
+  };
+}
+function kategoriAwal() {
+  const last = lsGet(LAST_KEY, null);
+  const ids = (Array.isArray(last) && last.length) ? last : KAT_BAWAAN.map((k) => k.id);
+  return ids.map((id) => KAT_BAWAAN.find((k) => k.id === id)).filter(Boolean).map((k) => normKategori(clone(k)));
+}
+function posAwal() {
+  return POS_AWAL.map((p) => ({ id: p.id, name: p.name, personel: [] }));
+}
+function validasiKategori(nama, mulai, selesai, exceptCid) {
+  if (!rapikan(nama)) return 'Nama kategori wajib diisi.';
+  if ((mulai && !selesai) || (!mulai && selesai)) return 'Isi jam mulai dan jam selesai, atau kosongkan keduanya.';
+  const kembar = kategoriKekuatan.some((k) => k.id !== exceptCid && normNama(k.nama) === normNama(nama) && k.mulai === mulai && k.selesai === selesai);
+  if (kembar) return 'Kategori dengan nama dan jam yang sama sudah ada.';
+  return '';
+}
+
+/* ---------- Perhitungan: SATU sumber untuk layar, WA, dan PDF ---------- */
+function daftarGanda(names) {
+  const m = new Map();
+  names.forEach((n) => { const k = normNama(n); if (!k) return; const e = m.get(k) || { tampil: rapikan(n), c: 0 }; e.c++; m.set(k, e); });
+  const set = new Set(), tampil = [];
+  m.forEach((e, k) => { if (e.c > 1) { set.add(k); tampil.push(e.tampil); } });
+  return { set, tampil };
+}
+function hitungData(kat, pos) {
+  let totalHadir = 0, totalPenempatan = 0;
+  const issues = [];
+
+  const rows = (kat || []).map((k) => {
+    const semua = k.absen || [];
+    const valid = semua.filter(adaNama);
+    const jml = Math.max(0, parseInt(k.jml, 10) || 0);
+    const krg = valid.length;
+    const hdr = Math.max(0, jml - krg);
+    totalHadir += hdr;
+    return { k, jml, valid, krg, kosong: semua.length - krg, hdr, lebih: krg > jml };
+  });
+  rows.filter((r) => r.lebih).forEach((r) => issues.push(`${labelKategori(r.k)}: personel kurang (${r.krg}) melebihi Jumlah (${r.jml}).`));
+  const kosongAbs = rows.reduce((a, r) => a + r.kosong, 0);
+  if (kosongAbs) issues.push(`${kosongAbs} baris personel tidak hadir belum diisi namanya.`);
+  const gAbs = daftarGanda(rows.flatMap((r) => r.valid.map((p) => p.nama)));
+  if (gAbs.tampil.length) issues.push(`Nama ganda pada daftar tidak hadir: ${gAbs.tampil.join(', ')}.`);
+
+  const posRows = (pos || []).map((p) => {
+    const semua = p.personel || [];
+    const valid = semua.filter(adaNama);
+    totalPenempatan += valid.length;
+    return { p, valid, kosong: semua.length - valid.length };
+  });
+  const kosongPos = posRows.reduce((a, r) => a + r.kosong, 0);
+  if (kosongPos) issues.push(`${kosongPos} baris penempatan belum diisi namanya.`);
+  const gPos = daftarGanda(posRows.flatMap((r) => r.valid.map((x) => x.nama)));
+  if (gPos.tampil.length) issues.push(`Nama ganda pada penempatan: ${gPos.tampil.join(', ')}.`);
+
+  let balanceIssue = '';
+  if (totalHadir !== totalPenempatan) {
+    const selisih = Math.abs(totalHadir - totalPenempatan);
+    balanceIssue = totalPenempatan < totalHadir ? `Penempatan kurang ${selisih} orang dari total hadir.` : `Penempatan kelebihan ${selisih} orang dari total hadir.`;
+    issues.push(balanceIssue);
+  }
+  return { rows, posRows, totalHadir, totalPenempatan, issues, balanceIssue, dupAbs: gAbs.set, dupPos: gPos.set };
+}
+const hitung = () => hitungData(kategoriKekuatan, posPenempatan);
+
+function calculateTotals() {
+  const info = hitung();
+  $('totalDisplay').innerText = `TOTAL HADIR: ${info.totalHadir} PERSONEL`;
+  $('totalPenempatanDisplay').innerText = `TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL`;
+
+  const st = $('compStatus');
+  if (info.balanceIssue) {
+    const selisih = Math.abs(info.totalHadir - info.totalPenempatan);
+    st.className = 'compStatus-unbalance';
+    st.innerText = info.totalPenempatan < info.totalHadir ? `⚠ BELUM SESUAI (Kurang ${selisih} Penempatan)` : `⚠ BELUM SESUAI (Kelebihan ${selisih} Penempatan)`;
+  } else if (info.issues.length) {
+    st.className = 'compStatus-unbalance';
+    st.innerText = `⚠ ADA ${info.issues.length} CATATAN`;
+  } else {
+    st.className = 'compStatus-balance';
+    st.innerText = '✓ SESUAI (BALANCE)';
+  }
+
+  const box = $('issueBox');
+  if (info.issues.length) {
+    box.style.display = 'block';
+    box.innerHTML = `<b>CATATAN PEMERIKSAAN</b><ul>${info.issues.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`;
+  } else {
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
+
+  if ($('ktInfo')) { $('ktInfo').textContent = `${info.rows.length} kategori • hadir ${info.totalHadir}`; $('posInfo').textContent = `${info.posRows.length} pos • ${info.totalPenempatan} personel`; }
+  refreshKartuAngka(info);
+  refreshMarks(info);
+  generateReportText();
+  return info;
+}
+
+/* Update tanpa render ulang supaya kursor tidak hilang saat mengetik */
+function refreshKartuAngka(info) {
+  info.rows.forEach((r) => {
+    const kr = $('kurang_' + r.k.id), hd = $('hadir_' + r.k.id);
+    if (kr) { kr.value = r.krg; kr.classList.toggle('z', r.krg === 0); }
+    if (hd) hd.value = r.hdr;
+    const card = document.querySelector(`[data-cid="${r.k.id}"]`);
+    if (card) card.classList.toggle('err', r.lebih);
+  });
+}
+function refreshMarks(info) {
+  document.querySelectorAll('.dynamic-row[data-kind]').forEach((row) => {
+    const inp = row.querySelector('input.nm');
+    if (!inp) return;
+    const nama = rapikan(inp.value);
+    const set = row.dataset.kind === 'pos' ? info.dupPos : info.dupAbs;
+    row.classList.toggle('dup', nama !== '' && set.has(normNama(nama)));
+    row.classList.toggle('empty', nama === '');
+  });
+}
+
+/* ---------- Render: Kekuatan ---------- */
+function renderKekuatan() {
+  const box = $('kekuatanContainer');
+  const st = box.scrollTop;
+  if (!kategoriKekuatan.length) {
+    box.innerHTML = '<div class="status-nihil">Belum ada kategori shift. Tekan “+ Kategori shift” di atas.</div>';
+  } else {
+    box.innerHTML = '<div class="kt-hdr"><span>KATEGORI</span><span>JUMLAH</span><span>KURANG</span><span>HADIR</span><span></span></div>' +
+      kategoriKekuatan.map((k, i) => kartuKekuatan(k, i)).join('');
+  }
+  box.scrollTop = st;
+  calculateTotals();
+}
+
+function kartuKekuatan(k, i) {
+  const valid = k.absen.filter(adaNama).length;
+  const hdr = Math.max(0, k.jml - valid);
+  const jam = (k.mulai && k.selesai) ? `${k.mulai} – ${k.selesai} WIB` : 'tanpa jam tetap';
+
+  const alat = `<span class="kt-tools">
+<button type="button" class="icon-btn" title="Ubah nama / jam" onclick="mulaiEditKategori('${k.id}')">✎</button>
+<button type="button" class="icon-btn" title="Geser ke atas" onclick="geserKategori('${k.id}',-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+<button type="button" class="icon-btn" title="Geser ke bawah" onclick="geserKategori('${k.id}',1)" ${i === kategoriKekuatan.length - 1 ? 'disabled' : ''}>▼</button>
+<button type="button" class="icon-btn del" title="Hapus dari laporan ini" onclick="hapusKategori('${k.id}')">✕</button>
+</span>`;
+
+  let edit = '';
+  if (editingCid === k.id) {
+    edit = `
+<div class="kat-edit">
+<div class="kat-edit-grid">
+<div><label>Nama kategori</label><input type="text" id="en_${k.id}" value="${esc(k.nama)}" maxlength="60" onkeydown="if(event.key==='Enter')simpanEditKategori('${k.id}')"></div>
+<div><label>Mulai</label><input type="time" id="em_${k.id}" value="${esc(k.mulai)}"></div>
+<div><label>Selesai</label><input type="time" id="es_${k.id}" value="${esc(k.selesai)}"></div>
+</div>
+<div class="kat-edit-actions">
+<button type="button" class="btn-add" onclick="simpanEditKategori('${k.id}')">Simpan</button>
+<button type="button" class="btn-cancel" onclick="batalEditKategori()">Batal</button>
+<span class="hint">Hanya berlaku untuk laporan ini. Kosongkan jam bila tidak ada.</span>
+</div>
+</div>`;
+  }
+
+  let absenHTML = '';
+  k.absen.forEach((p, pi) => {
+    const opts = opsiAlasan.map((o) => `<option value="${esc(o)}" ${p.alasan === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
+    const custom = p.alasan === 'Lainnya' ? `<div class="cust"><input type="text" placeholder="Keterangan Lainnya..." value="${esc(p.ket)}" oninput="updateKet('${k.id}',${pi},this.value)"></div>` : '';
+    absenHTML += `
+<div class="dynamic-row" data-kind="absen">
+<input type="text" class="nm" list="listPersonel" placeholder="Nama personel tidak hadir" value="${esc(p.nama)}" oninput="updateNamaAbsen('${k.id}',${pi},this.value)">
+<select onchange="updateAlasanAbsen('${k.id}',${pi},this.value)">${opts}</select>
+<button type="button" class="btn-remove" onclick="removeAbsen('${k.id}',${pi})">✕</button>${custom}
+</div>`;
+  });
+
+  return `
+<div class="kat-card" data-cid="${k.id}">
+<div class="kt-row">
+<div class="nm"><b>${esc(rapikan(k.nama))}${alat}</b><span class="jm">${jam}</span></div>
+<input type="number" min="0" step="1" placeholder="0" value="${k.jml === 0 ? '' : k.jml}" oninput="updateJumlah('${k.id}',this.value)" aria-label="Jumlah">
+<input type="number" id="kurang_${k.id}" class="bd k ${valid ? '' : 'z'}" value="${valid}" readonly tabindex="-1" aria-label="Kurang">
+<input type="number" id="hadir_${k.id}" class="bd h" value="${hdr}" readonly tabindex="-1" aria-label="Hadir">
+<button type="button" class="add" onclick="addAbsen('${k.id}')">+ Tidak hadir</button>
+</div>${edit}
+${absenHTML ? `<div class="abs-rows">${absenHTML}</div>` : ''}
+</div>`;
+}
+
+const cari = (cid) => kategoriKekuatan.find((k) => k.id === cid);
+function markDirty() { dirty = true; }
+
+function updateJumlah(cid, val) {
+  const k = cari(cid); if (!k) return;
+  k.jml = Math.max(0, parseInt(val, 10) || 0);
+  markDirty();
+  calculateTotals();
+}
+function addAbsen(cid) {
+  const k = cari(cid); if (!k) return;
+  if (k.jml === 0) { toast('Isi kolom Jumlah terlebih dahulu.', 'err'); return; }
+  if (k.absen.length >= k.jml) { toast(`Personel kurang tidak boleh melebihi Jumlah (${k.jml}).`, 'err'); return; }
+  k.absen.push({ nama: '', alasan: opsiAlasan[0], ket: '' });
+  markDirty(); renderKekuatan();
+}
+function removeAbsen(cid, pi) {
+  const k = cari(cid); if (!k) return;
+  k.absen.splice(pi, 1);
+  markDirty(); renderKekuatan();
+}
+function updateNamaAbsen(cid, pi, val) {
+  const k = cari(cid); if (!k || !k.absen[pi]) return;
+  k.absen[pi].nama = val;
+  markDirty(); calculateTotals();
+}
+function updateAlasanAbsen(cid, pi, val) {
+  const k = cari(cid); if (!k || !k.absen[pi]) return;
+  k.absen[pi].alasan = val;
+  markDirty(); renderKekuatan();
+}
+function updateKet(cid, pi, val) {
+  const k = cari(cid); if (!k || !k.absen[pi]) return;
+  k.absen[pi].ket = val;
+  markDirty(); generateReportText();
+}
+
+/* ---------- Kelola kategori (berlaku hanya untuk laporan ini) ---------- */
+function mulaiEditKategori(cid) { editingCid = cid; renderKekuatan(); const el = $('en_' + cid); if (el) el.focus(); }
+function batalEditKategori() { editingCid = null; renderKekuatan(); }
+function simpanEditKategori(cid) {
+  const k = cari(cid); if (!k) return;
+  const nama = normNama($('en_' + cid).value), mulai = $('em_' + cid).value, selesai = $('es_' + cid).value;
+  const err = validasiKategori(nama, mulai, selesai, cid);
+  if (err) { toast(err, 'err'); return; }
+  k.nama = nama; k.mulai = mulai; k.selesai = selesai;
+  editingCid = null; markDirty(); renderKekuatan();
+}
+function hapusKategori(cid) {
+  const k = cari(cid); if (!k) return;
+  if ((k.jml > 0 || k.absen.length) && !confirm(`Hapus kategori "${labelKategori(k)}" dari laporan ini?\nJumlah dan keterangan yang sudah diisi akan hilang dan tidak ikut dihitung.`)) return;
+  kategoriKekuatan = kategoriKekuatan.filter((x) => x.id !== cid);
+  if (editingCid === cid) editingCid = null;
+  markDirty(); renderKekuatan();
+}
+function geserKategori(cid, arah) {
+  const i = kategoriKekuatan.findIndex((k) => k.id === cid), j = i + arah;
+  if (i < 0 || j < 0 || j >= kategoriKekuatan.length) return;
+  [kategoriKekuatan[i], kategoriKekuatan[j]] = [kategoriKekuatan[j], kategoriKekuatan[i]];
+  markDirty(); renderKekuatan();
+}
+
+function bukaTambahKategori() {
+  const sisa = KAT_BAWAAN.filter((b) => !kategoriKekuatan.some((k) => k.id === b.id));
+  $('addSelect').innerHTML = sisa.map((b) => `<option value="bawaan:${esc(b.id)}">${esc(labelKategori(b))}</option>`).join('') + '<option value="baru">+ Buat kategori baru...</option>';
+  $('addNama').value = ''; $('addMulai').value = ''; $('addSelesai').value = '';
+  $('addSelect').value = sisa.length ? 'bawaan:' + sisa[0].id : 'baru';
+  $('btnOpenAdd').style.display = 'none';
+  $('addWrap').style.display = 'block';
+  $('addPanel').style.display = 'block';
+  ubahPilihanTambah();
+}
+function ubahPilihanTambah() {
+  const baru = $('addSelect').value === 'baru';
+  $('addNew').style.display = baru ? 'grid' : 'none';
+  if (baru) $('addNama').focus();
+}
+function tutupTambahKategori() {
+  $('addPanel').style.display = 'none';
+  $('addWrap').style.display = 'none';
+  $('btnOpenAdd').style.display = '';
+}
+function tambahKategori() {
+  const v = $('addSelect').value;
+  let kat;
+  if (v === 'baru') {
+    const nama = normNama($('addNama').value), mulai = $('addMulai').value, selesai = $('addSelesai').value;
+    const err = validasiKategori(nama, mulai, selesai, null);
+    if (err) { toast(err, 'err'); return; }
+    kat = normKategori({ id: uid(), nama, mulai, selesai });
+  } else {
+    const b = KAT_BAWAAN.find((x) => 'bawaan:' + x.id === v);
+    if (!b) return;
+    kat = normKategori(clone(b));
+    const err = validasiKategori(kat.nama, kat.mulai, kat.selesai, null);
+    if (err) { toast(err, 'err'); return; }
+  }
+  kategoriKekuatan.push(kat);
+  tutupTambahKategori();
+  markDirty(); renderKekuatan();
+  const box = $('kekuatanContainer'); box.scrollTop = box.scrollHeight;
+}
+
+/* ---------- Render: Penempatan ---------- */
+function renderPenempatan() {
+  const container = $('penempatanContainer');
+  const st = container.scrollTop;
+  container.innerHTML = posPenempatan.map((pos, posIdx) => {
+    let rows = '';
+    pos.personel.forEach((p, pIdx) => {
+      const opts = opsiPeran.map((pr) => `<option value="${esc(pr)}" ${p.peran === pr ? 'selected' : ''}>${pr ? esc(pr) : 'Biasa'}</option>`).join('');
+      rows += `
+<div class="dynamic-row" data-kind="pos">
+<span class="no">${pIdx + 1}</span>
+<input type="text" class="nm" list="listPersonel" placeholder="Nama personel" value="${esc(p.nama)}" oninput="updateNamaPos(${posIdx},${pIdx},this.value)">
+<select onchange="updatePeranPos(${posIdx},${pIdx},this.value)">${opts}</select>
+<button type="button" class="btn-remove" onclick="removePersonelPos(${posIdx},${pIdx})">✕</button>
+</div>`;
+    });
+    return `
+<div class="kat-card">
+<div class="kat-title"><span>${esc(pos.name)}</span><b>${pos.personel.length}</b></div>
+${rows}
+<button type="button" class="btn-add" onclick="addPersonelPos(${posIdx})">+ Tambah personel</button>
+</div>`;
+  }).join('');
+  container.scrollTop = st;
+  calculateTotals();
+}
+function addPersonelPos(i) { posPenempatan[i].personel.push({ nama: '', peran: '' }); markDirty(); renderPenempatan(); }
+function removePersonelPos(i, p) { posPenempatan[i].personel.splice(p, 1); markDirty(); renderPenempatan(); }
+function updateNamaPos(i, p, val) { posPenempatan[i].personel[p].nama = val; markDirty(); calculateTotals(); }
+function updatePeranPos(i, p, val) { posPenempatan[i].personel[p].peran = val; markDirty(); generateReportText(); }
+
+/* ---------- Teks laporan (WA) ---------- */
+function getLabelJabatanPembuatLaporan(peran, format) {
+  const br = format === 'html' ? '<br>' : '\n';
+  if (!peran || peran === '(Chief)') return 'CHIEF';
+  return `a.n. Chief${br}${peran.replace(/^\(|\)$/g, '')}`;
+}
+function getPembuatLaporanInfo(posPen, format) {
+  let nama = '(....................)', jabatanLabel = 'CHIEF';
+  const posko = (posPen || []).find((p) => p.id === 'posko') || (posPen || [])[0];
+  const pertama = posko && (posko.personel || []).find(adaNama);
+  if (pertama) { nama = rapikan(pertama.nama); jabatanLabel = getLabelJabatanPembuatLaporan(pertama.peran, format); }
+  return { nama, jabatanLabel };
+}
+
+function generateReportTextFromData(tanggal, shift, regu, kat, pos) {
+  const info = hitungData(kat, pos);
+  let t = `*LAPORAN KEKUATAN & PENEMPATAN PERSONEL AVSEC BANDARA SUPADIO*\n\n`;
+  t += `Hari/Tgl: ${formatTanggalIndo(tanggal)}\nShift : ${shift || '-'}\nRegu : ${regu || '-'}\n\n`;
+  t += `*KEKUATAN PERSONEL:*\n\n`;
+  if (!info.rows.length) t += `- Nihil\n\n`;
+  info.rows.forEach((r) => {
+    let ket = '-Nihil';
+    if (r.krg > 0) ket = r.valid.map((p) => `- ${rapikan(p.nama)} (${alasanText(p)})`).join('\n');
+    else if (r.jml > 0) ket = 'Lengkap';
+    t += `${labelKategori(r.k)}\nJumlah : ${r.jml}\nHadir : ${r.hdr}\nKurang : ${r.krg || '-'}\nKeterangan :\n${ket}\n\n`;
+  });
+  t += `*TOTAL HADIR: ${info.totalHadir} PERSONEL*\n\n------------------------------------\n\n*PENEMPATAN PERSONEL:*\n\n`;
+  info.posRows.forEach((r) => {
+    t += `*${r.p.name}*\n`;
+    if (!r.valid.length) t += `- Nihil\n\n`;
+    else { r.valid.forEach((p, i) => { t += `${i + 1}. ${rapikan(p.nama)}${p.peran ? ' ' + p.peran : ''}\n`; }); t += `\n`; }
+  });
+  t += `*TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL*\n\n`;
+  const pb = getPembuatLaporanInfo(pos, 'text');
+  t += `Dibuat oleh,\n${pb.jabatanLabel},\n\n\n( ${pb.nama} )`;
+  return t;
+}
+function generateReportText() {
+  const text = generateReportTextFromData($('tanggal').value, $('shift').value, $('regu').value, kategoriKekuatan, posPenempatan);
+  $('outputReport').innerText = text;
+  return text;
+}
+function headerChanged() { markDirty(); generateReportText(); }
+
+/* ---------- Salin & Kirim WA ---------- */
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+  return new Promise((resolve) => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta); resolve(ok);
+  });
+}
+function konfirmasi(aksi, info, tanggal, shift, regu) {
+  const daftar = [];
+  if (!tanggal) daftar.push('Tanggal belum diisi.');
+  if (!shift) daftar.push('Shift belum dipilih.');
+  if (!regu) daftar.push('Regu belum dipilih.');
+  info.issues.forEach((t) => daftar.push(t));
+  if (!daftar.length) return true;
+  return confirm(`Sebelum ${aksi}, perhatikan:\n\n• ${daftar.join('\n• ')}\n\nTetap lanjutkan?`);
+}
+function copyReport() {
+  if (!konfirmasi('menyalin laporan', hitung(), $('tanggal').value, $('shift').value, $('regu').value)) return;
+  copyText(generateReportText()).then((ok) => toast(ok ? 'Laporan berhasil disalin!' : 'Gagal menyalin. Blok teks pratinjau lalu salin manual.', ok ? 'ok' : 'err'));
+}
+function bukaWA(text) {
+  copyText(text);   // cadangan: teks juga disalin bila kolom pesan WhatsApp kosong
+  window.open(AVS.urlWA(text), '_blank', 'noopener');
+  toast('WhatsApp dibuka. Pilih grup/kontak lalu kirim. Jika kolom pesan kosong, tempel dengan Ctrl+V (teks sudah disalin).', 'ok');
+}
+function kirimWA() {
+  if (!konfirmasi('mengirim laporan', hitung(), $('tanggal').value, $('shift').value, $('regu').value)) return;
+  bukaWA(generateReportText());
+}
+
+/* ---------- Simpan / daftar tersimpan ---------- */
+function snapshot() {
+  const kat = clone(kategoriKekuatan).map((k) => { k.absen = k.absen.filter(adaNama); return k; });
+  const pos = clone(posPenempatan).map((p) => { p.personel = p.personel.filter(adaNama); return p; });
+  return { kat, pos };
+}
+function updateBadge() {
+  const b = $('editBadge');
+  if (!editingReportId) { b.style.display = 'none'; b.innerHTML = ''; return; }
+  const r = lsGet(STORAGE_KEY, []).find((x) => x.id === editingReportId);
+  if (!r) { b.style.display = 'none'; b.innerHTML = ''; return; }
+  const k = AVS.ketJejak(r);
+  b.innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
+    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>`;
+  b.style.display = 'flex';
+}
+function bukaRiwayat() {
+  if (!editingReportId) return;
+  const r = lsGet(STORAGE_KEY, []).find((x) => x.id === editingReportId); if (!r) return;
+  bukaRiwayatDari(r);
+}
+function bukaRiwayatId(id) {
+  const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
+  bukaRiwayatDari(r);
+}
+function bukaRiwayatDari(r) {
+  const judul = `${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${r.tanggal ? new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'} • Laporan Personel`;
+  const out = AVS.renderRiwayat(r, judul);
+  $('rwSub').textContent = out.sub; $('rwList').innerHTML = out.html;
+  togglePratinjau(false); $('drawerRw').classList.add('open');
+}
+function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
+document.addEventListener('click', (e) => { const p = $('rwPop'); if (p && p.classList.contains('open') && !p.contains(e.target)) p.classList.remove('open'); });
+function togglePratinjau(force) {
+  const d = $('drawer'), buka = force === undefined ? !d.classList.contains('open') : !!force;
+  d.classList.toggle('open', buka);
+  $('hdl').style.display = buka ? 'none' : '';
+}
+function saveReport() {
+  const tanggal = $('tanggal').value, shift = $('shift').value, regu = $('regu').value;
+  if (!tanggal || !shift || !regu) { toast('Harap lengkapi Tanggal, Shift, dan Regu!', 'err'); return; }
+  const info = calculateTotals();
+  if (info.issues.length && !confirm(`Ada catatan pada laporan ini:\n\n• ${info.issues.join('\n• ')}\n\nTetap simpan?`)) return;
+
+  const { kat, pos } = snapshot();
+  const reportData = {
+    id: editingReportId || Date.now().toString(),
+    tanggal, shift, regu,
+    kategoriKekuatan: kat, posPenempatan: pos,
+    savedAt: new Date().toLocaleString('id-ID'), versi: 2
+  };
+  const reports = lsGet(STORAGE_KEY, []);
+  const idx = reports.findIndex((r) => r.id === reportData.id);
+  const lama = idx !== -1 ? reports[idx] : null;
+  const perubahan = lama ? AVS.diffPersonel(normReport(lama), reportData) : [];
+  AVS.catatJejak(reportData, lama, perubahan);   // waktu dibuat, waktu pembaruan terakhir, riwayat & rincian perubahan
+  if (idx !== -1) reports[idx] = reportData; else reports.unshift(reportData);
+  if (!lsSet(STORAGE_KEY, reports)) return;
+
+  lsSet(LAST_KEY, kategoriKekuatan.map((k) => k.id).filter((id) => KAT_BAWAAN.some((b) => b.id === id)));
+  editingReportId = reportData.id;   // simpan berikutnya menimpa laporan ini, bukan membuat duplikat
+  dirty = false;
+  updateBadge();
+  toast(lama ? 'Laporan diperbarui: ' + AVS.waktu(reportData.diperbaruiPada) : 'Laporan berhasil disimpan!');
+  updateCount();
+  switchPage('saved');
+}
+
+function getReports() { return lsGet(STORAGE_KEY, []).map(normReport); }
+
+const shiftKunci = (sh) => (/malam/i.test(String(sh || '')) ? 'M' : 'P');
+const bulanTanggal = (t) => { const m = String(t || '').match(/^(\d{4})-(\d{2})/); return m ? { y: +m[1], m: +m[2] - 1 } : null; };
+function updateCount() { const el = $('cntSaved'); if (el) el.textContent = lsGet(STORAGE_KEY, []).length; }
+function laporanTerfilter() {
+  const semua = getReports(), mulai = $('fMulai').value, sampai = $('fSampai').value, regu = $('fRegu').value, shift = $('fShift').value;
+  const list = semua.filter((r) => {
+    if (mulai && r.tanggal < mulai) return false;
+    if (sampai && r.tanggal > sampai) return false;
+    if (regu !== 'all' && String(r.regu || '').trim().charAt(0).toUpperCase() !== regu) return false;
+    if (shift !== 'all' && shiftKunci(r.shift) !== shift) return false;
+    return true;
+  }).sort((a, b) => String(b.tanggal).localeCompare(String(a.tanggal)) || (shiftKunci(b.shift) === shiftKunci(a.shift) ? 0 : (shiftKunci(b.shift) === 'M' ? 1 : -1)) || String(b.id).localeCompare(String(a.id), undefined, { numeric: true }));
+  return { semua, list };
+}
+function jejakHTML(r) {
+  const k = AVS.ketJejak(r);
+  if (k.j.pernahDiubah) return `<span class="upd">✎ Diperbarui</span><span>${esc(k.dibuat)}</span><span>•</span><span><b>${esc(k.ubah)}</b></span>`;
+  return `<span>${esc(k.dibuat)}</span>${k.j.tercatat ? '<span>•</span><span>Belum pernah diubah</span>' : ''}`;
+}
+function renderSavedReports() {
+  const box = $('savedReportsList');
+  const { semua, list } = laporanTerfilter();
+  const mulai = $('fMulai').value, sampai = $('fSampai').value;
+  const rentangTeks = (mulai || sampai) ? `${mulai ? esc(mulai.split('-').reverse().join('/')) : '…'} – ${sampai ? esc(sampai.split('-').reverse().join('/')) : '…'}` : 'Semua tanggal';
+  $('sumLine').innerHTML = `Menampilkan <b>${list.length}</b> dari <b>${semua.length}</b> laporan • ${rentangTeks} • diurutkan dari yang terbaru`;
+  updateCount();
+  if (!semua.length) { box.innerHTML = '<div class="empty-state">Belum ada laporan tersimpan.</div>'; return; }
+  if (!list.length) { box.innerHTML = '<div class="empty-state">Tidak ada laporan yang cocok dengan filter.<br><small>Ubah rentang tanggal, regu, atau shift.</small></div>'; return; }
+  box.innerHTML = list.map((r) => {
+    const info = hitungData(r.kategoriKekuatan, r.posPenempatan), kurang = info.rows.reduce((a, x) => a + x.krg, 0);
+    const chBal = info.balanceIssue ? '<span class="pchip" style="background:#FBE9E7;color:#A82F24">⚠ Belum balance</span>' : '<span class="pchip" style="background:#EEF5E7;color:#3F6B2E">✓ Balance</span>';
+    return `
+<div class="saved-card">
+<div>
+<div style="font-weight:bold;color:var(--primary);font-size:14px;">Regu ${esc(r.regu)} - ${esc(r.shift)}</div>
+<div style="font-size:12px;color:#64748b;">Tanggal: ${esc(formatTanggalIndo(r.tanggal))}</div>
+<div class="jejak">${jejakHTML(r)}</div>
+<div class="pchips">${chBal}<span class="pchip" style="background:#E4F3F4;color:#0F5F65">Hadir ${info.totalHadir}</span><span class="pchip" style="background:${kurang ? '#FBE9E7' : '#EEF1F6'};color:${kurang ? '#A82F24' : '#5C6675'}">Tidak hadir ${kurang}</span><span class="pchip" style="background:#EEF1F6;color:#5C6675">${r.kategoriKekuatan.length} kategori</span></div>
+</div>
+<div class="saved-actions">
+<button type="button" class="btn-info" onclick="viewReport('${esc(r.id)}')">Lihat</button>
+<button type="button" class="btn-warning" onclick="editReport('${esc(r.id)}')">Ubah</button>
+<button type="button" class="btn-success btn-wa" onclick="kirimWAId('${esc(r.id)}')">Kirim WA</button>
+<button type="button" class="btn-success" onclick="exportPDF('${esc(r.id)}')">Unduh PDF</button>
+<button type="button" class="btn-info" style="background:#EEF1F6;color:#475569" onclick="bukaRiwayatId('${esc(r.id)}')">Riwayat</button>
+<button type="button" class="btn-danger" onclick="deleteReport('${esc(r.id)}')">Hapus</button>
+</div>
+</div>`;
+  }).join('');
+}
+function textOfReport(r) { return generateReportTextFromData(r.tanggal, r.shift, r.regu, r.kategoriKekuatan, r.posPenempatan); }
+
+function viewReport(id) {
+  const r = getReports().find((x) => x.id === id); if (!r) return;
+  modalReportId = id;
+  $('modalTitle').innerText = `PRATINJAU: REGU ${r.regu} (${formatTanggalIndo(r.tanggal)})`;
+  $('modalViewContent').innerText = textOfReport(r);
+  $('viewModal').style.display = 'flex';
+}
+function closeViewModal() { $('viewModal').style.display = 'none'; }
+function copyModalReport() {
+  copyText($('modalViewContent').innerText).then((ok) => toast(ok ? 'Teks laporan berhasil disalin!' : 'Gagal menyalin teks.', ok ? 'ok' : 'err'));
+}
+function kirimWAModal() { bukaWA($('modalViewContent').innerText); }
+function kirimWAId(id) {
+  const r = getReports().find((x) => x.id === id); if (!r) return;
+  if (!konfirmasi('mengirim laporan', hitungData(r.kategoriKekuatan, r.posPenempatan), r.tanggal, r.shift, r.regu)) return;
+  bukaWA(textOfReport(r));
+}
+
+function editReport(id) {
+  const r = getReports().find((x) => x.id === id); if (!r) return;
+  if (dirty && !confirm('Isian yang sedang dibuka belum disimpan dan akan diganti. Lanjutkan?')) return;
+  editingReportId = r.id; editingCid = null;
+  $('tanggal').value = r.tanggal; $('shift').value = r.shift; $('regu').value = r.regu;
+  kategoriKekuatan = r.kategoriKekuatan;
+  const posLengkap = posAwal();
+  posLengkap.forEach((p) => { const s = r.posPenempatan.find((x) => x.id === p.id); if (s) p.personel = s.personel; });
+  posPenempatan = posLengkap;
+  dirty = false; updateBadge();
+  renderKekuatan(); renderPenempatan();
+  switchPage('form');
+}
+function deleteReport(id) {
+  if (!confirm('Hapus laporan ini?')) return;
+  const rest = lsGet(STORAGE_KEY, []).filter((r) => r.id !== id);
+  lsSet(STORAGE_KEY, rest);
+  if (editingReportId === id) { editingReportId = null; updateBadge(); }
+  renderSavedReports();
+}
+
+function newReport() {
+  if (dirty && !confirm('Mulai laporan baru? Isian saat ini akan dikosongkan (laporan yang sudah disimpan tidak terpengaruh).')) return;
+  editingReportId = null; editingCid = null;
+  $('tanggal').value = tanggalLokalISO(new Date()); $('shift').value = ''; $('regu').value = '';
+  kategoriKekuatan = kategoriAwal();
+  posPenempatan = posAwal();
+  dirty = false; updateBadge();
+  renderKekuatan(); renderPenempatan();
+  switchPage('form');
+}
+
+function switchPage(page) {
+  const form = page === 'form';
+  $('pageForm').style.display = form ? 'flex' : 'none';
+  $('pageSaved').style.display = form ? 'none' : 'flex';
+  $('statBar').style.display = form ? 'flex' : 'none';
+  ['hdrDiv', 'hdrTgl', 'hdrShift', 'hdrRegu'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
+  togglePratinjau(false);
+  $('hdl').style.display = form ? '' : 'none';
+  if (form) updateBadge(); else $('editBadge').style.display = 'none';   // strip "mengubah laporan" hanya di tab isian
+  $('btnFormTab').classList.toggle('on', form);
+  $('btnSavedTab').classList.toggle('on', !form);
+  if (!form) renderSavedReports();
+}
+
+/* ---------- Backup ---------- */
+/* Ekspor/Impor Personel-saja DIHAPUS dari sini (Tahap 4, butir 4.4) — digantikan
+   satu tombol gabungan (seluruh jenis laporan) di rekap.html. Lihat RENCANA-PENGEMBANGAN.md. */
+
+/* ---------- PDF ---------- */
+function exportPDF(id) {
+  const r = getReports().find((x) => x.id === id); if (!r) return;
+  if (typeof html2pdf === 'undefined') { toast('Pustaka PDF (lib/html2pdf.bundle.min.js) tidak termuat.', 'err'); return; }
+  if (typeof window.buildPersonelPdfHTML !== 'function') { toast('Pembangun PDF (personel-pdf.js) tidak termuat.', 'err'); return; }
+  const pembuat = window.pembuatDariPosPenempatan(r.posPenempatan);
+  const tglCetak = new Date().toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  $('pdfContent').innerHTML = window.buildPersonelPdfHTML(r, pembuat, tglCetak);
+  html2pdf().set({
+    margin: 10,
+    filename: `Lap Personel - ${String(r.regu).replace(/[\\/:*?"<>|]/g, '')} - (${r.tanggal}).pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['css'], avoid: ['tr', '.ttd-block'] }
+  }).from($('pdfContent')).save();
+}
+
+/* ---------- Inisialisasi ---------- */
+function isiDaftarPersonel() {
+  const sumber = (typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : [];
+  const seen = new Set(), list = [];
+  sumber.forEach((n) => { const t = rapikan(n), k = t.toUpperCase(); if (t && !seen.has(k)) { seen.add(k); list.push(t); } });
+  list.sort((a, b) => a.localeCompare(b, 'id'));
+  $('listPersonel').innerHTML = list.map((n) => `<option value="${esc(n)}">`).join('');
+  if (!list.length) toast('Daftar personel (personel.js) tidak terbaca. Saran nama tidak tersedia.', 'err');
+  if (!KAT_BAWAAN.length) toast('Daftar kategori (kategori.js) tidak terbaca.', 'err');
+}
+
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeViewModal(); if ($('drawer').classList.contains('open')) togglePratinjau(false); if ($('drawerRw').classList.contains('open')) tutupRiwayat(); } });
+
+window.addEventListener('DOMContentLoaded', () => {
+  AVS.nav('personel');
+  const semuaLap = getReports(), hIni = new Date();
+  const terbaru = semuaLap.map((r) => r.tanggal).filter(Boolean).sort().reverse()[0];
+  const awalRentang = terbaru ? `${terbaru.slice(0, 8)}01` : tanggalLokalISO(new Date(hIni.getFullYear(), hIni.getMonth(), 1));
+  $('fMulai').value = awalRentang; $('fSampai').value = tanggalLokalISO(hIni);
+  updateCount();
+  cekPerangkat();
+  isiDaftarPersonel();
+  $('tanggal').value = tanggalLokalISO(new Date());
+  kategoriKekuatan = kategoriAwal();
+  posPenempatan = posAwal();
+  renderKekuatan();
+  renderPenempatan();
+});
+
+window.adaPerubahanBelumTersimpan = () => dirty === true;
+AVS.daftarSW();
+
+</script>
+</body>
+</html>

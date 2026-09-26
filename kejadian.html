@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laporan Kejadian - Sistem Pelaporan AVSEC Bandara Supadio</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10243D">
+<link rel="icon" type="image/png" href="Logo/AVS-192.png">
+<link rel="apple-touch-icon" href="Logo/AVS-192.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="layout.css">
+<link rel="stylesheet" href="kejadian.css">
+</head>
+
+<body class="locked">
+
+<!-- LAYAR KUNCI: hanya logo -->
+<div id="lockScreen"><img src="Logo/AVS.png" alt="Logo AVSEC PNK"></div>
+
+<datalist id="listPersonel"></datalist>
+<datalist id="listJabatan"></datalist>
+<datalist id="listTerlampir"></datalist>
+
+<div class="main-wrapper">
+<div id="topBar"></div>
+
+<!-- TOOLBAR -->
+<div class="toolbar" id="toolbar">
+<div class="seg">
+<button type="button" id="btnFormTab" class="on" onclick="switchPage('form')">Buat Laporan</button>
+<button type="button" id="btnSavedTab" onclick="switchPage('saved')">Laporan Tersimpan <span class="badge" id="cntSaved">0</span></button>
+</div>
+<span class="tdiv" id="hdrDiv"></span>
+<div class="fld" id="hdrTgl"><label for="tglLap">TANGGAL</label><input type="date" id="tglLap" data-f="tanggal" oninput="fieldChanged(this)"></div>
+<div class="fld" id="hdrNomor"><label for="fileNumber">NOMOR</label>
+<div class="nomor-wrap" id="nomorWrap"><input type="text" id="fileNumber" data-f="fileNumber" oninput="fieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="autoTag">AUTO</span></div>
+<button type="button" class="hbtn" id="btnNomorMode" onclick="ubahModeNomor()" title="Ubah nomor secara manual">✎</button>
+<button type="button" class="hbtn" onclick="bukaUrutan()" title="Atur urutan nomor bulan ini">⚙</button>
+</div>
+<span class="tsp"></span>
+<button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Sembunyikan bilah atas agar area isian lebih luas">⛶ Mode fokus</button>
+<button type="button" class="tbtn" onclick="newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
+</div>
+<div class="strip" id="editBadge" style="display:none"></div>
+
+<!-- FORM: daftar bagian di kiri + kolom isian lebar -->
+<div class="kj-body" id="pageForm">
+<aside class="rail pn acc-navy">
+<div class="hd"><h3>Bagian Laporan</h3></div>
+<div class="railprog"><div class="tr"><i id="railBar"></i></div><span id="railTxt">0 dari 7 bagian terisi</span></div>
+<nav id="railNav">
+<a data-sec="sec1" onclick="lompatBagian('sec1')"><i>1</i>Identitas &amp; pejabat</a>
+<a data-sec="sec2" onclick="lompatBagian('sec2')"><i>2</i>Kasus &amp; dasar hukum</a>
+<a data-sec="sec3" onclick="lompatBagian('sec3')"><i>3</i>Kronologis</a>
+<a data-sec="sec4" onclick="lompatBagian('sec4')"><i>4</i>Tindak lanjut</a>
+<a data-sec="sec5" onclick="lompatBagian('sec5')"><i>5</i>Informasi lainnya</a>
+<a data-sec="sec6" onclick="lompatBagian('sec6')"><i>6</i>Penutup &amp; tanda tangan</a>
+<a data-sec="sec7" onclick="lompatBagian('sec7')"><i>7</i>Foto lampiran</a>
+</nav>
+</aside>
+
+<div class="kj-main" id="kjMain">
+<div class="privacy-note">Laporan memuat data pribadi pihak terkait. Draf dan laporan tersimpan hanya di browser komputer ini. Hapus laporan yang sudah tidak diperlukan sesuai ketentuan kantor.</div>
+
+<section class="pn sec acc-red" id="sec1"><div class="hd"><h3>1 · Identitas &amp; pejabat</h3><span class="sp"></span><span class="ct">Nama dipilih dari daftar personel</span></div>
+<div class="sc"><div class="g4">
+<div class="pc"><div class="pt">DISUSUN OLEH <small>Prepared By</small></div>
+<label>Nama</label><input type="text" list="listPersonel" data-f="preparedBy.nama" oninput="fieldChanged(this)" onchange="namaChanged('preparedBy')">
+<label>Jabatan</label><input type="text" list="listJabatan" data-f="preparedBy.jabatan" oninput="fieldChanged(this)"></div>
+<div class="pc"><div class="pt">DITANDATANGANI <small>Signed By</small></div>
+<label>Nama</label><input type="text" list="listPersonel" data-f="signedBy.nama" oninput="fieldChanged(this)" onchange="namaChanged('signedBy')">
+<label>Jabatan</label><input type="text" list="listJabatan" data-f="signedBy.jabatan" oninput="fieldChanged(this)"></div>
+<div class="pc"><div class="pt">DISETUJUI OLEH <small>Approved By</small></div>
+<label>Nama</label><input type="text" list="listPersonel" data-f="approvedBy.nama" oninput="fieldChanged(this)" onchange="namaChanged('approvedBy')">
+<label>Jabatan</label><input type="text" list="listJabatan" data-f="approvedBy.jabatan" oninput="fieldChanged(this)"></div>
+<div class="pc"><div class="pt">DISTRIBUSI &amp; PELAYANAN <small>Distribution To</small></div>
+<label>Nama</label><input type="text" list="listPersonel" data-f="distribution.nama" oninput="fieldChanged(this)">
+<label>Jabatan</label><input type="text" list="listJabatan" data-f="distribution.jabatan" oninput="fieldChanged(this)"></div>
+</div></div></section>
+
+<section class="pn sec acc-teal" id="sec2"><div class="hd"><h3>2 · Kasus &amp; dasar hukum</h3></div>
+<div class="sc"><div class="g2">
+<div><div class="lab">Informasi kasus <small>Cases Information</small></div><textarea rows="4" data-f="caseInfo" oninput="fieldChanged(this)" placeholder="Ringkasan kasus, mis. Pencegahan barang bawaan diduga ..."></textarea></div>
+<div><div class="lab">Dasar hukum <small>Action References</small></div>
+<div id="dasarContainer"></div>
+<div class="row-item" style="align-items:center;">
+<select id="selDasar" onchange="tambahDasarDariDaftar(this)" style="flex:1;"></select>
+<button type="button" class="btn-add" style="margin-top:0;" onclick="tambahItem('dasarHukum','')">+ Tulis sendiri</button>
+</div></div>
+</div></div></section>
+
+<section class="pn sec acc-navy" id="sec3"><div class="hd"><h3>3 · Kronologis</h3></div>
+<div class="sc"><textarea rows="7" data-f="kronologis" oninput="fieldChanged(this)" placeholder="Uraian awal kejadian: hari, tanggal, pukul, siapa yang bertugas, apa yang ditemukan..."></textarea></div></section>
+
+<section class="pn sec acc-red" id="sec4"><div class="hd"><h3>4 · Tindak lanjut</h3><span class="sp"></span><span class="ct">jam otomatis diberi “WIB” di PDF</span></div>
+<div class="sc"><div id="tlContainer"></div>
+<div style="display:flex; gap:6px; flex-wrap:wrap;">
+<button type="button" class="btn-add" onclick="tambahTL()">+ Tambah Baris Waktu</button>
+<button type="button" class="btn-cancel" style="margin-top:8px;" onclick="urutkanTL()" title="Urutkan dari jam paling awal">Urutkan menurut jam</button>
+</div></div></section>
+
+<section class="pn sec acc-teal" id="sec5"><div class="hd"><h3>5 · Informasi lainnya</h3><span class="sp"></span><span class="ct">Other Information</span></div>
+<div class="sc"><div class="g2">
+<div><div class="lab">Judul data</div>
+<input type="text" data-f="dataJudul" oninput="fieldChanged(this)" placeholder="mis. Berikut Data Penumpang">
+<div id="drContainer"></div>
+<button type="button" class="btn-add" onclick="tambahDR()">+ Tambah Baris Data</button></div>
+<div><div class="lab">Terlampir</div>
+<div id="terlampirContainer"></div>
+<button type="button" class="btn-add" onclick="tambahItem('terlampir','')">+ Tambah Terlampir</button></div>
+</div></div></section>
+
+<section class="pn sec acc-navy" id="sec6"><div class="hd"><h3>6 · Penutup &amp; tanda tangan</h3></div>
+<div class="sc"><div class="g2">
+<div><div class="lab">Penutup <small>Closing</small></div><textarea rows="4" data-f="penutup" oninput="fieldChanged(this)"></textarea>
+<div class="field"><label>Tempat penulisan (untuk tanda tangan)</label><input type="text" data-f="tempat" oninput="fieldChanged(this)"></div></div>
+<div class="sigcard">
+<div class="lab">Tanda tangan <small>gambar tampil di PDF</small></div>
+<label class="tg"><input type="checkbox" data-f="pakaiTTD" onchange="fieldChanged(this)"> Sertakan gambar tanda tangan di PDF</label>
+<div id="ttdRows"></div>
+<div class="info">Tanda tangan disimpan hanya di komputer ini dan <b>terisi otomatis</b> saat nama yang sama dipilih di laporan berikutnya.</div>
+<div class="info warn">Berupa gambar, bukan tanda tangan elektronik tersertifikasi. Kolom yang dikosongkan tetap menyediakan ruang untuk tanda tangan basah.</div>
+</div>
+</div></div></section>
+
+<section class="pn sec acc-red" id="sec7"><div class="hd"><h3>7 · Foto lampiran</h3><span class="sp"></span><span class="ct">dokumentasi</span></div>
+<div class="sc">
+<input type="file" id="fileFoto" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="tambahFoto(this)">
+<div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+<button type="button" class="btn-add" style="margin-top:0;" onclick="document.getElementById('fileFoto').click()">+ Tambah Foto</button>
+<label style="margin:0;font-weight:700;">Foto per halaman di PDF</label>
+<select data-f="fotoPerHal" onchange="fieldChanged(this)" style="width:auto;">
+<option value="1">1 foto per halaman (besar)</option>
+<option value="2">2 foto per halaman</option>
+<option value="4">4 foto per halaman (2 × 2)</option>
+</select></div>
+<div id="fotoContainer"></div>
+<div class="hint" style="margin-top:6px;">Foto otomatis dikecilkan agar PDF tidak terlalu berat. Urutan foto di sini = urutan di PDF.</div>
+</div></section>
+<div style="height:8px;flex:none"></div>
+</div>
+</div>
+
+<!-- HALAMAN TERSIMPAN -->
+<div class="panel-box" id="pageSaved" style="display:none;">
+<div class="panel-title">DAFTAR LAPORAN KEJADIAN TERSIMPAN</div>
+<div class="saved-toolbar">
+<span class="hint">Ekspor/Impor data laporan kini ada di halaman <a href="rekap.html" style="color:var(--secondary-hover);font-weight:800">Lihat Semua Rekap</a> (mencakup semua jenis laporan sekaligus).</span>
+</div>
+<div id="savedList" style="flex:1; overflow-y:auto;"></div>
+</div>
+
+<!-- BILAH AKSI (tetap di bawah) -->
+<div class="stat" id="statBar">
+<span class="hint" id="actionHint"></span>
+<span class="sp"></span>
+<button type="button" class="sbtn ghost" onclick="togglePratinjauWA()" title="Lihat teks laporan WhatsApp dan kirim (laporan awal)">Pratinjau WA &amp; Kirim</button>
+<button type="button" class="sbtn ghost" onclick="pratinjauPdf()">Pratinjau PDF</button>
+<button type="button" class="sbtn red" onclick="simpan()">Simpan Laporan</button>
+</div>
+</div>
+
+<button type="button" class="hdl" id="hdlWA" onclick="togglePratinjauWA(true)">PRATINJAU WA ‹</button>
+<aside class="drawer" id="drawerWA">
+<div class="dh"><span>PRATINJAU LAPORAN WHATSAPP</span><button type="button" onclick="togglePratinjauWA(false)" title="Tutup">✕</button></div>
+<div class="wa-opt">
+<label for="waStatus">Jenis laporan</label>
+<select id="waStatus" data-f="waStatus" onchange="fieldChanged(this)">
+<option value="awal">Laporan awal</option>
+<option value="lanjutan">Laporan lanjutan</option>
+<option value="akhir">Laporan akhir</option>
+</select>
+</div>
+<div class="wa-info" id="waInfo"></div>
+<div class="output-area" id="outputWA">Mengolah laporan...</div>
+<div class="dfoot">
+<button type="button" class="sbtn ghost" onclick="salinTeksWA()">Salin Teks</button>
+<button type="button" class="sbtn grn" onclick="kirimAwalWA()" title="Buka WhatsApp Web dengan teks di atas dan lampirkan kolase foto">Kirim ke WA</button>
+</div>
+</aside>
+<aside class="drawer" id="drawerRw">
+<div class="dh"><span>RIWAYAT PERUBAHAN</span><button type="button" onclick="tutupRiwayat()" title="Tutup">✕</button></div>
+<div class="rwsub" id="rwSub"></div>
+<div class="rwlist" id="rwList"></div>
+<div class="rwnote">Riwayat menyimpan 30 entri terakhir per laporan (entri "Dibuat" selalu dipertahankan). Gambar foto lama dan tanda tangan tidak disimpan, hanya keterangannya. Riwayat mencatat perubahan, tidak dapat mengembalikan versi lama.</div>
+</aside>
+
+
+<!-- JENDELA UNGGAH TANDA TANGAN -->
+<div class="ov" id="ttdModal" style="display:none">
+<div class="modal2">
+<div class="mh"><div><h3>Unggah Tanda Tangan</h3><p id="ttdSub"></p></div><div class="cx" onclick="tutupTTD()">✕</div></div>
+<div class="mb">
+<div>
+<div class="lab"><span>1</span>Foto tanda tangan</div>
+<div class="frame" id="ttdFrame">
+<canvas id="ttdSrc" width="10" height="10"></canvas>
+<div class="drop" id="ttdDrop"><div>Pilih foto tanda tangan di atas kertas putih<br><small>JPG / PNG / WebP</small></div><button type="button" class="btn-add" onclick="document.getElementById('fileTTD').click()">Pilih Foto…</button></div>
+<div class="crop" id="cropBox" style="display:none"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div>
+</div>
+<input type="file" id="fileTTD" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="pilihFotoTTD(this)">
+<div class="cap" id="ttdCapKiri">Seret sudut atau bagian dalam kotak untuk memotong area tanda tangan. Foto di atas kertas putih dengan cahaya merata memberi hasil terbaik.</div>
+</div>
+<div class="arrowc">➜</div>
+<div>
+<div class="lab"><span>2</span>Hasil pada PDF</div>
+<div class="checker"><span class="tagx" id="ttdTag">Belum ada foto</span><canvas id="ttdOut" width="10" height="10"></canvas></div>
+<div class="cap">Kotak-kotak menandakan bagian yang transparan. Atur kepekaan bila garis kurang jelas atau masih ada noda kertas.</div>
+</div>
+</div>
+<div class="ctl">
+<div class="it"><label>Kepekaan hapus latar <b id="lblSens">62%</b></label><input type="range" id="rgSens" min="0" max="100" value="62" oninput="ubahPengaturanTTD()"></div>
+<div class="it"><label>Ketebalan garis <b id="lblTeb">45%</b></label><input type="range" id="rgTeb" min="0" max="100" value="45" oninput="ubahPengaturanTTD()"></div>
+<div class="it"><label>Warna tinta</label>
+<div class="inks" id="inks">
+<span class="on" data-ink="biru" onclick="pilihInk('biru')"><i style="background:#16267A"></i>Biru tua</span>
+<span data-ink="hitam" onclick="pilihInk('hitam')"><i style="background:#111"></i>Hitam</span>
+<span data-ink="asli" onclick="pilihInk('asli')"><i style="background:linear-gradient(90deg,#16267A,#888)"></i>Asli</span>
+</div></div>
+</div>
+<div class="docprev">
+<div class="lbl">Pratinjau<br>di dokumen</div>
+<div class="blk"><span id="miniJab">&nbsp;</span><br><img id="ttdMini" alt=""><br><b id="miniNama"></b></div>
+<div class="side"><label><input type="checkbox" id="ttdSimpan" checked><span id="ttdSimpanLbl">Simpan untuk nama ini dan isi otomatis di laporan berikutnya</span></label><div style="margin-top:4px;padding-left:23px">Bisa dihapus kapan saja dari panel Tanda Tangan.</div></div>
+</div>
+<div class="mf"><div class="lock">🔒 Disimpan hanya di komputer ini, tidak dikirim ke mana pun.</div><div class="btns"><button type="button" class="b1" onclick="tutupTTD()">Batal</button><button type="button" class="b2" id="btnPakaiTTD" onclick="pakaiTTD()" disabled>Pakai Tanda Tangan Ini</button></div></div>
+</div>
+</div>
+
+<!-- JENDELA ATUR URUTAN NOMOR -->
+<div class="ov" id="urutModal" style="display:none">
+<div class="modal2" style="width:520px">
+<div class="mh"><div><h3>Atur Urutan Nomor</h3><p id="urutSub"></p></div><div class="cx" onclick="tutupUrutan()">✕</div></div>
+<div style="padding:18px 20px 8px">
+<label for="urutInput" style="font-weight:700;">Nomor terakhir yang sudah dipakai bulan ini</label>
+<input type="number" id="urutInput" min="0" step="1" oninput="ubahInputUrutan()" style="margin-top:6px;">
+<div class="cap" id="urutInfo"></div>
+<div class="urut-next"><span>Nomor berikutnya</span><b id="urutNext">-</b></div>
+<div class="cap" id="urutRiwayat"></div>
+<div class="info-note">Gunakan ini bila ada nomor yang sudah terpakai di komputer lain atau pada surat tertulis, agar tidak terjadi nomor ganda. Nomor tidak akan turun sendiri walaupun laporan dihapus.</div>
+</div>
+<div class="mf"><div class="lock">Urutan dihitung per bulan</div><div class="btns"><button type="button" class="b1" onclick="tutupUrutan()">Batal</button><button type="button" class="b2" onclick="simpanUrutan()">Simpan Urutan</button></div></div>
+</div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="shell.js"></script>
+<script src="lib/pdfmake.min.js"></script>
+<script src="lib/fonts-carlito.js"></script>
+<script src="personel.js"></script>
+<script src="kejadian-data.js"></script>
+<script src="kejadian-nomor.js"></script>
+<script src="kejadian-wa.js"></script>
+<script src="kejadian-pdf.js"></script>
+<script>
+'use strict';
+
+/* =====================================================
+   LAPORAN KEJADIAN (Security Incident/Accident Report)
+   Data disimpan di IndexedDB browser (mampu menampung foto).
+   ===================================================== */
+
+const DB_NAME = 'avsec-kejadian';
+const DB_VER = 2;
+const STORE = 'laporan';
+const STORE_TTD = 'tandatangan';
+const KEY_DRAFT = '__draft__';
+const MIN_LEBAR = 1024;
+const MAX_SISI_FOTO = 1600;
+const SLOTS = ['approvedBy', 'signedBy', 'preparedBy'];   // urutan tanda tangan kiri → kanan di PDF
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const rapikan = (s) => String(s == null ? '' : s).trim();
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/* Konstanta dari kejadian-data.js (dengan cadangan bila file itu tidak termuat) */
+const JABATAN_LIST = typeof JABATAN_UMUM !== 'undefined' ? JABATAN_UMUM : [];
+const JABATAN_DEF = typeof JABATAN_AWAL !== 'undefined' ? JABATAN_AWAL : { preparedBy: '', signedBy: '', distribution: '', approvedBy: '' };
+const DASAR_LIST = typeof DASAR_HUKUM_UMUM !== 'undefined' ? DASAR_HUKUM_UMUM : [];
+const TERLAMPIR_LIST = typeof TERLAMPIR_UMUM !== 'undefined' ? TERLAMPIR_UMUM : [];
+const TEMPAT_DEF = typeof TEMPAT_AWAL !== 'undefined' ? TEMPAT_AWAL : '';
+const JUDUL_DATA_DEF = typeof JUDUL_DATA_AWAL !== 'undefined' ? JUDUL_DATA_AWAL : 'Data';
+const LABEL_DATA_DEF = typeof LABEL_DATA_AWAL !== 'undefined' ? LABEL_DATA_AWAL : ['Nama'];
+const PENUTUP_DEF = typeof PENUTUP_AWAL !== 'undefined' ? PENUTUP_AWAL : '';
+
+let laporan = null;
+let editingId = null;
+let dirty = false;
+let draftTimer = null;
+
+/* ---------- Utilitas ---------- */
+let toastTimer;
+function toast(msg, type, ms) {
+  const t = $('toast');
+  t.textContent = msg; t.className = 'show ' + (type || 'ok');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, ms || 4200);
+}
+function hariIni() {
+  const d = new Date(), p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+function tglIndo(ymd) { return (window.tglIndoKejadian && window.tglIndoKejadian(ymd)) || '-'; }
+function getPath(o, p) { return p.split('.').reduce((c, k) => (c == null ? c : c[k]), o); }
+function setPath(o, p, v) { const k = p.split('.'); let c = o; for (let i = 0; i < k.length - 1; i++) c = c[k[i]]; c[k[k.length - 1]] = v; }
+const ttdKey = (n) => rapikan(n).replace(/\s+/g, ' ').toUpperCase();
+const ukuranTeks = (b) => b > 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+
+/* ---------- Kunci: hanya komputer/laptop ---------- */
+function cekPerangkat() {
+  const pointerOk = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
+  const lebarOk = window.innerWidth >= MIN_LEBAR;
+  document.body.classList.toggle('locked', !(pointerOk && lebarOk));
+}
+cekPerangkat();
+window.addEventListener('resize', cekPerangkat);
+
+/* ---------- Penyimpanan (IndexedDB) ---------- */
+let dbPromise = null;
+function bukaDB() {
+  if (!dbPromise) {
+    dbPromise = new Promise((res, rej) => {
+      if (!window.indexedDB) { rej(new Error('IndexedDB tidak tersedia')); return; }
+      const q = indexedDB.open(DB_NAME, DB_VER);
+      q.onupgradeneeded = () => {
+        const db = q.result;
+        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(STORE_TTD)) db.createObjectStore(STORE_TTD, { keyPath: 'key' });
+      };
+      q.onsuccess = () => res(q.result);
+      q.onerror = () => rej(q.error);
+    });
+  }
+  return dbPromise;
+}
+function tx(mode, fn, store) {
+  return bukaDB().then((db) => new Promise((res, rej) => {
+    const t = db.transaction(store || STORE, mode), s = t.objectStore(store || STORE);
+    const req = fn(s);
+    t.oncomplete = () => res(req && req.result);
+    t.onerror = () => rej(t.error);
+    t.onabort = () => rej(t.error || new Error('abort'));
+  }));
+}
+const dbAll = () => tx('readonly', (s) => s.getAll());
+const dbGet = (id) => tx('readonly', (s) => s.get(id));
+const dbPut = (o) => tx('readwrite', (s) => s.put(o));
+const dbDel = (id) => tx('readwrite', (s) => s.delete(id));
+const ttdGet = (key) => tx('readonly', (s) => s.get(key), STORE_TTD);
+const ttdPut = (o) => tx('readwrite', (s) => s.put(o), STORE_TTD);
+const ttdDel = (key) => tx('readwrite', (s) => s.delete(key), STORE_TTD);
+
+/* ---------- Model ---------- */
+function modelBaru() {
+  return {
+    id: null, tanggal: hariIni(), fileNumber: '', nomorOtomatis: true, nomorDikunci: false, waStatus: 'awal', tempat: TEMPAT_DEF,
+    preparedBy: { nama: '', jabatan: JABATAN_DEF.preparedBy || '' },
+    signedBy: { nama: '', jabatan: JABATAN_DEF.signedBy || '' },
+    distribution: { nama: '', jabatan: JABATAN_DEF.distribution || '' },
+    approvedBy: { nama: '', jabatan: JABATAN_DEF.approvedBy || '' },
+    caseInfo: '', dasarHukum: [], kronologis: '',
+    tindakLanjut: [{ jam: '', uraian: '' }],
+    dataJudul: JUDUL_DATA_DEF, dataRows: LABEL_DATA_DEF.map((l) => ({ label: l, nilai: '' })),
+    terlampir: [], penutup: PENUTUP_DEF, fotos: [], fotoPerHal: 2,
+    pakaiTTD: true, ttd: { approvedBy: null, signedBy: null, preparedBy: null }
+  };
+}
+function lengkapiModel(r) {   // gabungkan dengan bawaan agar aman bila ada bidang yang belum ada
+  const b = modelBaru(), m = Object.assign(b, r || {});
+  ['preparedBy', 'signedBy', 'distribution', 'approvedBy'].forEach((k) => { m[k] = Object.assign({ nama: '', jabatan: '' }, (r && r[k]) || {}); });
+  ['dasarHukum', 'tindakLanjut', 'dataRows', 'terlampir', 'fotos'].forEach((k) => { if (!Array.isArray(m[k])) m[k] = b[k]; });
+  m.ttd = Object.assign({ approvedBy: null, signedBy: null, preparedBy: null }, (r && r.ttd) || {});
+  if (m.pakaiTTD === undefined) m.pakaiTTD = true;
+  if (!['awal', 'lanjutan', 'akhir'].includes(m.waStatus)) m.waStatus = 'awal';
+  if (r && r.nomorOtomatis === undefined) { m.nomorOtomatis = false; m.nomorDikunci = false; }   // laporan lama: nomor tetap seperti tersimpan
+  return m;
+}
+function ubah() {
+  dirty = true;
+  updateKirimState();
+  renderRail();
+  renderWA();
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(simpanDraft, 1200);
+}
+async function simpanDraft() {
+  try { const d = clone(laporan); d.id = KEY_DRAFT; d.editingId = editingId; await dbPut(d); } catch (e) { /* draf bersifat cadangan saja */ }
+}
+
+
+/* =====================================================
+   NOMOR LAPORAN OTOMATIS  (OOSC/LK/<urut>/<bulan romawi>/<tahun>)
+   ===================================================== */
+if (typeof KejadianNomor !== 'undefined') KejadianNomor.atur({ prefix: typeof NOMOR_AWALAN !== 'undefined' ? NOMOR_AWALAN : undefined, pad: typeof NOMOR_PAD !== 'undefined' ? NOMOR_PAD : undefined });
+const NOMOR_KEY = 'nomorKejadian';   // pencatat nomor terbesar per bulan; tidak pernah turun, agar nomor tidak dipakai ulang
+function bacaCounter() { try { return JSON.parse(localStorage.getItem(NOMOR_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function tulisCounter(o) { try { localStorage.setItem(NOMOR_KEY, JSON.stringify(o)); } catch (e) { /* penyimpanan diblokir */ } }
+function pecahTgl(t) { const m = String(t || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? { y: +m[1], m: +m[2] - 1 } : null; }
+async function rekamTersimpan() { try { return (await dbAll()).filter((r) => r.id !== KEY_DRAFT); } catch (e) { return []; } }
+async function usulNomor(tanggal, kecualiId) {
+  const p = pecahTgl(tanggal); if (!p) return null;
+  const recs = (await rekamTersimpan()).filter((r) => r.id !== kecualiId);
+  return Object.assign({ y: p.y, m: p.m }, KejadianNomor.usul(recs, bacaCounter(), p.y, p.m));
+}
+function renderNomor() {
+  const inp = $('fileNumber'); if (!inp || !laporan) return;
+  const auto = !!laporan.nomorOtomatis, wrap = $('nomorWrap'), btn = $('btnNomorMode');
+  inp.value = laporan.fileNumber || ''; inp.readOnly = auto;
+  inp.placeholder = auto ? 'Menghitung nomor…' : 'Ketik nomor laporan (boleh dikosongkan)';
+  $('autoTag').style.display = auto ? '' : 'none';
+  btn.textContent = auto ? '✎' : '↺'; btn.title = auto ? 'Ubah nomor secara manual' : 'Kembali ke nomor otomatis';
+  const p = KejadianNomor.parse(laporan.fileNumber), t = pecahTgl(laporan.tanggal), beda = !!(p && t && (p.y !== t.y || p.m !== t.m));
+  wrap.classList.toggle('warn', beda);
+  wrap.title = beda ? 'Perhatian: bulan/tahun pada nomor tidak sama dengan tanggal laporan.' : (auto ? 'Nomor otomatis. Urutan mulai dari 1 setiap bulan.' : 'Nomor diisi manual.');
+}
+async function perbaruiNomor() {
+  if (!laporan) return;
+  if (laporan.nomorOtomatis && !laporan.nomorDikunci) { const u = await usulNomor(laporan.tanggal, editingId); laporan.fileNumber = u ? u.nomor : ''; }
+  renderNomor(); renderWA();
+}
+async function ubahModeNomor() {
+  if (laporan.nomorOtomatis) { laporan.nomorOtomatis = false; laporan.nomorDikunci = false; renderNomor(); $('fileNumber').focus(); ubah(); return; }
+  if (editingId && rapikan(laporan.fileNumber) && !confirm('Nomor laporan ini akan diganti dengan nomor otomatis berikutnya. Lanjutkan?')) return;
+  laporan.nomorOtomatis = true; laporan.nomorDikunci = false; laporan.fileNumber = '';
+  await perbaruiNomor(); ubah();
+}
+// dipanggil saat menyimpan: nomor otomatis ditetapkan final (laporan yang sudah bernomor tidak berganti nomor)
+async function tetapkanNomor(rec) {
+  if (rec.nomorOtomatis) {
+    let lama = null; if (editingId) { try { const o = await dbGet(editingId); lama = o && o.fileNumber; } catch (e) { /* abaikan */ } }
+    if (!(lama && rec.fileNumber === lama && KejadianNomor.parse(lama))) { const u = await usulNomor(rec.tanggal, editingId); if (u) rec.fileNumber = u.nomor; }
+    rec.nomorDikunci = !!rapikan(rec.fileNumber);
+  } else rec.nomorDikunci = false;
+}
+function catatNomor(rec) { const p = KejadianNomor.parse(rec.fileNumber); if (p) tulisCounter(KejadianNomor.catat(bacaCounter(), p.urut, p.y, p.m)); }
+
+let UR = null;
+async function bukaUrutan() {
+  const t = pecahTgl(laporan.tanggal) || { y: new Date().getFullYear(), m: new Date().getMonth() }, recs = await rekamTersimpan();
+  const minim = KejadianNomor.urutTertinggiTersimpan(recs, t.y, t.m), efektif = KejadianNomor.urutTerakhir(recs, bacaCounter(), t.y, t.m);
+  UR = { t, minim };
+  $('urutSub').textContent = `${AVS.BULAN[t.m]} ${t.y} (mengikuti tanggal laporan)`;
+  $('urutInput').min = minim; $('urutInput').value = efektif;
+  const ada = recs.map((r) => KejadianNomor.parse(r.fileNumber)).filter((p) => p && p.y === t.y && p.m === t.m).map((p) => p.urut).sort((a, b) => a - b);
+  $('urutRiwayat').textContent = ada.length ? 'Nomor yang sudah ada di laporan tersimpan bulan ini: ' + ada.join(', ') + '.' : 'Belum ada laporan bernomor otomatis pada bulan ini.';
+  $('urutInfo').textContent = minim ? `Tidak dapat lebih kecil dari ${minim} (nomor tertinggi yang sudah tersimpan).` : 'Isi 0 untuk memulai dari nomor 1.';
+  ubahInputUrutan(); $('urutModal').style.display = 'flex';
+}
+function ubahInputUrutan() { if (!UR) return; const v = Math.max(UR.minim, parseInt($('urutInput').value, 10) || 0); $('urutNext').textContent = KejadianNomor.format(v + 1, UR.t.y, UR.t.m); }
+function tutupUrutan() { $('urutModal').style.display = 'none'; UR = null; }
+async function simpanUrutan() {
+  if (!UR) return;
+  const v = parseInt($('urutInput').value, 10);
+  if (!Number.isFinite(v) || v < 0) { toast('Isi angka 0 atau lebih.', 'err'); return; }
+  if (v < UR.minim) { toast(`Nomor terakhir tidak boleh kurang dari ${UR.minim}.`, 'err'); return; }
+  const t = UR.t, c = bacaCounter(); c[KejadianNomor.kunciBulan(t.y, t.m)] = v; tulisCounter(c);
+  tutupUrutan(); await perbaruiNomor();
+  toast(`Urutan diatur. Nomor berikutnya: ${KejadianNomor.format(v + 1, t.y, t.m)}`);
+}
+
+/* ---------- Form: kolom biasa ---------- */
+function fieldChanged(el) {
+  let v = el.value;
+  if (el.type === 'checkbox') v = el.checked;
+  else if (el.dataset.f === 'fotoPerHal') v = parseInt(v, 10) || 2;
+  setPath(laporan, el.dataset.f, v);
+  if (/^(approvedBy|signedBy|preparedBy)\.nama$/.test(el.dataset.f)) renderTTD();   // nama di panel tanda tangan ikut berubah
+  ubah();
+  if (el.dataset.f === 'tanggal') perbaruiNomor();   // bulan berganti → nomor otomatis dihitung ulang
+}
+function isiForm() {
+  document.querySelectorAll('[data-f]').forEach((el) => {
+    const v = getPath(laporan, el.dataset.f);
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v;
+  });
+  renderSemua();
+  updateBadge();
+  updateKirimState();
+  renderNomor(); perbaruiNomor();
+  renderRail(); renderWA();
+}
+function renderSemua() { renderDasar(); renderTL(); renderDR(); renderTerlampir(); renderFoto(); renderTTD(); }
+
+function isiSaran() {
+  const sumber = (typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : [];
+  const seen = new Set(), list = [];
+  sumber.forEach((n) => { const t = rapikan(n).replace(/\s+/g, ' '), k = t.toUpperCase(); if (t && !seen.has(k)) { seen.add(k); list.push(t); } });
+  list.sort((a, b) => a.localeCompare(b, 'id'));
+  $('listPersonel').innerHTML = list.map((n) => `<option value="${esc(n)}">`).join('');
+  $('listJabatan').innerHTML = JABATAN_LIST.map((n) => `<option value="${esc(n)}">`).join('');
+  $('listTerlampir').innerHTML = TERLAMPIR_LIST.map((n) => `<option value="${esc(n)}">`).join('');
+}
+
+/* ---------- Daftar teks (Dasar Hukum, Terlampir) ---------- */
+function tambahItem(nama, val) {
+  laporan[nama].push(val || ''); ubah(); renderSemua();
+  const cont = $(nama === 'dasarHukum' ? 'dasarContainer' : 'terlampirContainer');
+  const el = cont.querySelector('.row-item:last-child textarea, .row-item:last-child input'); if (el) el.focus();
+}
+function setItem(nama, i, val) { laporan[nama][i] = val; ubah(); }
+function hapusItem(nama, i) { laporan[nama].splice(i, 1); ubah(); renderSemua(); }
+
+function renderDasar() {
+  $('dasarContainer').innerHTML = laporan.dasarHukum.map((t, i) => `
+<div class="row-item"><span class="no">${i + 1}.</span>
+<textarea rows="2" oninput="setItem('dasarHukum',${i},this.value)">${esc(t)}</textarea>
+<button type="button" class="btn-remove" onclick="hapusItem('dasarHukum',${i})">✕</button></div>`).join('')
+    || '<div class="status-nihil">-Belum ada dasar hukum</div>';
+  const sisa = DASAR_LIST.filter((d) => !laporan.dasarHukum.includes(d));
+  $('selDasar').innerHTML = '<option value="">+ Tambah dari daftar umum...</option>' +
+    sisa.map((d) => `<option value="${esc(d)}">${esc(d.length > 70 ? d.slice(0, 70) + '…' : d)}</option>`).join('');
+}
+function tambahDasarDariDaftar(sel) {
+  if (!sel.value) return;
+  laporan.dasarHukum.push(sel.value);
+  ubah(); renderDasar();
+}
+function renderTerlampir() {
+  $('terlampirContainer').innerHTML = laporan.terlampir.map((t, i) => `
+<div class="row-item" style="align-items:center;"><span class="no" style="padding-top:0;">•</span>
+<input type="text" list="listTerlampir" value="${esc(t)}" oninput="setItem('terlampir',${i},this.value)">
+<button type="button" class="btn-remove" onclick="hapusItem('terlampir',${i})">✕</button></div>`).join('')
+    || '<div class="status-nihil">-Belum ada</div>';
+}
+
+/* ---------- Tindak lanjut ---------- */
+function renderTL() {
+  $('tlContainer').innerHTML = laporan.tindakLanjut.map((x, i) => `
+<div class="tl-item">
+<input type="time" value="${esc(x.jam)}" oninput="setTL(${i},'jam',this.value)" title="Jam kejadian">
+<textarea rows="3" oninput="setTL(${i},'uraian',this.value)" placeholder="Uraian tindakan pada jam ini...">${esc(x.uraian)}</textarea>
+<div class="tl-btns">
+<button type="button" class="icon-btn" title="Geser ke atas" onclick="geserTL(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+<button type="button" class="icon-btn" title="Geser ke bawah" onclick="geserTL(${i},1)" ${i === laporan.tindakLanjut.length - 1 ? 'disabled' : ''}>▼</button>
+<button type="button" class="icon-btn del" title="Hapus baris" onclick="hapusTL(${i})">✕</button>
+</div></div>`).join('') || '<div class="status-nihil">-Belum ada tindak lanjut</div>';
+}
+function setTL(i, k, v) { laporan.tindakLanjut[i][k] = v; ubah(); }
+function tambahTL() {
+  laporan.tindakLanjut.push({ jam: '', uraian: '' }); ubah(); renderTL();
+  const c = $('tlContainer').querySelectorAll('.tl-item'); if (c.length) c[c.length - 1].querySelector('input').focus();
+}
+function hapusTL(i) {
+  const x = laporan.tindakLanjut[i];
+  if ((rapikan(x.uraian) || rapikan(x.jam)) && !confirm('Hapus baris tindak lanjut ini?')) return;
+  laporan.tindakLanjut.splice(i, 1); ubah(); renderTL();
+}
+function geserTL(i, arah) {
+  const j = i + arah, a = laporan.tindakLanjut;
+  if (j < 0 || j >= a.length) return;
+  [a[i], a[j]] = [a[j], a[i]]; ubah(); renderTL();
+}
+function urutkanTL() {
+  const a = laporan.tindakLanjut;
+  const ada = a.filter((x) => x.jam), tanpa = a.filter((x) => !x.jam);
+  ada.sort((p, q) => p.jam.localeCompare(q.jam));
+  laporan.tindakLanjut = ada.concat(tanpa);
+  ubah(); renderTL(); toast('Diurutkan dari jam paling awal (baris tanpa jam di paling bawah).');
+}
+
+/* ---------- Data lainnya ---------- */
+function renderDR() {
+  $('drContainer').innerHTML = laporan.dataRows.map((d, i) => `
+<div class="dr-item">
+<input type="text" value="${esc(d.label)}" oninput="setDR(${i},'label',this.value)" placeholder="Label" style="font-weight:600;">
+<input type="text" value="${esc(d.nilai)}" oninput="setDR(${i},'nilai',this.value)" placeholder="Isi">
+<button type="button" class="btn-remove" onclick="hapusDR(${i})">✕</button></div>`).join('');
+}
+function setDR(i, k, v) { laporan.dataRows[i][k] = v; ubah(); }
+function tambahDR() {
+  laporan.dataRows.push({ label: '', nilai: '' }); ubah(); renderDR();
+  const c = $('drContainer').querySelectorAll('.dr-item'); if (c.length) c[c.length - 1].querySelector('input').focus();
+}
+function hapusDR(i) { laporan.dataRows.splice(i, 1); ubah(); renderDR(); }
+
+/* ---------- Foto lampiran ---------- */
+function bacaFoto(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onerror = () => rej(fr.error);
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = () => rej(new Error('format'));
+      img.onload = () => {
+        const s = Math.min(1, MAX_SISI_FOTO / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * s)), h = Math.max(1, Math.round(img.height * s));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+        res(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+async function tambahFoto(input) {
+  const files = Array.from(input.files || []);
+  input.value = '';
+  if (!files.length) return;
+  let ok = 0, gagal = 0;
+  for (const f of files) {
+    try { laporan.fotos.push({ dataUrl: await bacaFoto(f), caption: '' }); ok++; }
+    catch (e) { gagal++; }
+  }
+  ubah(); renderFoto();
+  if (gagal) toast(`${ok} foto ditambahkan, ${gagal} gagal dibaca (gunakan JPG/PNG/WebP).`, 'err');
+  else toast(`${ok} foto ditambahkan.`);
+}
+function renderFoto() {
+  $('fotoContainer').innerHTML = laporan.fotos.map((f, i) => `
+<div class="foto-item">
+<img src="${esc(f.dataUrl)}" alt="Foto ${i + 1}">
+<input type="text" value="${esc(f.caption)}" placeholder="Keterangan foto ${i + 1} (boleh kosong)" oninput="setCaption(${i},this.value)">
+<div class="tl-btns">
+<button type="button" class="icon-btn" title="Geser ke atas" onclick="geserFoto(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+<button type="button" class="icon-btn" title="Geser ke bawah" onclick="geserFoto(${i},1)" ${i === laporan.fotos.length - 1 ? 'disabled' : ''}>▼</button>
+<button type="button" class="icon-btn del" title="Hapus foto" onclick="hapusFoto(${i})">✕</button>
+</div></div>`).join('');
+}
+function setCaption(i, v) { laporan.fotos[i].caption = v; ubah(); }
+function hapusFoto(i) { laporan.fotos.splice(i, 1); ubah(); renderFoto(); }
+function geserFoto(i, arah) {
+  const j = i + arah, a = laporan.fotos;
+  if (j < 0 || j >= a.length) return;
+  [a[i], a[j]] = [a[j], a[i]]; ubah(); renderFoto();
+}
+
+/* =====================================================
+   TANDA TANGAN
+   ===================================================== */
+function renderTTD() {
+  $('ttdRows').innerHTML = SLOTS.map((slot) => {
+    const nama = rapikan(laporan[slot].nama), t = laporan.ttd[slot];
+    const ada = !!(t && t.dataUrl && t.key === ttdKey(nama));
+    return `<div class="row">
+<div class="role"><b>${nama ? esc(nama) : '<i>(nama belum diisi)</i>'}</b></div>
+<div class="prev ${ada ? '' : 'empty'}">${ada ? `<img src="${esc(t.dataUrl)}" alt="Tanda tangan ${esc(nama)}">` : '<b>+</b>Belum ada'}</div>
+<div class="act">${ada ? '<span class="okc">✓ Terpasang</span>' : '<span class="warnc">Kosong</span>'}
+<div class="mini"><button type="button" class="${ada ? '' : 'pri'}" ${nama ? '' : 'disabled'} onclick="bukaTTD('${slot}')">${ada ? 'Ganti' : 'Unggah Foto'}</button>${ada ? `<button type="button" class="x" title="Hapus tanda tangan" onclick="hapusTTD('${slot}')">✕</button>` : ''}</div></div></div>`;
+  }).join('');
+}
+
+/* Saat nama diganti: pasang tanda tangan milik nama itu (bila tersimpan), atau kosongkan.
+   Tanda tangan selalu terikat pada nama, sehingga tanda tangan orang lain tidak pernah ikut terbawa. */
+async function sinkronTTD(slot) {
+  const key = ttdKey(laporan[slot].nama), cur = laporan.ttd[slot];
+  if (cur && cur.key === key) return;
+  if (!key) { laporan.ttd[slot] = null; return; }
+  let st = null;
+  try { st = await ttdGet(key); } catch (e) { /* tanpa penyimpanan */ }
+  laporan.ttd[slot] = st ? { key, dataUrl: st.dataUrl } : null;
+}
+async function namaChanged(slot) { await sinkronTTD(slot); renderTTD(); ubah(); }
+
+async function hapusTTD(slot) {
+  const key = ttdKey(laporan[slot].nama);
+  if (!confirm('Hapus tanda tangan ini dari laporan?')) return;
+  laporan.ttd[slot] = null; ubah(); renderTTD();
+  let st = null; try { st = await ttdGet(key); } catch (e) {}
+  if (st && confirm('Hapus juga dari penyimpanan komputer ini, sehingga tidak terisi otomatis lagi?')) { await ttdDel(key); toast('Tanda tangan dihapus dari komputer ini.'); }
+}
+
+/* Gambar tanda tangan yang dipakai saat membuat PDF (dari laporan; atau dari penyimpanan bila belum ada, mis. hasil impor) */
+async function ttdGambar(rec) {
+  const out = {};
+  if (rec.pakaiTTD === false) return out;
+  for (const slot of SLOTS) {
+    const key = ttdKey(rec[slot] && rec[slot].nama);
+    if (!key) continue;
+    const t = rec.ttd && rec.ttd[slot];
+    if (t && t.key === key && t.dataUrl) { out[slot] = t.dataUrl; continue; }
+    try { const st = await ttdGet(key); if (st && st.dataUrl) out[slot] = st.dataUrl; } catch (e) {}
+  }
+  return out;
+}
+
+/* ----- Pengolah gambar: hapus latar putih, tebalkan, warnai ----- */
+function prosesTTD(src, crop, sens, teb, ink) {
+  const sx = Math.round(crop.x * src.width), sy = Math.round(crop.y * src.height);
+  const sw = Math.max(8, Math.round(crop.w * src.width)), sh = Math.max(8, Math.round(crop.h * src.height));
+  const sc = Math.min(1, 900 / sw), w = Math.max(8, Math.round(sw * sc)), h = Math.max(8, Math.round(sh * sc));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const cx = c.getContext('2d', { willReadFrequently: true });
+  cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h); cx.drawImage(src, sx, sy, sw, sh, 0, 0, w, h);
+  const im = cx.getImageData(0, 0, w, h), d = im.data, n = w * h, lum = new Float32Array(n);
+  for (let i = 0; i < n; i++) lum[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+
+  // perkiraan kecerahan kertas: nilai tertinggi per blok, diperhalus (menangani bayangan/cahaya tak rata)
+  const B = Math.max(6, Math.round(Math.min(w, h) / 10)), gw = Math.ceil(w / B), gh = Math.ceil(h / B);
+  const g = new Float32Array(gw * gh);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const k = ((y / B) | 0) * gw + ((x / B) | 0); if (lum[y * w + x] > g[k]) g[k] = lum[y * w + x]; }
+  const hist = new Uint32Array(256); for (let i = 0; i < n; i++) hist[lum[i] | 0]++;
+  let acc = 0, p90 = 255; for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= n * 0.9) { p90 = v; break; } }
+  const g2 = new Float32Array(gw * gh);
+  for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+    let s = 0, m = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const yy = y + dy, xx = x + dx; if (yy >= 0 && yy < gh && xx >= 0 && xx < gw) { s += g[yy * gw + xx]; m++; } }
+    g2[y * gw + x] = Math.max(s / m, p90 * 0.9, 60);
+  }
+  const bgAt = (x, y) => {
+    const fx = clamp(x / B - 0.5, 0, gw - 1), fy = clamp(y / B - 0.5, 0, gh - 1), x0 = fx | 0, y0 = fy | 0, x1 = Math.min(gw - 1, x0 + 1), y1 = Math.min(gh - 1, y0 + 1), tx = fx - x0, ty = fy - y0;
+    return (g2[y0 * gw + x0] * (1 - tx) + g2[y0 * gw + x1] * tx) * (1 - ty) + (g2[y1 * gw + x0] * (1 - tx) + g2[y1 * gw + x1] * tx) * ty;
+  };
+
+  const lo = 0.28 - 0.22 * sens, hi = lo + 0.20, gain = 0.6 + 1.2 * teb;
+  const tint = ink === 'hitam' ? [17, 17, 17] : [22, 38, 122];
+  let alpha = new Float32Array(n);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const dk = clamp(1 - lum[y * w + x] / bgAt(x, y), 0, 1);
+    const t = clamp((dk - lo) / (hi - lo), 0, 1), a = t * t * (3 - 2 * t);
+    alpha[y * w + x] = Math.min(1, a * gain);
+  }
+  if (teb > 0.75) {   // garis sangat tebal: lebarkan 1 piksel
+    const a2 = new Float32Array(n);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let m = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const yy = y + dy, xx = x + dx; if (yy >= 0 && yy < h && xx >= 0 && xx < w) m = Math.max(m, alpha[yy * w + xx]); }
+      a2[y * w + x] = m;
+    }
+    alpha = a2;
+  }
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, a = alpha[i];
+    if (ink === 'asli') { d[i * 4] = d[i * 4] * 0.8; d[i * 4 + 1] = d[i * 4 + 1] * 0.8; d[i * 4 + 2] = d[i * 4 + 2] * 0.8; }
+    else { d[i * 4] = tint[0]; d[i * 4 + 1] = tint[1]; d[i * 4 + 2] = tint[2]; }
+    d[i * 4 + 3] = Math.round(a * 255);
+    if (a > 0.1) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0 || (x1 - x0) < 6 || (y1 - y0) < 3) return null;   // tidak ada goresan terdeteksi
+  cx.putImageData(im, 0, 0);
+  const pad = 6; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+  const tw = x1 - x0 + 1, th = y1 - y0 + 1, sc2 = Math.min(1, 700 / tw, 280 / th);
+  const out = document.createElement('canvas'); out.width = Math.max(1, Math.round(tw * sc2)); out.height = Math.max(1, Math.round(th * sc2));
+  out.getContext('2d').drawImage(c, x0, y0, tw, th, 0, 0, out.width, out.height);
+  return out;
+}
+
+/* ----- Jendela unggah ----- */
+let T = null;   // { slot, src, crop, sens, teb, ink, out }
+let dragCrop = null, outTimer = null;
+
+function bukaTTD(slot) {
+  const nama = rapikan(laporan[slot].nama);
+  if (!nama) { toast('Isi nama terlebih dahulu.', 'err'); return; }
+  T = { slot, src: null, crop: { x: 0.04, y: 0.06, w: 0.92, h: 0.88 }, sens: 0.62, teb: 0.45, ink: 'biru', out: null };
+  $('ttdSub').textContent = nama + (rapikan(laporan[slot].jabatan) ? ' • ' + rapikan(laporan[slot].jabatan) : '');
+  $('miniJab').textContent = rapikan(laporan[slot].jabatan) || ' '; $('miniNama').textContent = nama;
+  $('ttdSimpanLbl').textContent = `Simpan untuk “${nama}” dan isi otomatis di laporan berikutnya`;
+  $('ttdSimpan').checked = true;
+  $('rgSens').value = 62; $('rgTeb').value = 45; $('lblSens').textContent = '62%'; $('lblTeb').textContent = '45%';
+  pilihInk('biru', true);
+  $('ttdDrop').style.display = 'flex'; $('cropBox').style.display = 'none';
+  $('ttdSrc').getContext('2d').clearRect(0, 0, $('ttdSrc').width, $('ttdSrc').height);
+  $('ttdOut').getContext('2d').clearRect(0, 0, $('ttdOut').width, $('ttdOut').height);
+  setTag('Belum ada foto', ''); $('ttdMini').removeAttribute('src'); $('btnPakaiTTD').disabled = true;
+  $('ttdModal').style.display = 'flex';
+}
+function tutupTTD() { $('ttdModal').style.display = 'none'; T = null; dragCrop = null; }
+
+function pilihFotoTTD(input) {
+  const file = input.files && input.files[0]; input.value = '';
+  if (!file || !T) return;
+  const fr = new FileReader();
+  fr.onerror = () => toast('Foto tidak dapat dibaca.', 'err');
+  fr.onload = () => {
+    const img = new Image();
+    img.onerror = () => toast('Format foto tidak didukung. Gunakan JPG, PNG, atau WebP.', 'err');
+    img.onload = () => {
+      if (!T) return;
+      const s = Math.min(1, MAX_SISI_FOTO / Math.max(img.width, img.height));
+      const c = $('ttdSrc'); c.width = Math.max(1, Math.round(img.width * s)); c.height = Math.max(1, Math.round(img.height * s));
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      T.src = c; T.crop = { x: 0.04, y: 0.06, w: 0.92, h: 0.88 };
+      $('ttdDrop').style.display = 'none'; $('cropBox').style.display = 'block';
+      posisiCrop(); renderOutTTD();
+    };
+    img.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+
+function dispRect() {
+  const f = $('ttdFrame').getBoundingClientRect(), ar = T.src.width / T.src.height;
+  let w = f.width, h = w / ar; if (h > f.height) { h = f.height; w = h * ar; }
+  return { x: (f.width - w) / 2, y: (f.height - h) / 2, w, h };
+}
+function posisiCrop() {
+  if (!T || !T.src) return;
+  const r = dispRect(), c = T.crop, b = $('cropBox');
+  b.style.left = (r.x + c.x * r.w) + 'px'; b.style.top = (r.y + c.y * r.h) + 'px';
+  b.style.width = (c.w * r.w) + 'px'; b.style.height = (c.h * r.h) + 'px';
+}
+function setTag(t, cls) { const el = $('ttdTag'); el.textContent = t; el.className = 'tagx' + (cls ? ' ' + cls : ''); }
+
+function jadwalOut() { if (outTimer) return; outTimer = requestAnimationFrame(() => { outTimer = null; renderOutTTD(); }); }
+function renderOutTTD() {
+  if (!T || !T.src) return;
+  const out = prosesTTD(T.src, T.crop, T.sens, T.teb, T.ink);
+  T.out = out;
+  const vis = $('ttdOut');
+  if (!out) {
+    vis.getContext('2d').clearRect(0, 0, vis.width, vis.height);
+    setTag('Goresan tidak terdeteksi — naikkan kepekaan atau ubah area potong', 'bad'); $('btnPakaiTTD').disabled = true; $('ttdMini').removeAttribute('src'); return;
+  }
+  vis.width = out.width; vis.height = out.height; vis.getContext('2d').clearRect(0, 0, out.width, out.height); vis.getContext('2d').drawImage(out, 0, 0);
+  setTag('Latar transparan', 'ok'); $('btnPakaiTTD').disabled = false; $('ttdMini').src = out.toDataURL('image/png');
+}
+function ubahPengaturanTTD() {
+  if (!T) return;
+  T.sens = +$('rgSens').value / 100; T.teb = +$('rgTeb').value / 100;
+  $('lblSens').textContent = Math.round(T.sens * 100) + '%'; $('lblTeb').textContent = Math.round(T.teb * 100) + '%';
+  jadwalOut();
+}
+function pilihInk(ink, diam) {
+  document.querySelectorAll('#inks span').forEach((s) => s.classList.toggle('on', s.dataset.ink === ink));
+  if (T) { T.ink = ink; if (!diam) jadwalOut(); }
+}
+async function pakaiTTD() {
+  if (!T || !T.out) return;
+  const slot = T.slot, key = ttdKey(laporan[slot].nama), dataUrl = T.out.toDataURL('image/png');
+  laporan.ttd[slot] = { key, dataUrl };
+  if ($('ttdSimpan').checked) {
+    try { await ttdPut({ key, nama: rapikan(laporan[slot].nama), dataUrl, updated: Date.now() }); }
+    catch (e) { toast('Tanda tangan dipakai, tetapi gagal disimpan di komputer ini.', 'err'); }
+  }
+  tutupTTD(); ubah(); renderTTD(); toast('Tanda tangan dipasang.');
+}
+
+/* Geser / ubah ukuran kotak potong */
+(function pasangCrop() {
+  const box = $('cropBox');
+  box.addEventListener('pointerdown', (e) => {
+    if (!T || !T.src) return;
+    dragCrop = { h: (e.target.dataset && e.target.dataset.h) || 'move', sx: e.clientX, sy: e.clientY, start: Object.assign({}, T.crop) };
+    try { box.setPointerCapture(e.pointerId); } catch (x) {}
+    e.preventDefault();
+  });
+  box.addEventListener('pointermove', (e) => {
+    if (!dragCrop || !T) return;
+    const r = dispRect(), dx = (e.clientX - dragCrop.sx) / r.w, dy = (e.clientY - dragCrop.sy) / r.h, min = 0.05;
+    let { x, y, w, h } = dragCrop.start; const k = dragCrop.h;
+    if (k === 'move') { x = clamp(x + dx, 0, 1 - w); y = clamp(y + dy, 0, 1 - h); }
+    else {
+      if (k.includes('w')) { const nx = clamp(x + dx, 0, x + w - min); w = w + (x - nx); x = nx; }
+      if (k.includes('e')) w = clamp(w + dx, min, 1 - x);
+      if (k.includes('n')) { const ny = clamp(y + dy, 0, y + h - min); h = h + (y - ny); y = ny; }
+      if (k.includes('s')) h = clamp(h + dy, min, 1 - y);
+    }
+    T.crop = { x, y, w, h }; posisiCrop(); jadwalOut();
+  });
+  const stop = () => { dragCrop = null; };
+  box.addEventListener('pointerup', stop); box.addEventListener('pointercancel', stop);
+  window.addEventListener('resize', posisiCrop);
+})();
+
+/* =====================================================
+   PDF
+   ===================================================== */
+function siapPdf() {
+  if (typeof pdfMake === 'undefined' || typeof buildKejadianDoc === 'undefined') throw new Error('Pustaka PDF (lib/pdfmake.min.js) tidak termuat.');
+  pdfMake.vfs = Object.assign({}, window.KEJADIAN_VFS || {});
+  pdfMake.fonts = window.KEJADIAN_FONTS;
+}
+function namaFilePdf(r) {
+  let kasus = rapikan(r.caseInfo).replace(/[\\/:*?"<>|\r\n]+/g, ' ').replace(/\s+/g, ' ');
+  if (kasus.length > 45) { kasus = kasus.slice(0, 45); const sp = kasus.lastIndexOf(' '); if (sp > 20) kasus = kasus.slice(0, sp); }
+  kasus = kasus.trim();
+  return `Laporan Kejadian${kasus ? ' - ' + kasus : ''} (${r.tanggal || hariIni()}).pdf`;
+}
+function catatan(r) {
+  const c = [];
+  if (!r.tanggal) c.push('Tanggal belum diisi.');
+  if (!rapikan(r.caseInfo)) c.push('Informasi kasus belum diisi.');
+  if (!rapikan(r.kronologis) && !(r.tindakLanjut || []).some((x) => rapikan(x.uraian))) c.push('Kronologis / tindak lanjut belum diisi.');
+  if (!rapikan(r.preparedBy && r.preparedBy.nama)) c.push('Nama penyusun (Prepared By) belum diisi.');
+  if (!rapikan(r.approvedBy && r.approvedBy.nama)) c.push('Nama penyetuju (Approved By) belum diisi.');
+  return c;
+}
+function konfirmasiCatatan(r, aksi) {
+  const c = catatan(r);
+  if (!c.length) return true;
+  return confirm(`Sebelum ${aksi}, perhatikan:\n\n• ${c.join('\n• ')}\n\nTetap lanjutkan?`);
+}
+async function siapkanDoc(r) { return buildKejadianDoc(Object.assign({}, r, { ttdGambar: await ttdGambar(r) })); }
+function buatBlobPdf(r) {
+  return siapkanDoc(r).then((doc) => new Promise((res, rej) => { try { siapPdf(); pdfMake.createPdf(doc).getBlob(res); } catch (e) { rej(e); } }));
+}
+function unduhBlob(blob, nama) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nama;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function cetakPdf(r, mode) {
+  if (!konfirmasiCatatan(r, mode === 'unduh' ? 'mengunduh PDF' : 'melihat pratinjau')) return;
+  let win = null;
+  try {
+    siapPdf();
+    if (mode !== 'unduh') win = window.open('', '_blank');   // dibuka langsung saat klik agar tidak diblokir browser
+    const pdf = pdfMake.createPdf(await siapkanDoc(r));
+    if (mode === 'unduh') { pdf.download(namaFilePdf(r)); toast('PDF sedang diunduh...'); return; }
+    pdf.getBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      if (win) { win.location.href = url; } else { toast('Jendela pratinjau diblokir browser. Gunakan tombol Unduh PDF.', 'err'); }
+    });
+  } catch (e) { if (win) win.close(); toast('Gagal membuat PDF: ' + e.message, 'err'); }
+}
+const unduhPdf = () => cetakPdf(laporan, 'unduh');
+const pratinjauPdf = () => cetakPdf(laporan, 'pratinjau');
+
+/* =====================================================
+   KIRIM KE WHATSAPP: langsung membuka WhatsApp Web + mengunduh PDF
+   (WhatsApp tidak dapat menerima lampiran otomatis dari sebuah tautan,
+    jadi PDF diunduh lalu dilampirkan lewat ikon klip)
+   ===================================================== */
+function updateKirimState() {
+  const hint = $('actionHint'); if (!hint) return;
+  const siap = !!editingId && !dirty;
+  if (siap) { hint.textContent = '✓ Tersimpan'; hint.className = 'hint ok'; }
+  else if (editingId) { hint.textContent = 'Ada perubahan yang belum disimpan'; hint.className = 'hint warn'; }
+  else { hint.textContent = ''; hint.className = 'hint'; }
+}
+
+/* =====================================================
+   PRATINJAU & KIRIM WHATSAPP (laporan awal: teks + kolase foto)
+   ===================================================== */
+function teksWA() { return KejadianWA.buildWAKejadian(laporan); }
+function renderWA() {
+  const out = $('outputWA'); if (!out || !laporan) return;
+  out.textContent = teksWA();
+  const n = (laporan.fotos || []).filter((f) => f && f.dataUrl).length;
+  $('waInfo').textContent = n ? `${n} foto lampiran akan dikirim sebagai 1 kolase foto` + (n > 9 ? ' (9 foto pertama; sisanya ada di PDF)' : '') : 'Tidak ada foto lampiran — hanya teks yang dikirim';
+}
+function togglePratinjauWA(force) {
+  const d = $('drawerWA'), buka = force === undefined ? !d.classList.contains('open') : !!force;
+  d.classList.toggle('open', buka);
+  $('hdlWA').style.display = buka ? 'none' : '';
+  if (buka) renderWA();
+}
+async function salinTeksWA() {
+  const t = teksWA();
+  try { await navigator.clipboard.writeText(t); toast('Teks laporan disalin. Tempel di WhatsApp dengan Ctrl+V.'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+    let oke = false; try { oke = document.execCommand('copy'); } catch (e2) { /* abaikan */ } ta.remove();
+    toast(oke ? 'Teks laporan disalin. Tempel di WhatsApp dengan Ctrl+V.' : 'Gagal menyalin teks.', oke ? 'ok' : 'err');
+  }
+}
+function catatanWA() {
+  const c = [], L = laporan;
+  if (!rapikan(L.tanggal)) c.push('tanggal belum diisi');
+  if (!rapikan(L.caseInfo)) c.push('informasi kasus masih kosong');
+  if (!rapikan(L.kronologis) && !L.tindakLanjut.some((x) => rapikan(x.uraian))) c.push('kronologis dan tindak lanjut masih kosong');
+  if (!rapikan(L.preparedBy.nama)) c.push('nama penyusun (Disusun oleh) belum diisi');
+  return c;
+}
+// Kolase foto lampiran: 1 gambar berisi semua foto (maks. 9) dengan judul laporan di bagian atas
+const KOLASE_MAKS = 9;
+let KOLASE_TIMEOUT = 15000;   // foto yang tak kunjung terbaca tidak boleh menahan pengiriman selamanya
+function muatGambar(src) { return new Promise((res, rej) => { const im = new Image(), t = setTimeout(() => rej(new Error('foto tidak terbaca (waktu habis)')), KOLASE_TIMEOUT); im.onload = () => { clearTimeout(t); res(im); }; im.onerror = () => { clearTimeout(t); rej(new Error('foto tidak terbaca')); }; im.src = src; }); }
+function potongTeks(ctx, lebar, s) { let t = s; while (t.length > 1 && ctx.measureText(t).width > lebar) t = t.slice(0, -1); return t === s ? s : t.trimEnd() + '…'; }
+async function buatKolase(L) {
+  const fotos = (L.fotos || []).filter((f) => f && f.dataUrl), pakai = fotos.slice(0, KOLASE_MAKS), lebih = fotos.length - pakai.length, n = pakai.length;
+  if (!n) return null;
+  const imgs = await Promise.all(pakai.map((f) => muatGambar(f.dataUrl)));
+  // Kolase berbentuk potret 4:5 (untuk WhatsApp); foto UTUH (tak dipotong), ruang kosong diisi
+  // versi kabur dari foto itu sendiri; keterangan pada strip tersendiri di bawah foto (tak menimpa foto).
+  const W = 1440, H = 1800, GAP = 12, HEAD = 66, CAPH = 64;
+  const POLA = { 1: [1], 2: [1, 1], 3: [1, 2], 4: [2, 2], 5: [2, 3], 6: [2, 2, 2], 7: [3, 3, 1], 8: [3, 3, 2], 9: [3, 3, 3] };
+  const pola = POLA[n] || POLA[9], barisIdx = []; let k = 0;
+  pola.forEach((jm) => { barisIdx.push(imgs.slice(k, k + jm).map((im, j2) => k + j2)); k += jm; });
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d'); if (!ctx) throw new Error('canvas tidak tersedia');
+  ctx.fillStyle = '#EEF1F5'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#10243D'; ctx.fillRect(0, 0, W, HEAD); ctx.fillStyle = '#C93B2E'; ctx.fillRect(0, 0, W, 5);
+  ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'middle'; ctx.font = '800 30px Inter, Arial, sans-serif';
+  const judul = 'LAPORAN KEJADIAN' + (rapikan(L.fileNumber) ? ' • ' + rapikan(L.fileNumber) : '') + ' • ' + KejadianWA.hariTgl(L.tanggal) + ` • ${fotos.length} foto`;
+  ctx.fillText(potongTeks(ctx, W - 60, judul), 30, HEAD / 2 + 3); ctx.textBaseline = 'alphabetic';
+  const bungkusTeks = (t, lebar, maks) => {
+    const kata = String(t).split(' '), baris = []; let cur = '';
+    kata.forEach((kt) => { const uji = cur ? cur + ' ' + kt : kt; if (ctx.measureText(uji).width <= lebar) cur = uji; else { baris.push(cur); cur = kt; } });
+    if (cur) baris.push(cur);
+    if (baris.length > maks) { baris.length = maks; baris[maks - 1] = potongTeks(ctx, lebar, baris[maks - 1] + '…'); }
+    return baris;
+  };
+  const tersedia = H - HEAD - GAP * (barisIdx.length + 1);
+  const bobot = barisIdx.map((idx) => { const cw2 = (W - GAP * (idx.length + 1)) / idx.length; return Math.max(...idx.map((i) => cw2 * imgs[i].height / imgs[i].width)) + CAPH; });
+  const totalBobot = bobot.reduce((a, b) => a + b, 0), skala = totalBobot > 0 ? tersedia / totalBobot : 1;
+  let y = HEAD + GAP;
+  barisIdx.forEach((idx, r) => {
+    const rh = Math.round(bobot[r] * skala), cw = Math.floor((W - GAP * (idx.length + 1)) / idx.length);
+    const lebarBaris = idx.length * cw + (idx.length - 1) * GAP, x0 = Math.round((W - lebarBaris) / 2);
+    idx.forEach((i, c) => {
+      const im = imgs[i], x = x0 + c * (cw + GAP), fh = rh - CAPH;
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, cw, fh); ctx.clip();
+      // latar kabur dari foto yang sama, mengisi penuh sel (agar tidak ada ruang kosong polos)
+      const coverSkala = Math.max(cw / im.width, fh / im.height) * 1.12, bw = im.width * coverSkala, bh = im.height * coverSkala;
+      ctx.filter = 'blur(26px)'; ctx.drawImage(im, x + (cw - bw) / 2, y + (fh - bh) / 2, bw, bh); ctx.filter = 'none';
+      ctx.fillStyle = 'rgba(16,36,61,.28)'; ctx.fillRect(x, y, cw, fh);
+      // foto UTUH, ditengahkan (tidak dipotong sedikit pun)
+      const pad = 10, fit = Math.min((cw - pad * 2) / im.width, (fh - pad * 2) / im.height), pw = im.width * fit, ph = im.height * fit;
+      ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 18;
+      ctx.drawImage(im, x + (cw - pw) / 2, y + (fh - ph) / 2, pw, ph);
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+      ctx.restore();
+      // strip keterangan tersendiri di bawah foto (tak menimpa gambar)
+      ctx.fillStyle = '#10243D'; ctx.fillRect(x, y + fh, cw, CAPH);
+      ctx.fillStyle = '#FFFFFF'; ctx.font = '600 21px Inter, Arial, sans-serif';
+      const cap = rapikan(pakai[i].caption) || `Foto ${i + 1}`;
+      const teksCap = (lebih > 0 && i === n - 1) ? `${cap} (+${lebih} foto lagi di PDF)` : cap;
+      const barisCap = bungkusTeks((i + 1) + '. ' + teksCap, cw - 24, 2), lh = 26, mulai = y + fh + (CAPH - barisCap.length * lh) / 2 + 20;
+      barisCap.forEach((b, idxB) => ctx.fillText(b, x + 12, mulai + idxB * lh));
+    });
+    y += rh + GAP;
+  });
+  const blob = (tipe, q) => new Promise((res, rej) => cv.toBlob((b) => b ? res(b) : rej(new Error('gagal membuat gambar')), tipe, q));
+  return { png: await blob('image/png'), jpg: await blob('image/jpeg', 0.9), lebar: W, tinggi: H, jumlah: n };
+}
+async function kirimAwalWA() {
+  const c = catatanWA();
+  if (c.length && !confirm('Laporan awal belum lengkap:\n- ' + c.join('\n- ') + '\n\nTetap kirim ke WhatsApp?')) return;
+  const teks = teksWA(), adaFoto = (laporan.fotos || []).some((f) => f && f.dataUrl);
+  if (!adaFoto) {
+    window.open(AVS.urlWA(teks), '_blank', 'noopener');
+    toast('WhatsApp Web dibuka dengan teks laporan. Pilih grup/kontak lalu kirim.', 'ok', 7000); return;
+  }
+  // kolase dibuat DULU (sebelum tab WhatsApp terbuka) agar gambar bisa disalin ke clipboard selagi halaman ini masih aktif
+  let k = null, galat = '';
+  try { k = await buatKolase(laporan); } catch (e) { galat = e && e.message ? e.message : String(e); }
+  let disalin = false;
+  if (k) {
+    try { if (navigator.clipboard && window.ClipboardItem) { await navigator.clipboard.write([new ClipboardItem({ 'image/png': k.png })]); disalin = true; } } catch (e) { /* diabaikan: berkas tetap diunduh */ }
+    unduhBlob(k.jpg, 'Kolase Foto ' + (rapikan(laporan.fileNumber) || 'Laporan Kejadian').replace(/[\\/:*?"<>|]/g, '-') + '.jpg');
+  }
+  window.open(AVS.urlWA(teks), '_blank', 'noopener');
+  if (!k) toast('WhatsApp Web dibuka dengan teks, tetapi kolase foto gagal dibuat (' + galat + ').', 'err', 9000);
+  else toast(disalin
+    ? 'WhatsApp Web dibuka dengan teks laporan. Kolase foto sudah disalin: klik kolom pesan lalu tekan Ctrl+V untuk melampirkannya (juga diunduh sebagai berkas cadangan).'
+    : 'WhatsApp Web dibuka dengan teks laporan. Kolase foto diunduh: di WhatsApp pilih ikon klip (+) → Foto & Video → pilih berkas kolase yang baru diunduh.', 'ok', 14000);
+}
+
+/* ---------- Simpan, daftar, ubah, hapus ---------- */
+async function updateBadge() {
+  const b = $('editBadge');
+  if (!editingId) { b.style.display = 'none'; b.innerHTML = ''; return; }
+  let r = null; try { r = await dbGet(editingId); } catch (e) { /* abaikan */ }
+  if (!r || !editingId) { b.style.display = 'none'; b.innerHTML = ''; return; }
+  const k = AVS.ketJejak(r);
+  b.innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
+    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>`;
+  b.style.display = 'flex';
+}
+async function bukaRiwayat(id) {
+  const rid = id || editingId; if (!rid) return;
+  let r = null; try { r = await dbGet(rid); } catch (e) { /* abaikan */ } if (!r) return;
+  const judul = `${rapikan(r.fileNumber) || '(tanpa nomor)'} • Laporan Kejadian`;
+  const out = AVS.renderRiwayat(r, judul);
+  $('rwSub').textContent = out.sub; $('rwList').innerHTML = out.html;
+  togglePratinjauWA(false); $('drawerRw').classList.add('open');
+}
+function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
+async function simpan() {
+  if (!laporan.tanggal || !rapikan(laporan.caseInfo)) { toast('Isi Tanggal dan Informasi Kasus terlebih dahulu.', 'err'); return; }
+  const rec = clone(laporan);
+  rec.id = editingId || ('kj' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5));
+  rec.savedAt = new Date().toISOString(); rec.versi = 2;
+  try {
+    await tetapkanNomor(rec);
+    let lama = null; if (editingId) { try { lama = await dbGet(editingId); } catch (e) { /* abaikan */ } }
+    const perubahan = lama ? AVS.diffKejadian(lengkapiModel(clone(lama)), rec) : [];
+    AVS.catatJejak(rec, lama, perubahan);   // waktu dibuat, waktu pembaruan terakhir, riwayat & rincian perubahan
+    await dbPut(rec);
+    catatNomor(rec);
+    laporan.fileNumber = rec.fileNumber; laporan.nomorDikunci = rec.nomorDikunci; renderNomor();
+    await dbDel(KEY_DRAFT).catch(() => {});
+    clearTimeout(draftTimer);
+    editingId = laporan.id = rec.id; dirty = false; updateBadge(); updateKirimState(); updateCount();
+    toast((lama ? 'Laporan diperbarui (' + AVS.waktu(rec.diperbaruiPada) + ')' : 'Laporan berhasil disimpan') + (rec.fileNumber ? ' dengan nomor ' + rec.fileNumber : '') + '.', 'ok', 5500);
+  } catch (e) { toast('Gagal menyimpan: penyimpanan browser penuh atau diblokir.', 'err'); }
+}
+async function updateCount() {
+  try { $('cntSaved').textContent = (await dbAll()).filter((r) => r.id !== KEY_DRAFT).length; } catch (e) { /* tanpa penyimpanan */ }
+}
+function jejakHTML(r) {
+  const k = AVS.ketJejak(r);
+  if (k.j.pernahDiubah) return `<span class="upd">✎ Diperbarui</span><span>${esc(k.dibuat)}</span><span>•</span><span><b>${esc(k.ubah)}</b></span>`;
+  return `<span>${esc(k.dibuat)}</span>${k.j.tercatat ? '<span>•</span><span>Belum pernah diubah</span>' : ''}`;
+}
+async function renderTersimpan() {
+  const box = $('savedList');
+  let list = [];
+  try { list = (await dbAll()).filter((r) => r.id !== KEY_DRAFT); } catch (e) { box.innerHTML = '<div style="text-align:center;color:#C93B2E;padding:40px 0;">Penyimpanan browser tidak tersedia.</div>'; return; }
+  list.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
+  if (!list.length) { box.innerHTML = '<div style="text-align:center;color:#64748b;padding:40px 0;">Belum ada laporan kejadian tersimpan.</div>'; return; }
+  box.innerHTML = list.map((r) => `
+<div class="saved-card">
+<div style="min-width:0;">
+<div style="font-weight:bold;color:var(--primary);font-size:14px;">${esc(tglIndo(r.tanggal))}${r.fileNumber ? ' • No. ' + esc(r.fileNumber) : ''}</div>
+<div class="saved-cases">${esc(rapikan(r.caseInfo) || '(tanpa informasi kasus)')}</div>
+<div class="jejak">${jejakHTML(r)}</div>
+<div class="saved-meta">Disusun: ${esc((r.preparedBy && r.preparedBy.nama) || '-')} • ${(r.tindakLanjut || []).length} baris tindak lanjut • ${(r.fotos || []).length} foto</div>
+</div>
+<div class="saved-actions">
+<button type="button" class="btn-info" onclick="pratinjauId('${esc(r.id)}')">Pratinjau</button>
+<button type="button" class="btn-warning" onclick="editReport('${esc(r.id)}')">Ubah</button>
+<button type="button" class="btn-success" onclick="unduhId('${esc(r.id)}')">Unduh PDF</button>
+<button type="button" class="btn-info" style="background:#EEF1F6;color:#475569" onclick="bukaRiwayat('${esc(r.id)}')">Riwayat</button>
+<button type="button" class="btn-danger" onclick="hapusLaporan('${esc(r.id)}')">Hapus</button>
+</div></div>`).join('');
+}
+async function unduhId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapiModel(r), 'unduh'); }
+async function pratinjauId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapiModel(r), 'pratinjau'); }
+async function editReport(id) {
+  const r = await dbGet(id); if (!r) return;
+  if (dirty && !confirm('Isian yang sedang dibuka belum disimpan dan akan diganti. Lanjutkan?')) return;
+  laporan = lengkapiModel(clone(r)); editingId = r.id; laporan.id = r.id; dirty = false;
+  isiForm(); switchPage('form');
+}
+async function hapusLaporan(id) {
+  if (!confirm('Hapus laporan kejadian ini beserta foto lampirannya? Tindakan ini tidak dapat dibatalkan.')) return;
+  await dbDel(id);
+  if (editingId === id) { editingId = null; laporan.id = null; updateBadge(); updateKirimState(); }
+  updateCount(); renderTersimpan();
+}
+async function newReport() {
+  if (dirty && !confirm('Mulai laporan baru? Isian saat ini akan dikosongkan (laporan yang sudah disimpan tidak terpengaruh).')) return;
+  clearTimeout(draftTimer);
+  laporan = modelBaru(); editingId = null; dirty = false;
+  await dbDel(KEY_DRAFT).catch(() => {});
+  isiForm(); switchPage('form');
+}
+function switchPage(page) {
+  const form = page === 'form';
+  $('pageForm').style.display = form ? 'flex' : 'none';
+  $('pageSaved').style.display = form ? 'none' : 'flex';
+  $('statBar').style.display = form ? 'flex' : 'none';
+  ['hdrDiv', 'hdrTgl', 'hdrNomor'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
+  $('btnFormTab').classList.toggle('on', form);
+  $('btnSavedTab').classList.toggle('on', !form);
+  if (form) updateBadge(); else $('editBadge').style.display = 'none';   // strip "mengubah laporan" hanya di tab isian
+  if (!form) renderTersimpan();
+}
+
+/* ---------- Daftar bagian (rail) ---------- */
+const BAGIAN = ['sec1', 'sec2', 'sec3', 'sec4', 'sec5', 'sec6', 'sec7'];
+function bagianSelesai() {
+  const L = laporan;
+  return {
+    sec1: !!(rapikan(L.preparedBy.nama) && rapikan(L.approvedBy.nama)),
+    sec2: !!rapikan(L.caseInfo),
+    sec3: !!rapikan(L.kronologis),
+    sec4: L.tindakLanjut.some((x) => rapikan(x.uraian)),
+    sec5: L.dataRows.some((d) => rapikan(d.nilai)) || L.terlampir.some((t) => rapikan(t)),
+    sec6: !!(rapikan(L.penutup) && rapikan(L.tempat)),
+    sec7: L.fotos.length > 0
+  };
+}
+function renderRail() {
+  if (!laporan || !$('railNav')) return;
+  const d = bagianSelesai(); let n = 0;
+  document.querySelectorAll('#railNav a').forEach((a, i) => {
+    const ok = !!d[a.dataset.sec]; if (ok) n++;
+    a.classList.toggle('done', ok); a.querySelector('i').textContent = ok ? '✓' : String(i + 1);
+  });
+  $('railBar').style.width = Math.round(n / BAGIAN.length * 100) + '%';
+  $('railTxt').textContent = `${n} dari ${BAGIAN.length} bagian terisi`;
+}
+function lompatBagian(id) { const el = $(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+function pantauGulir() {
+  const main = $('kjMain'); if (!main) return;
+  const top = main.getBoundingClientRect().top; let aktif = BAGIAN[0];
+  BAGIAN.forEach((id) => { const r = $(id).getBoundingClientRect(); if (r.top - top <= 40) aktif = id; });
+  if (main.scrollTop + main.clientHeight >= main.scrollHeight - 4) aktif = BAGIAN[BAGIAN.length - 1];
+  document.querySelectorAll('#railNav a').forEach((a) => a.classList.toggle('on', a.dataset.sec === aktif));
+}
+
+/* ---------- Backup (tanda tangan sengaja tidak ikut) ---------- */
+function untukBackup(list) { return list.filter((r) => r.id !== KEY_DRAFT).map((r) => { const c = Object.assign({}, r); delete c.ttd; return c; }); }
+async function exportBackup() {
+  let data = [];
+  try { data = untukBackup(await dbAll()); } catch (e) { toast('Penyimpanan browser tidak tersedia.', 'err'); return; }
+  if (!data.length) { toast('Belum ada laporan untuk dibackup.', 'err'); return; }
+  const blob = new Blob([JSON.stringify({ app: 'laporan-kejadian-avsec-supadio', versi: 2, laporan: data })], { type: 'application/json' });
+  unduhBlob(blob, `backup-laporan-kejadian-${hariIni()}.json`);
+  toast(`${data.length} laporan dibackup (tanda tangan tidak disertakan demi keamanan).`);
+}
+function importBackup(input) {
+  const file = input.files && input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const d = JSON.parse(reader.result);
+      const arr = Array.isArray(d) ? d : d.laporan;
+      if (!Array.isArray(arr)) throw new Error('format');
+      const ids = new Set((await dbAll()).map((r) => r.id));
+      let baru = 0, lewat = 0;
+      for (const r of arr) {
+        if (!r || !r.id || r.id === KEY_DRAFT || !r.tanggal || ids.has(String(r.id))) { lewat++; continue; }
+        r.id = String(r.id); delete r.ttd; await dbPut(lengkapiModel(r)); ids.add(r.id); baru++;
+      }
+      updateCount(); renderTersimpan();
+      toast(`Impor selesai: ${baru} laporan ditambahkan, ${lewat} dilewati (sudah ada / tidak valid).`);
+    } catch (e) { toast('File backup tidak valid.', 'err'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- Inisialisasi ---------- */
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if ($('ttdModal').style.display !== 'none') tutupTTD(); else if ($('urutModal').style.display !== 'none') tutupUrutan(); else if ($('drawerWA').classList.contains('open')) togglePratinjauWA(false); else if ($('drawerRw').classList.contains('open')) tutupRiwayat(); } });
+
+async function mulai() {
+  AVS.nav('kejadian');
+  cekPerangkat();
+  isiSaran();
+  laporan = modelBaru();
+  try {
+    const d = await dbGet(KEY_DRAFT);
+    if (d) {
+      editingId = d.editingId || null; delete d.editingId; d.id = editingId;
+      laporan = lengkapiModel(d); dirty = true;
+      toast('Draf terakhir yang belum disimpan dipulihkan.');
+    }
+  } catch (e) { /* tanpa draf */ }
+  isiForm();
+  updateCount();
+  const km = $('kjMain'); if (km) { km.addEventListener('scroll', pantauGulir, { passive: true }); pantauGulir(); }
+  await tanganiHash();
+}
+/* Tautan dari Beranda: kejadian.html#tersimpan | #pdf=ID | #ubah=ID */
+async function tanganiHash() {
+  const h = decodeURIComponent(location.hash || '').replace(/^#/, ''); if (!h) return;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* abaikan */ }
+  if (h === 'tersimpan') switchPage('saved');
+  else if (h.startsWith('pdf=')) { switchPage('saved'); await unduhId(h.slice(4)); }
+  else if (h.startsWith('ubah=')) await editReport(h.slice(5));
+}
+window.addEventListener('DOMContentLoaded', mulai);
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((err) => console.warn('Service worker gagal didaftarkan:', err));
+  });
+}
+
+</script>
+</body>
+</html>

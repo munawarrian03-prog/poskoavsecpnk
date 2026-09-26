@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beranda - Sistem Pelaporan AVSEC Bandara Supadio</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10243D">
+<link rel="icon" type="image/png" href="Logo/AVS-192.png">
+<link rel="apple-touch-icon" href="Logo/AVS-192.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="layout.css">
+<link rel="stylesheet" href="beranda.css">
+</head>
+<body class="locked">
+
+<div class="main-wrapper">
+<div id="topBar"></div>
+
+<div class="d-wrap" id="dash">
+
+<div class="rl-head">
+<div><h2>Rekap Laporan</h2><p>Panduan serah-terima untuk shift berikutnya</p></div>
+<div class="rl-sp"></div>
+<div class="bell-wrap">
+<button type="button" class="bell-btn" id="btnBell" onclick="Beranda.bukaShiftKosong()" title="Laporan belum lengkap bulan ini">
+<svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+<span class="bell-badge" id="bellBadge" style="display:none">0</span>
+</button>
+</div>
+<a class="btn-semua-rekap" id="btnSemuaRekap" href="rekap.html" title="Lihat rekap lengkap semua laporan">Lihat Semua Rekap ›</a>
+</div>
+
+<div class="sec-lbl"><h4>Shift Sebelumnya</h4><span id="shiftSbLabel">memuat…</span></div>
+<div class="grid12" id="rowShiftSb">
+<div class="dcard c4 rauto"><div class="h"><div><h3>Personel Tidak Hadir</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Fasilitas Bermasalah</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>📓 Catatan Serah Terima</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+</div>
+
+<div class="sec-lbl"><h4>Bulan Ini</h4><span id="bulanIniLabel"></span></div>
+<div class="grid12" id="rowBulanIni1">
+<div class="dcard c6 r250"><div class="h"><div><h3>Ketidakhadiran Terbanyak</h3><div class="sub">5 teratas bulan ini • dihitung per orang per hari</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c6 r250"><div class="h"><div><h3>Alasan Ketidakhadiran</h3><div class="sub">Komposisi bulan ini</div></div></div><div class="empty">Memuat data…</div></div>
+</div>
+<div class="grid12" id="rowFasilitas">
+<div class="dcard c12 rauto"><div class="h"><div><h3>Fasilitas Sering Bermasalah</h3><div class="sub">5 teratas bulan ini</div></div></div><div class="empty">Memuat data…</div></div>
+</div>
+<div class="grid12" id="rowKejadian">
+<div class="dcard c4 r274"><div class="h"><div><h3>Jumlah Kejadian</h3><div class="sub">Bulan ini</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 r274"><div class="h"><div><h3>Kejadian per Minggu</h3><div class="sub">Berdasarkan tanggal laporan kejadian</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 r274"><div class="h"><div><h3>Kejadian Terbaru</h3><div class="sub">Klik untuk membuka laporan</div></div><a class="pill" href="kejadian.html#tersimpan">LIHAT SEMUA</a></div><div class="empty">Memuat data…</div></div>
+</div>
+
+<div class="note" id="noteBawah"></div>
+</div>
+</div>
+
+<!-- MODAL: LAPORAN BELUM LENGKAP (3 jenis) -->
+<div class="modal-overlay" id="kosongOverlay">
+<div class="modal-container" style="max-width:560px">
+<div class="modal-header"><span class="modal-title">LAPORAN BELUM LENGKAP</span><button type="button" class="modal-close" onclick="Beranda.tutupShiftKosong()">✕</button></div>
+<div class="modal-body" id="kosongBody"></div>
+<div class="modal-footer"><button type="button" class="btn-info" onclick="Beranda.salinPengingatKosong()">Salin Pengingat WA</button><button type="button" class="btn-cancel" onclick="Beranda.tutupShiftKosong()">Tutup</button></div>
+</div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="shell.js"></script>
+<script src="data.js"></script>
+<script src="beranda.js"></script>
+</body>
+</html>
