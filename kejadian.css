@@ -171,7 +171,7 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
    (NOMOR tetap statis di posisi asalnya, tidak peduli kolom ini muncul atau tidak) */
 #tbRow2 { position: relative; flex-wrap: nowrap; }
 #hdrLokasiManual { display: none; }
-#hdrLokasiManual.show { display: flex; flex-direction: column; position: absolute; left: 0; top: 0; }
+#hdrLokasiManual.show { display: flex; position: absolute; left: 0; top: 0; }
 #hdrNomor { flex: none; }
 
 /* Samakan lebar Tanggal, Shift, Lokasi Kejadian, dan kolom tulis lokasi manual */
