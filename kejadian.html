@@ -989,8 +989,8 @@ async function salinTeksWA() {
     toast(oke ? 'Teks laporan disalin. Tempel di WhatsApp dengan Ctrl+V.' : 'Gagal menyalin teks.', oke ? 'ok' : 'err');
   }
 }
-function catatanWA() {
-  const c = [], L = laporan;
+function catatanWA(L) {
+  const c = []; L = L || laporan;
   if (!rapikan(L.tanggal)) c.push('tanggal belum diisi');
   if (!rapikan(L.caseInfo)) c.push('informasi kasus masih kosong');
   if (!rapikan(L.kronologis) && !L.tindakLanjut.some((x) => rapikan(x.uraian))) c.push('kronologis dan tindak lanjut masih kosong');
@@ -1093,6 +1093,30 @@ async function updateBadge() {
     `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>`;
   b.style.display = 'flex';
 }
+/* ---------- Kirim WA dari Daftar Tersimpan (sama seperti kirimAwalWA, untuk laporan yang sudah tersimpan) ---------- */
+async function kirimWAId(id) {
+  const rMentah = await dbGet(id); if (!rMentah) return;
+  const r = lengkapiModel(rMentah);
+  const c = catatanWA(r);
+  if (c.length && !confirm('Laporan ini belum lengkap:\n- ' + c.join('\n- ') + '\n\nTetap kirim ke WhatsApp?')) return;
+  const teks = KejadianWA.buildWAKejadian(r), adaFoto = (r.fotos || []).some((f) => f && f.dataUrl);
+  if (!adaFoto) {
+    window.open(AVS.urlWA(teks), '_blank', 'noopener');
+    toast('WhatsApp Web dibuka dengan teks laporan. Pilih grup/kontak lalu kirim.', 'ok', 7000); return;
+  }
+  let k = null, galat = '';
+  try { k = await buatKolase(r); } catch (e) { galat = e && e.message ? e.message : String(e); }
+  let disalin = false;
+  if (k) {
+    try { if (navigator.clipboard && window.ClipboardItem) { await navigator.clipboard.write([new ClipboardItem({ 'image/png': k.png })]); disalin = true; } } catch (e) { /* diabaikan: berkas tetap diunduh */ }
+    unduhBlob(k.jpg, 'Kolase Foto ' + (rapikan(r.fileNumber) || 'Laporan Kejadian').replace(/[\\/:*?"<>|]/g, '-') + '.jpg');
+  }
+  window.open(AVS.urlWA(teks), '_blank', 'noopener');
+  if (!k) toast('WhatsApp Web dibuka dengan teks, tetapi kolase foto gagal dibuat (' + galat + ').', 'err', 9000);
+  else toast(disalin
+    ? 'WhatsApp Web dibuka dengan teks laporan. Kolase foto sudah disalin: klik kolom pesan lalu tekan Ctrl+V untuk melampirkannya (juga diunduh sebagai berkas cadangan).'
+    : 'WhatsApp Web dibuka dengan teks laporan. Kolase foto diunduh: di WhatsApp pilih ikon klip (+) → Foto & Video → pilih berkas kolase yang baru diunduh.', 'ok', 14000);
+}
 async function bukaRiwayat(id) {
   const rid = id || editingId; if (!rid) return;
   let r = null; try { r = await dbGet(rid); } catch (e) { /* abaikan */ } if (!r) return;
@@ -1147,6 +1171,7 @@ async function renderTersimpan() {
 <div class="saved-actions">
 <button type="button" class="btn-info" onclick="pratinjauId('${esc(r.id)}')">Pratinjau</button>
 <button type="button" class="btn-warning" onclick="editReport('${esc(r.id)}')">Ubah</button>
+<button type="button" class="btn-success btn-wa" onclick="kirimWAId('${esc(r.id)}')">Kirim WA</button>
 <button type="button" class="btn-success" onclick="unduhId('${esc(r.id)}')">Unduh PDF</button>
 <button type="button" class="btn-info" style="background:#EEF1F6;color:#475569" onclick="bukaRiwayat('${esc(r.id)}')">Riwayat</button>
 <button type="button" class="btn-danger" onclick="hapusLaporan('${esc(r.id)}')">Hapus</button>
