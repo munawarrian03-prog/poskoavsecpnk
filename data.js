@@ -192,19 +192,29 @@
     const s = pecah(startISO), e = pecah(endISO);
     const sd = new Date(s.y, s.m, s.d), ed = new Date(e.y, e.m, e.d);
     const totalHari = Math.round((ed - sd) / 86400000) + 1;
-    const mingguan = totalHari > 60;
-    const buckets = [];
-    if (!mingguan) {
-      for (let i = 0; i < totalHari; i++) { const d = new Date(sd); d.setDate(d.getDate() + i); buckets.push({ mulai: fmtISO(d.getFullYear(), d.getMonth(), d.getDate()), akhir: fmtISO(d.getFullYear(), d.getMonth(), d.getDate()), label: String(d.getDate()) }); }
-    } else {
+    let granularitas = 'harian', buckets = [];
+    if (totalHari >= 365) {
+      granularitas = 'bulanan';
+      let cur = new Date(sd.getFullYear(), sd.getMonth(), 1), idx = 1;
+      while (cur <= ed) {
+        const mulai = new Date(cur), akhir = new Date(cur.getFullYear(), cur.getMonth() + 1, 0);
+        if (akhir > ed) akhir.setTime(ed.getTime());
+        buckets.push({ mulai: fmtISO(mulai.getFullYear(), mulai.getMonth(), mulai.getDate()), akhir: fmtISO(akhir.getFullYear(), akhir.getMonth(), akhir.getDate()), label: 'Bl' + idx });
+        cur.setMonth(cur.getMonth() + 1); idx++;
+      }
+    } else if (totalHari > 30) {
+      granularitas = 'mingguan';
       let cur = new Date(sd), idx = 1;
       while (cur <= ed) {
         const mulai = new Date(cur), akhir = new Date(cur); akhir.setDate(akhir.getDate() + 6); if (akhir > ed) akhir.setTime(ed.getTime());
         buckets.push({ mulai: fmtISO(mulai.getFullYear(), mulai.getMonth(), mulai.getDate()), akhir: fmtISO(akhir.getFullYear(), akhir.getMonth(), akhir.getDate()), label: 'Mg' + idx });
         cur.setDate(cur.getDate() + 7); idx++;
       }
+    } else {
+      granularitas = 'harian';
+      for (let i = 0; i < totalHari; i++) { const d = new Date(sd); d.setDate(d.getDate() + i); buckets.push({ mulai: fmtISO(d.getFullYear(), d.getMonth(), d.getDate()), akhir: fmtISO(d.getFullYear(), d.getMonth(), d.getDate()), label: String(d.getDate()) }); }
     }
-    return { mingguan, totalHari, buckets };
+    return { granularitas, totalHari, buckets };
   }
   function isiBucket(buckets, tanggalList) {
     return buckets.map((b) => ({ label: b.label, jumlah: tanggalList.filter((t) => t >= b.mulai && t <= b.akhir).length }));
@@ -243,7 +253,7 @@
       .sort((a, b) => b.jumlah - a.jumlah || a.nama.localeCompare(b.nama, 'id'));
     const tidakHadir = grup.size, orangTerlibat = orang.size;
     const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, Array.from(grup.values()).map((g) => g.tgl));
-    return { tidakHadir, orangTerlibat, kehadiran: totalJml > 0 ? (totalHadir / totalJml) * 100 : null, laporanTersimpan, shiftAda: shiftAda.size, perRegu, daftar, tren, granularitas: bk.mingguan ? 'mingguan' : 'harian' };
+    return { tidakHadir, orangTerlibat, kehadiran: totalJml > 0 ? (totalHadir / totalJml) * 100 : null, laporanTersimpan, shiftAda: shiftAda.size, perRegu, daftar, tren, granularitas: bk.granularitas };
   }
 
   // Fasilitas bermasalah, GABUNGAN seluruh rentang.
@@ -277,9 +287,9 @@
   function statKejadianRentang(list, startISO, endISO) {
     const daftar = (list || []).filter((r) => dalamRentang(r && r.tanggal, startISO, endISO))
       .sort((a, b) => String(b.tanggal).localeCompare(String(a.tanggal)) || String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
-      .map((r) => ({ id: r.id, tanggal: r.tanggal, judul: rapikan(r.caseInfo) || '(tanpa informasi kasus)', lokasi: rapikan(r.tempat) || rapikan(r.lokasi) || '-', fileNumber: rapikan(r.fileNumber) }));
+      .map((r) => ({ id: r.id, tanggal: r.tanggal, judul: rapikan(r.caseInfo) || '(tanpa informasi kasus)', shift: rapikan(r.shift) || '-', lokasiKejadian: rapikan(r.lokasiKejadian) || rapikan(r.tempat) || '-', fileNumber: rapikan(r.fileNumber) }));
     const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, daftar.map((x) => x.tanggal));
-    return { jumlah: daftar.length, daftar, tren, granularitas: bk.mingguan ? 'mingguan' : 'harian' };
+    return { jumlah: daftar.length, daftar, tren, granularitas: bk.granularitas };
   }
 
   // Kepatuhan pelaporan shift, GABUNGAN 3 jenis (Personel/Fasilitas/Log Book), seluruh rentang.
