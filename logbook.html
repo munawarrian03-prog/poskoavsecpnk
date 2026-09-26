@@ -134,6 +134,11 @@
 <div class="rwlist" id="rwList"></div>
 <div class="rwnote">Riwayat menyimpan 30 entri terakhir per catatan (entri "Dibuat" selalu dipertahankan). Riwayat mencatat perubahan, tidak dapat mengembalikan versi lama.</div>
 </aside>
+<aside class="drawer" id="drawerLihat">
+<div class="dh"><span>LIHAT CATATAN</span><button type="button" onclick="tutupLihat()" title="Tutup">✕</button></div>
+<div class="lhsub" id="lihatSub"></div>
+<div class="lhbody" id="lihatIsi"></div>
+</aside>
 
 <!-- MODAL LIHAT -->
 <div class="modal-overlay" id="viewModal">
@@ -309,7 +314,7 @@ function generateWAText() {
   out += info.ada && info.nama ? `Dibuat oleh,\n${info.jabatanLabel},\n( ${info.nama.toUpperCase()} )` : `Dibuat oleh,\n(menunggu Laporan Personel shift ini)`;
   return out;
 }
-function togglePratinjau(force) { const d = $('drawer'), buka = force === undefined ? !d.classList.contains('open') : !!force; d.classList.toggle('open', buka); if (buka) refreshPratinjauLive(); }
+function togglePratinjau(force) { const d = $('drawer'), buka = force === undefined ? !d.classList.contains('open') : !!force; d.classList.toggle('open', buka); if (buka) { refreshPratinjauLive(); tutupRiwayat(); tutupLihat(); } }
 function refreshPratinjauLive() { if ($('drawer').classList.contains('open')) $('outputReport').textContent = generateWAText(); }
 function kirimWA() { window.open(AVS.urlWA(generateWAText()), '_blank'); }
 function salinWA() { const txt = generateWAText(); navigator.clipboard.writeText(txt).then(() => toast('Teks WA disalin.')).catch(() => { const ta = document.createElement('textarea'); ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Teks WA disalin.'); } catch(e) { toast('Gagal menyalin.','err'); } ta.remove(); }); }
@@ -388,12 +393,12 @@ function renderSavedReports() {
         <span class="pchip" style="font-size:10px;font-weight:800;border-radius:8px;padding:3px 9px;background:${adaST ? '#FCF1DF' : '#EEF1F6'};color:${adaST ? '#9A5F12' : '#5C6675'}">${adaST ? 'Ada catatan serah terima' : 'Tanpa catatan serah terima'}</span>
       </div></div>
       <div class="lb-actions">
-        <button style="background:#E4F3F4;color:#0F5F65" onclick="viewReport('${r.id}')">Lihat</button>
-        <button style="background:#FCF1DF;color:#9A5F12" onclick="loadForEdit('${r.id}')">Ubah</button>
-        <button style="background:#E4F3F4;color:#0F5F65" onclick="viewReport('${r.id}', true)">Kirim WA</button>
-        <button style="background:#DCEEE3;color:#1E6B3E" onclick="unduhPDF('${r.id}')">Unduh PDF</button>
-        <button style="background:#EEF1F6;color:#475569" onclick="bukaRiwayat('${r.id}')">Riwayat</button>
-        <button style="background:#FBE9E7;color:#A82F24" onclick="deleteReport('${r.id}')">Hapus</button>
+        <button class="btn-info" onclick="bukaLihat('${r.id}')">Lihat</button>
+        <button class="btn-warning" onclick="loadForEdit('${r.id}')">Ubah</button>
+        <button class="btn-success btn-wa" onclick="viewReport('${r.id}')">Kirim WA</button>
+        <button class="btn-success" onclick="unduhPDF('${r.id}')">Unduh PDF</button>
+        <button class="btn-info" style="background:#EEF1F6;color:#475569" onclick="bukaRiwayat('${r.id}')">Riwayat</button>
+        <button class="btn-danger" onclick="deleteReport('${r.id}')">Hapus</button>
       </div>
     </div>`;
   }).join('') || '<div style="padding:30px;text-align:center;color:#8A94A6;font-weight:600">Belum ada catatan tersimpan.</div>';
@@ -405,7 +410,7 @@ function generateWATextFromRecord(r) {
   $('tanggal').value = old.t; $('shift').value = old.s; $('regu').value = old.r; catatanKegiatan = old.ck; $('serahTerima').value = old.st;
   return txt;
 }
-function viewReport(id, kirim) {
+function viewReport(id) {
   const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
   modalReportId = id;
   const txt = generateWATextFromRecord(r);
@@ -414,7 +419,6 @@ function viewReport(id, kirim) {
   $('modalCopyBtn').onclick = () => { navigator.clipboard.writeText(txt).then(() => toast('Teks disalin.')); };
   $('modalWaBtn').onclick = () => window.open(AVS.urlWA(txt), '_blank');
   $('viewModal').style.display = 'flex';
-  if (kirim) window.open(AVS.urlWA(txt), '_blank');
 }
 function closeViewModal() { $('viewModal').style.display = 'none'; modalReportId = null; }
 
@@ -449,9 +453,26 @@ function bukaRiwayat(id) {
   const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
   const { sub, html } = AVS.renderRiwayat(r, `Regu ${r.regu} · ${r.shift} · ${formatTanggalIndo(r.tanggal)}`);
   $('rwSub').textContent = sub; $('rwList').innerHTML = html;
-  $('drawerRw').classList.add('open');
+  togglePratinjau(false); tutupLihat(); $('drawerRw').classList.add('open');
 }
 function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
+
+/* ---------- Laci "Lihat" (tampilan web hanya-baca, tidak dapat diubah) ---------- */
+function bukaLihat(id) {
+  const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
+  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
+  const catatan = r.catatanKegiatan || [];
+  let html = `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${catatan.length})</div>`;
+  html += catatan.length
+    ? catatan.map((c) => `<div class="lb-auto-item"><span>${esc(rapikan(c.uraian)) || '(kosong)'}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(c.jam || '--:--')}</span></div>`).join('')
+    : '<div class="lihat-empty">Belum ada catatan waktu.</div>';
+  html += '</div>';
+  const st = rapikan(r.catatanSerahTerima);
+  html += `<div class="lb-auto"><div class="t"><i></i>Catatan Serah Terima</div><div style="font-size:12.5px;color:var(--ink);line-height:1.6;white-space:pre-wrap">${st ? esc(st) : '<span class="lihat-empty">(kosong)</span>'}</div></div>`;
+  $('lihatIsi').innerHTML = html;
+  togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
+}
+function tutupLihat() { $('drawerLihat').classList.remove('open'); }
 
 /* ---------- Init ---------- */
 window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
