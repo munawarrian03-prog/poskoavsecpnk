@@ -165,7 +165,6 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .toolbar.tb-2row .tb-row .fld select { min-width: 118px; }
 
 /* Lokasi kejadian: dropdown & kolom tulis manual disusun ke bawah (bukan ke samping) */
-#hdrLokasi { align-items: flex-start; }
 #hdrLokasi .lokasi-stack { display: flex; flex-direction: column; gap: 6px; }
 
 /* Samakan lebar Tanggal, Shift, Lokasi Kejadian, dan kolom tulis lokasi manual */
