@@ -96,7 +96,7 @@
 
 <button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
 <aside class="drawer" id="drawer">
-<div class="dh"><span>PRATINJAU WHATSAPP</span><button type="button" id="btnSalinWA" onclick="salinWA()" style="background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Inter';cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="dh"><span>PRATINJAU WHATSAPP</span><button type="button" id="btnSalinWA" onclick="salinWA()" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
 <div class="output-area" id="outputReport">Mengolah laporan...</div>
 </aside>
 <aside class="drawer" id="drawerRw">
@@ -476,6 +476,7 @@ function switchPage(p) {
   $('btnSavedTab').classList.toggle('on', p !== 'form');
   $('hdrTgl').style.display = $('hdrShift').style.display = $('hdrRegu').style.display = $('hdrDiv').style.display = p === 'form' ? 'flex' : 'none';
   $('statBar').style.display = p === 'form' ? 'flex' : 'none';
+  $('hdl').style.display = p === 'form' ? '' : 'none';
   if (p === 'saved') renderSavedReports();
 }
 function renderSavedReports() {

@@ -1131,12 +1131,14 @@ async function newReport() {
 }
 function switchPage(page) {
   const form = page === 'form';
+  togglePratinjauWA(false);
   $('pageForm').style.display = form ? 'flex' : 'none';
   $('pageSaved').style.display = form ? 'none' : 'flex';
   $('statBar').style.display = form ? 'flex' : 'none';
   ['hdrDiv', 'hdrTgl', 'hdrNomor'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
   $('btnFormTab').classList.toggle('on', form);
   $('btnSavedTab').classList.toggle('on', !form);
+  $('hdlWA').style.display = form ? '' : 'none';
   if (form) updateBadge(); else $('editBadge').style.display = 'none';   // strip "mengubah laporan" hanya di tab isian
   if (!form) renderTersimpan();
 }
