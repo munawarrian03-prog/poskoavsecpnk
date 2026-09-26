@@ -105,6 +105,19 @@
     rowEl.parentElement.insertBefore(tr, rowEl.nextSibling);
   }
 
+  // Tabel yang barisnya bisa diklik: aksi klik HANYA dipasang ke baris tabel ini sendiri
+  // (id unik), supaya data tabel lain (mis. Personel) tidak ikut menempel ke baris tabel ini.
+  let nomorTabel = 0;
+  function tabelKlik(rows, thead, trs) {
+    const id = 'rtbl' + (++nomorTabel);
+    setTimeout(() => {
+      document.querySelectorAll(`#${id} tr.klik`).forEach((tr) => {
+        tr.onclick = () => { const i = +tr.dataset.i; if (rows[i]) toggleMekar(tr, badgeTanggal(rows[i].tanggal)); };
+      });
+    }, 0);
+    return `<table class="rtbl" id="${id}"><thead><tr>${thead}</tr></thead><tbody>${trs}</tbody></table>`;
+  }
+
   /* =========================================================
      BLOK PERSONEL
      ========================================================= */
@@ -112,13 +125,7 @@
     const rows = (penuh ? daftar : daftar.slice(0, 5));
     if (!rows.length) return '<div class="empty">Belum ada data ketidakhadiran<br>pada rentang ini.</div>';
     const trs = rows.map((x, i) => `<tr class="klik" data-i="${i}"><td>${i + 1}</td><td class="nm">${E(x.nama.toUpperCase())}</td><td>${E(x.regu)}</td><td><b>${x.jumlah}</b></td><td><span class="tag" style="background:#EEF1F6;color:#5C6675">${E(x.alasan)}</span></td></tr>`).join('');
-    setTimeout(() => {
-      document.querySelectorAll('.rtbl tr.klik').forEach((tr) => {
-        if (tr.dataset.wired) return; tr.dataset.wired = '1';
-        tr.onclick = () => { const i = +tr.dataset.i; if (rows[i]) toggleMekar(tr, badgeTanggal(rows[i].tanggal)); };
-      });
-    }, 0);
-    return `<table class="rtbl"><thead><tr><th>#</th><th>Nama</th><th>Regu</th><th>Hari</th><th>Alasan Utama</th></tr></thead><tbody>${trs}</tbody></table>`;
+    return tabelKlik(rows, '<th>#</th><th>Nama</th><th>Regu</th><th>Hari</th><th>Alasan Utama</th>', trs);
   }
   function renderPersonel() {
     const r = RP;
@@ -141,13 +148,7 @@
     if (!rows.length) return '<div class="empty">Belum ada masalah fasilitas<br>dilaporkan pada rentang ini.</div>';
     const warna = (j) => j === 'Rusak' ? '#A82F24' : '#9A5F12', bg = (j) => j === 'Rusak' ? '#FBE9E7' : '#FCF1DF';
     const trs = rows.map((x, i) => `<tr class="klik" data-i="${i}"><td>${i + 1}</td><td class="nm">${E(x.item)}</td><td>${E(x.pos)}</td><td><b>${x.jumlah}</b></td><td><span class="tag" style="background:${bg(x.jenis)};color:${warna(x.jenis)}">${E(x.jenis)}</span></td></tr>`).join('');
-    setTimeout(() => {
-      document.querySelectorAll('.rtbl tr.klik').forEach((tr) => {
-        if (tr.dataset.wired) return; tr.dataset.wired = '1';
-        tr.onclick = () => { const i = +tr.dataset.i; if (rows[i]) toggleMekar(tr, badgeTanggal(rows[i].tanggal)); };
-      });
-    }, 0);
-    return `<table class="rtbl"><thead><tr><th>#</th><th>Item</th><th>Pos</th><th>Kali</th><th>Jenis</th></tr></thead><tbody>${trs}</tbody></table>`;
+    return tabelKlik(rows, '<th>#</th><th>Item</th><th>Pos</th><th>Kali</th><th>Jenis</th>', trs);
   }
   function renderFasilitas() {
     const r = RF;
