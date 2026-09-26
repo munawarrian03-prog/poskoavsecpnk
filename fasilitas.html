@@ -64,7 +64,7 @@
 <div class="tambahpos" id="btnTambahPos" onclick="bukaTambahPos()" style="margin:8px 10px 10px;text-align:center;font-size:11px;font-weight:800;color:var(--secondary-hover);background:#E4F3F4;border-radius:9px;padding:9px;cursor:pointer">+ Tambah Pos</div>
 </aside>
 <div class="kj-main" id="kjMain">
-<div class="privacy-note">Isi kondisi apa adanya. Baris berlatar kuning WAJIB diisi keterangannya (kondisi Rusak, atau Tidak Digunakan meski kondisinya Baik, atau Tidak Lengkap).</div>
+<div class="privacy-note">Isi kondisi apa adanya. Baris berlatar kuning WAJIB diisi keterangannya (kondisi Rusak, atau Tidak Digunakan meski kondisinya Baik, ada unit Rusak, atau Tidak Lengkap).</div>
 <div id="posContainer"></div>
 </div>
 </div>
@@ -227,13 +227,14 @@ function posKosong() {
     items: p.items.map((it) => {
       const base = { id: it.id, name: it.name, bentuk: it.bentuk };
       if (it.bentuk === 'A') return Object.assign(base, { kondisi: 'Baik', status: 'Digunakan', keterangan: '' });
-      if (it.bentuk === 'B') return Object.assign(base, { jumlah: it.jumlahBawaan || 0, rusak: 0 });
+      if (it.bentuk === 'B') return Object.assign(base, { jumlah: it.jumlahBawaan || 0, rusak: 0, keterangan: '' });
       return Object.assign(base, { lengkap: true, keterangan: '' }); // C
     })
   }));
 }
 function wajibKeterangan(it) {
   if (it.bentuk === 'A') return it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan';
+  if (it.bentuk === 'B') return (it.rusak || 0) > 0;
   if (it.bentuk === 'C') return !it.lengkap;
   return false;
 }
@@ -269,13 +270,13 @@ function baris_A(pid, it) {
   </div>`;
 }
 function baris_B(pid, it) {
-  const baik = Math.max(0, (it.jumlah || 0) - (it.rusak || 0));
-  return `<div class="kt-row">
+  const baik = Math.max(0, (it.jumlah || 0) - (it.rusak || 0)), wajib = wajibKeterangan(it);
+  return `<div class="kt-row${wajib ? ' wajib' : ''}">
     <b>${esc(it.name)}</b>
     <input type="number" min="0" value="${it.jumlah}" class="kt-jumlah" oninput="setBKetik('${pid}','${it.id}','jumlah',this)">
     <input type="number" min="0" max="${it.jumlah}" value="${it.rusak}" class="kt-rusak" oninput="setBKetik('${pid}','${it.id}','rusak',this)">
     <input value="${baik}" class="kt-baik" readonly>
-    <button type="button" class="kt-tl" onclick="setB('${pid}','${it.id}','rusak',${it.rusak}+1)">+ Tidak Layak</button>
+    <input class="ket${ketKosong(it) ? ' kosong' : ''}" value="${esc(it.keterangan)}" placeholder="${wajib ? 'Wajib diisi' : '(opsional)'}" oninput="setKet('${pid}','${it.id}',this)">
   </div>`;
 }
 function baris_C(pid, it) {
@@ -296,7 +297,7 @@ function renderPosSection(p) {
   }
   if (b.length) {
     html += `<div class="fa-sub">Kumpulan Berjumlah <span class="bentuk">seperti Kekuatan Personel</span></div>`;
-    html += `<div class="kt-hdr"><span>ITEM</span><span>JUMLAH</span><span>RUSAK</span><span>BAIK</span><span></span></div>`;
+    html += `<div class="kt-hdr"><span>ITEM</span><span>JUMLAH</span><span>RUSAK</span><span>BAIK</span><span>KETERANGAN</span></div>`;
     html += b.map((it) => baris_B(p.id, it)).join('');
   }
   if (c.length) {
@@ -330,9 +331,10 @@ function setBKetik(pid, iid, field, el) {
   if (field === 'jumlah') { it.jumlah = n; if (it.rusak > n) { it.rusak = n; inRusak.value = n; } inRusak.max = n; }
   else { if (n > it.jumlah) { n = it.jumlah; el.value = n; } it.rusak = n; }
   row.querySelector('.kt-baik').value = Math.max(0, it.jumlah - it.rusak);
-  markDirty(); refreshPratinjauLive();
+  const wajib = wajibKeterangan(it), ket = row.querySelector('.ket');
+  row.classList.toggle('wajib', wajib); ket.placeholder = wajib ? 'Wajib diisi' : '(opsional)'; ket.classList.toggle('kosong', ketKosong(it));
+  markDirty(); refreshKunciKet(); refreshPratinjauLive();
 }
-function setB(pid, iid, field, val) { const it = findItem(pid, iid); if (!it) return; let n = Math.max(0, parseInt(val, 10) || 0); if (field === 'jumlah' && n < it.rusak) it.rusak = n; if (field === 'rusak') n = Math.min(n, it.jumlah); it[field] = n; markDirty(); renderForm(); refreshPratinjauLive(); }
 function setC(pid, iid, field, val) { const it = findItem(pid, iid); if (!it) return; it[field] = val; markDirty(); renderForm(); refreshPratinjauLive(); }
 function findItem(pid, iid) { const p = posFasilitas.find((x) => x.id === pid); return p && p.items.find((x) => x.id === iid); }
 function markDirty() { dirty = true; }
@@ -356,7 +358,7 @@ function tambahItem() {
   const p = posFasilitas.find((x) => x.id === addItemPosId); if (!p) return;
   const base = { id: uid(), name: nama, bentuk };
   const it = bentuk === 'A' ? Object.assign(base, { kondisi: 'Baik', status: 'Digunakan', keterangan: '' })
-    : bentuk === 'B' ? Object.assign(base, { jumlah: 0, rusak: 0 })
+    : bentuk === 'B' ? Object.assign(base, { jumlah: 0, rusak: 0, keterangan: '' })
     : Object.assign(base, { lengkap: true, keterangan: '' });
   p.items.push(it);
   tutupTambahItem(); markDirty(); renderForm();
@@ -428,7 +430,7 @@ function generateWAText() {
     });
     p.items.filter((i) => i.bentuk === 'B').forEach((it) => {
       const baik = Math.max(0, it.jumlah - it.rusak);
-      baris.push(`- ${it.name}: ${it.jumlah} unit (Baik ${baik}${it.rusak ? ', Rusak ' + it.rusak : ''}).`);
+      baris.push(`- ${it.name}: ${it.jumlah} unit (Baik ${baik}${it.rusak ? ', Rusak ' + it.rusak : ''})${rapikan(it.keterangan) ? ' (' + rapikan(it.keterangan) + ')' : ''}.`);
     });
     p.items.filter((i) => i.bentuk === 'C').forEach((it) => {
       baris.push(`- Dokumen: ${it.lengkap ? 'Lengkap' : 'Tidak Lengkap' + (it.keterangan ? ' (' + it.keterangan + ')' : '')}.`);

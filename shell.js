@@ -182,7 +182,7 @@
     [diffTeks('Tanggal', lama.tanggal, baru.tanggal), diffTeks('Shift', lama.shift, baru.shift), diffTeks('Regu', lama.regu, baru.regu)].forEach((r) => r && hasil.push(r));
     const teksItem = (it) => {
       if (!it) return '';
-      if (it.bentuk === 'B') return `${rapikanD(it.name)} — Jumlah:${it.jumlah || 0} Rusak:${it.rusak || 0}`;
+      if (it.bentuk === 'B') return `${rapikanD(it.name)} — Jumlah:${it.jumlah || 0} Rusak:${it.rusak || 0}${rapikanD(it.keterangan) ? ': ' + rapikanD(it.keterangan) : ''}`;
       if (it.bentuk === 'C') return `${rapikanD(it.name)} — ${it.lengkap ? 'Lengkap' : 'Tidak Lengkap'}${rapikanD(it.keterangan) ? ': ' + rapikanD(it.keterangan) : ''}`;
       return `${rapikanD(it.name)} — ${it.kondisi || 'Baik'}/${it.status || 'Digunakan'}${rapikanD(it.keterangan) ? ': ' + rapikanD(it.keterangan) : ''}`;
     };
