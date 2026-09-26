@@ -109,7 +109,7 @@ svg .col { cursor: default; }
 /* ---- sakelar mode hitung (butir 15) ---- */
 #modeSeg { display: flex; flex-direction: column; gap: 3px; }
 #modeSeg .seg2 { display: flex; background: #E6EBF3; border-radius: 9px; padding: 3px; }
-#modeSeg .seg2 button { border: none; background: transparent; font: 700 11px 'Inter', sans-serif; color: #64748B; padding: 6px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+#modeSeg .seg2 button { border: none; background: transparent; font: 700 11px 'Montserrat', 'Inter', sans-serif; color: #64748B; padding: 6px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
 #modeSeg .seg2 button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(16,36,61,.18); }
 
 /* =====================================================

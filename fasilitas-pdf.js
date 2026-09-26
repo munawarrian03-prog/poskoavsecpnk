@@ -28,7 +28,7 @@
   function kop(judul, tglCetak) {
     return `<div style="display:flex;align-items:center;gap:10px;border-bottom:2.5px solid #9A5F12;padding-bottom:8px;margin-bottom:12px">
 <img src="Logo/AVS.png" style="height:34px">
-<div><div style="font-size:14pt;font-weight:800;color:#10243D">${esc(judul)}</div><div style="font-size:8pt;color:#5C6675;font-weight:600">AVSEC Bandara Supadio</div></div>
+<div><div style="font-size:16pt;font-weight:700;color:#10243D">${esc(judul)}</div><div style="font-size:8pt;color:#5C6675;font-weight:600">AVSEC Bandara Supadio</div></div>
 <div style="flex:1"></div>
 <div style="font-size:8pt;color:#5C6675;font-weight:700;text-align:right">${esc(tglCetak)}</div>
 </div>`;
@@ -107,7 +107,7 @@ ${a.length ? tabelA(a) : ''}${b.length ? tabelB(b) : ''}${dokline(p.items)}
   // diambil SAAT PDF dibuat (live), bukan dibaca dari r itu sendiri.
   root.buildFasilitasPdfHTML = function (r, pembuat, tglCetak) {
     const posHtml = (r.posFasilitas || []).map((p, i) => posBlok(p, i + 1)).join('');
-    return `<div style="font-family:'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
+    return `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
 ${kop('Laporan Fasilitas', tglCetak)}
 ${idList(r)}
 ${ringkasanBox(r)}

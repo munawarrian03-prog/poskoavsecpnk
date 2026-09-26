@@ -65,7 +65,7 @@
     const periode = `${tglIndo(filter.mulai)} – ${tglIndo(filter.akhir)}`;
     const reguLabel = REGU_NAMA[filter.regu] || filter.regu;
 
-    const sampul = `<div style="font-family:'Inter',Arial,sans-serif;padding:18px;text-align:center;min-height:250mm;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    const sampul = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;text-align:center;min-height:250mm;display:flex;flex-direction:column;align-items:center;justify-content:center">
 <img src="Logo/AVS.png" style="height:64px;margin-bottom:18px">
 <div style="font-size:19pt;font-weight:800;color:#10243D">REKAP LAPORAN AVSEC</div>
 <div style="font-size:12pt;font-weight:700;color:#5C6675;margin-top:4px">Bandara Supadio Pontianak</div>
@@ -74,28 +74,28 @@
 <div style="margin-top:40px;font-size:8.5pt;color:#8A94A6">Dicetak ${esc(tglCetak)}</div>
 </div>`;
 
-    const halPersonel = `<div style="font-family:'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
+    const halPersonel = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
 ${kop('Laporan Personel', periode + ' • ' + reguLabel, tglCetak)}
 ${kpiRow([{ l: 'Tidak Hadir', v: RP.tidakHadir, s: 'hari' }, { l: 'Terlibat', v: RP.orangTerlibat, s: 'orang' }, { l: 'Kehadiran', v: RP.kehadiran == null ? '-' : RP.kehadiran.toFixed(1), s: RP.kehadiran == null ? '' : '%' }, { l: 'Laporan', v: RP.laporanTersimpan, s: 'tersimpan' }])}
 ${judulBlok('Ketidakhadiran per Personel', '#157A82')}
 ${tabelPersonel(RP.daftar)}
 </div>`;
 
-    const halFasilitas = `<div style="font-family:'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
+    const halFasilitas = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
 ${kop('Laporan Fasilitas', periode + ' • ' + reguLabel, tglCetak)}
 ${kpiRow([{ l: 'Total Masalah', v: RF.totalMasalah, s: 'kali' }, { l: 'Tidak Digunakan', v: RF.tidakDigunakan, s: 'kali' }, { l: 'Kelengkapan Dok.', v: RF.dokPct == null ? '-' : RF.dokPct, s: RF.dokPct == null ? '' : '%' }, { l: 'Laporan', v: RF.laporanTersimpan, s: 'tersimpan' }])}
 ${judulBlok('Alat Sering Bermasalah', '#9A5F12')}
 ${tabelFasilitas(RF.daftar)}
 </div>`;
 
-    const halKejadian = `<div style="font-family:'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
+    const halKejadian = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
 ${kop('Laporan Kejadian', periode, tglCetak)}
 ${kpiRow([{ l: 'Jumlah Kejadian', v: RK.jumlah, s: 'kejadian' }])}
 ${judulBlok('Daftar Kejadian', '#1D3A5C')}
 ${tabelKejadian(RK.daftar)}
 </div>`;
 
-    const halKepatuhan = `<div style="font-family:'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
+    const halKepatuhan = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
 ${kop('Kepatuhan Pelaporan Shift', periode + ' • seluruh 3 jenis laporan', tglCetak)}
 ${kpiRow([{ l: 'Personel Belum', v: RQ.personelBelum, s: '/ ' + RQ.total }, { l: 'Fasilitas Belum', v: RQ.fasilitasBelum, s: '/ ' + RQ.total }, { l: 'Log Book Belum', v: RQ.logbookBelum, s: '/ ' + RQ.total }])}
 ${judulBlok('Daftar Shift Belum Lengkap', '#5C6675')}

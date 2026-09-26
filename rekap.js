@@ -282,6 +282,7 @@
       const holder = document.getElementById('pdfContent');
       holder.innerHTML = html;
       await new Promise((res) => requestAnimationFrame(() => setTimeout(res, 80)));
+      await A.tungguFontSiap();
       await html2pdf().set({
         margin: 0, filename: `Rekap AVSEC (${filterAktif.mulai} sd ${filterAktif.akhir}).pdf`,
         image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true },

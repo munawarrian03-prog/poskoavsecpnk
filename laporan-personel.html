@@ -90,10 +90,10 @@
 <div class="panel-box" id="pageSaved" style="display: none; height: 100%;">
 <div class="panel-title">DAFTAR LAPORAN TERSIMPAN</div>
 <div class="stool">
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
 <div style="flex:1"></div>
 </div>
 <div class="sumline" id="sumLine"></div>
@@ -114,7 +114,7 @@
 
 <button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
 <aside class="drawer" id="drawer">
-<div class="dh"><span>PRATINJAU LAPORAN</span><button type="button" onclick="copyReport()" title="Salin teks laporan" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="dh"><span>PRATINJAU LAPORAN</span><button type="button" onclick="copyReport()" title="Salin teks laporan" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Montserrat', 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
 <div class="issue-box" id="issueBox"></div>
 <div class="output-area" id="outputReport">Mengolah laporan...</div>
 </aside>
@@ -883,13 +883,14 @@ function switchPage(page) {
    satu tombol gabungan (seluruh jenis laporan) di rekap.html. Lihat RENCANA-PENGEMBANGAN.md. */
 
 /* ---------- PDF ---------- */
-function exportPDF(id) {
+async function exportPDF(id) {
   const r = getReports().find((x) => x.id === id); if (!r) return;
   if (typeof html2pdf === 'undefined') { toast('Pustaka PDF (lib/html2pdf.bundle.min.js) tidak termuat.', 'err'); return; }
   if (typeof window.buildPersonelPdfHTML !== 'function') { toast('Pembangun PDF (personel-pdf.js) tidak termuat.', 'err'); return; }
   const pembuat = window.pembuatDariPosPenempatan(r.posPenempatan);
   const tglCetak = new Date().toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   $('pdfContent').innerHTML = window.buildPersonelPdfHTML(r, pembuat, tglCetak);
+  await AVS.tungguFontSiap();
   html2pdf().set({
     margin: 10,
     filename: `Lap Personel - ${String(r.regu).replace(/[\\/:*?"<>|]/g, '')} - (${r.tanggal}).pdf`,

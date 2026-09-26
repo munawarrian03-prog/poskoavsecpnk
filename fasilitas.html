@@ -74,10 +74,10 @@
 <div class="panel-box" id="pageSaved" style="display:none; height:100%;">
 <div class="panel-title">DAFTAR LAPORAN TERSIMPAN</div>
 <div class="stool">
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
 <div style="flex:1"></div>
 </div>
 <div class="sumline" id="sumLine"></div>
@@ -97,7 +97,7 @@
 
 <button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
 <aside class="drawer" id="drawer">
-<div class="dh"><span>PRATINJAU WHATSAPP</span><button type="button" id="btnSalinWA" onclick="salinWA()" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="dh"><span>PRATINJAU WHATSAPP</span><button type="button" id="btnSalinWA" onclick="salinWA()" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Montserrat', 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
 <div class="output-area" id="outputReport">Mengolah laporan...</div>
 </aside>
 <aside class="drawer" id="drawerRw">
@@ -133,7 +133,7 @@
 <div class="modal-container" style="max-width:420px">
 <div class="modal-header"><div class="modal-title">TAMBAH POS</div><button class="modal-close" onclick="tutupTambahPos()">✕</button></div>
 <div class="modal-body">
-<input type="text" id="addPosNama" placeholder="Nama pos, mis. SCP VIP" maxlength="40" style="width:100%;height:38px;border:1px solid #D7DEE8;border-radius:8px;padding:0 12px;font:700 13px 'Inter'">
+<input type="text" id="addPosNama" placeholder="Nama pos, mis. SCP VIP" maxlength="40" style="width:100%;height:38px;border:1px solid #D7DEE8;border-radius:8px;padding:0 12px;font:700 13px 'Montserrat', 'Inter'">
 <div style="font-size:11px;color:#8A94A6;margin-top:8px;font-weight:600">Pos baru dimulai kosong (belum ada item). Tambahkan item satu-satu dari dalam pos setelah dibuat. Hanya berlaku untuk laporan ini.</div>
 </div>
 <div class="modal-footer">
@@ -148,8 +148,8 @@
 <div class="modal-container" style="max-width:460px">
 <div class="modal-header"><div class="modal-title">TAMBAH ITEM</div><button class="modal-close" onclick="tutupTambahItem()">✕</button></div>
 <div class="modal-body">
-<input type="text" id="addItemNama" placeholder="Nama item, mis. Charger HT" maxlength="60" style="width:100%;height:38px;border:1px solid #D7DEE8;border-radius:8px;padding:0 12px;font:700 13px 'Inter';margin-bottom:10px">
-<select id="addItemBentuk" style="width:100%;height:38px;border:1px solid #D7DEE8;border-radius:8px;padding:0 10px;font:700 13px 'Inter'">
+<input type="text" id="addItemNama" placeholder="Nama item, mis. Charger HT" maxlength="60" style="width:100%;height:38px;border:1px solid #D7DEE8;border-radius:8px;padding:0 12px;font:700 13px 'Montserrat', 'Inter';margin-bottom:10px">
+<select id="addItemBentuk" style="width:100%;height:38px;border:1px solid #D7DEE8;border-radius:8px;padding:0 10px;font:700 13px 'Montserrat', 'Inter'">
 <option value="A">Tunggal/Jalur (Kondisi + Status + Keterangan)</option>
 <option value="B">Kumpulan Berjumlah (Jumlah + Rusak)</option>
 <option value="C">Kelengkapan (Lengkap/Tidak + Keterangan)</option>
@@ -574,7 +574,7 @@ function viewReport(id) {
 function closeViewModal() { $('viewModal').style.display = 'none'; modalReportId = null; }
 
 /* ---------- PDF (butir 1.6) ---------- */
-function unduhPDF(id) {
+async function unduhPDF(id) {
   const rid = id || editingReportId;
   if (!rid) { toast('Simpan laporan ini terlebih dahulu sebelum mengunduh PDF.', 'err'); return; }
   const r = lsGet(STORAGE_KEY, []).find((x) => x.id === rid);
@@ -586,6 +586,7 @@ function unduhPDF(id) {
   const pembuat = AVS.infoPembuatDariPersonel(r.tanggal, r.shift, r.regu);
   const tglCetak = new Date().toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   $('pdfContent').innerHTML = window.buildFasilitasPdfHTML(r, pembuat, tglCetak);
+  await AVS.tungguFontSiap();
   html2pdf().set({
     margin: 10,
     filename: `Lap Fasilitas - ${String(r.regu).replace(/[\\/:*?"<>|]/g, '')} - (${r.tanggal}).pdf`,

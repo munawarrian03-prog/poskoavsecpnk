@@ -22,7 +22,7 @@
   function kop(tglCetak) {
     return `<div style="display:flex;align-items:center;gap:10px;border-bottom:2.5px solid #1D3A5C;padding-bottom:8px;margin-bottom:12px">
 <img src="Logo/AVS.png" style="height:34px">
-<div><div style="font-size:14pt;font-weight:800;color:#10243D">Log Book Serah Terima</div><div style="font-size:8pt;color:#5C6675;font-weight:600">AVSEC Bandara Supadio</div></div>
+<div><div style="font-size:16pt;font-weight:700;color:#10243D">Log Book Serah Terima</div><div style="font-size:8pt;color:#5C6675;font-weight:600">AVSEC Bandara Supadio</div></div>
 <div style="flex:1"></div>
 <div style="font-size:8pt;color:#5C6675;font-weight:700;text-align:right">${esc(tglCetak)}</div>
 </div>`;
@@ -51,7 +51,7 @@
   // personelRec: rekaman Laporan Personel yang cocok (selalu ada, krn terkunci).
   // fasilitasRec: rekaman Laporan Fasilitas yang cocok, ATAU null bila belum tersedia (opsi B).
   root.buildLogbookPdfHTML = function (r, pembuat, personelRec, fasilitasRec, tglCetak) {
-    let html = `<div style="font-family:'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
+    let html = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
 ${kop(tglCetak)}
 ${idBox(r, pembuat)}
 <div style="font-size:11pt;font-weight:800;color:#10243D;margin:0 0 6px">Catatan Kegiatan</div>

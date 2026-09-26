@@ -263,6 +263,7 @@
 <script src="shell.js"></script>
 <script src="lib/pdfmake.min.js"></script>
 <script src="lib/fonts-carlito.js"></script>
+<script src="lib/fonts-montserrat.js"></script>
 <script src="personel.js"></script>
 <script src="kategori.js"></script>
 <script src="kejadian-data.js"></script>
@@ -902,8 +903,10 @@ async function pakaiTTD() {
    ===================================================== */
 function siapPdf() {
   if (typeof pdfMake === 'undefined' || typeof buildKejadianDoc === 'undefined') throw new Error('Pustaka PDF (lib/pdfmake.min.js) tidak termuat.');
-  pdfMake.vfs = Object.assign({}, window.KEJADIAN_VFS || {});
-  pdfMake.fonts = window.KEJADIAN_FONTS;
+  // Gabung (bukan timpa) supaya Carlito tetap tersedia bila suatu saat dibutuhkan;
+  // font PDF yang benar-benar dipakai diatur lewat defaultStyle.font di kejadian-pdf.js.
+  pdfMake.vfs = Object.assign({}, window.KEJADIAN_VFS || {}, window.MONTSERRAT_VFS || {});
+  pdfMake.fonts = Object.assign({}, window.KEJADIAN_FONTS || {}, window.MONTSERRAT_FONTS || {});
 }
 function namaFilePdf(r) {
   let kasus = rapikan(r.caseInfo).replace(/[\\/:*?"<>|\r\n]+/g, ' ').replace(/\s+/g, ' ');
@@ -1005,6 +1008,7 @@ function potongTeks(ctx, lebar, s) { let t = s; while (t.length > 1 && ctx.measu
 async function buatKolase(L) {
   const fotos = (L.fotos || []).filter((f) => f && f.dataUrl), pakai = fotos.slice(0, KOLASE_MAKS), lebih = fotos.length - pakai.length, n = pakai.length;
   if (!n) return null;
+  await AVS.tungguFontSiap();   // supaya teks di kolase memakai Montserrat, bukan font bawaan
   const imgs = await Promise.all(pakai.map((f) => muatGambar(f.dataUrl)));
   // Kolase berbentuk potret 4:5 (untuk WhatsApp); foto UTUH (tak dipotong), ruang kosong diisi
   // versi kabur dari foto itu sendiri; keterangan pada strip tersendiri di bawah foto (tak menimpa foto).
@@ -1016,7 +1020,7 @@ async function buatKolase(L) {
   const ctx = cv.getContext('2d'); if (!ctx) throw new Error('canvas tidak tersedia');
   ctx.fillStyle = '#EEF1F5'; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = '#10243D'; ctx.fillRect(0, 0, W, HEAD); ctx.fillStyle = '#C93B2E'; ctx.fillRect(0, 0, W, 5);
-  ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'middle'; ctx.font = '800 30px Inter, Arial, sans-serif';
+  ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'middle'; ctx.font = "800 30px 'Montserrat', Inter, Arial, sans-serif";
   const judul = 'LAPORAN KEJADIAN' + (rapikan(L.fileNumber) ? ' • ' + rapikan(L.fileNumber) : '') + ' • ' + KejadianWA.hariTgl(L.tanggal) + ` • ${fotos.length} foto`;
   ctx.fillText(potongTeks(ctx, W - 60, judul), 30, HEAD / 2 + 3); ctx.textBaseline = 'alphabetic';
   const bungkusTeks = (t, lebar, maks) => {
@@ -1048,7 +1052,7 @@ async function buatKolase(L) {
       ctx.restore();
       // strip keterangan tersendiri di bawah foto (tak menimpa gambar)
       ctx.fillStyle = '#10243D'; ctx.fillRect(x, y + fh, cw, CAPH);
-      ctx.fillStyle = '#FFFFFF'; ctx.font = '600 21px Inter, Arial, sans-serif';
+      ctx.fillStyle = '#FFFFFF'; ctx.font = "600 21px 'Montserrat', Inter, Arial, sans-serif";
       const cap = rapikan(pakai[i].caption) || `Foto ${i + 1}`;
       const teksCap = (lebih > 0 && i === n - 1) ? `${cap} (+${lebih} foto lagi di PDF)` : cap;
       const barisCap = bungkusTeks((i + 1) + '. ' + teksCap, cw - 24, 2), lh = 26, mulai = y + fh + (CAPH - barisCap.length * lh) / 2 + 20;

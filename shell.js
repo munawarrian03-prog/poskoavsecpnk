@@ -24,6 +24,22 @@
   AVS.HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   AVS.tanggalLengkap = (d) => `${AVS.HARI[d.getDay()]}, ${d.getDate()} ${AVS.BULAN[d.getMonth()]} ${d.getFullYear()}`;
 
+  // Pastikan font Montserrat (dan Inter cadangannya) sudah benar-benar termuat
+  // sebelum html2canvas "memotret" HTML jadi gambar untuk PDF — kalau dipotret
+  // sebelum font siap, hasilnya terlanjur pakai font bawaan sistem dan tidak
+  // berubah lagi meski font baru selesai dimuat sesaat kemudian.
+  AVS.tungguFontSiap = async function () {
+    try {
+      if (!document.fonts) return;
+      const berat = [400, 500, 600, 700, 800];
+      await Promise.all(berat.flatMap((w) => [
+        document.fonts.load(`${w} 12px Montserrat`),
+        document.fonts.load(`${w} 12px Inter`)
+      ]));
+      await Promise.race([document.fonts.ready, new Promise((res) => setTimeout(res, 1500))]);
+    } catch (e) { /* browser lama tanpa document.fonts: lanjut apa adanya */ }
+  };
+
   /* ---------- Bilah atas + navigasi utama ---------- */
   const MENU = [
     ['beranda', 'Beranda', 'index.html', 'home'],

@@ -21,7 +21,7 @@
 .fa-seg button + button { border-left: 1px solid #D7DEE8; }
 .fa-seg button.on.baik, .fa-seg button.on.pakai, .fa-seg button.on.lengkap { background: #E4F3F4; color: var(--secondary-hover); }
 .fa-seg button.on.rusak, .fa-seg button.on.tidak, .fa-seg button.on.tidaklengkap { background: #FBE9E7; color: #A82F24; }
-.fa-row .ket { width: 100%; height: 32px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 10px; font: 600 12px 'Inter', sans-serif; }
+.fa-row .ket { width: 100%; height: 32px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 10px; font: 600 12px 'Montserrat', 'Inter', sans-serif; }
 .fa-row.wajib .ket { border-color: #F0D9A8; background: #fff; }
 .fa-row .ket::placeholder { color: #B0894A; font-weight: 600; }
 
@@ -30,21 +30,21 @@
 .kt-row { display: grid; grid-template-columns: 1.6fr .67fr .67fr .66fr 1.6fr; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid #F4F6FA; }
 .kt-row:last-of-type { border-bottom: none; }
 .kt-row b { font-size: 12.5px; font-weight: 700; color: var(--ink); }
-.kt-row input[type=number] { height: 32px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 8px; font: 700 12px 'Inter', sans-serif; text-align: center; }
+.kt-row input[type=number] { height: 32px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 8px; font: 700 12px 'Montserrat', 'Inter', sans-serif; text-align: center; }
 .kt-row .kt-rusak { background: #FDECEA; color: #A82F24; font-weight: 800; }
 .kt-row .kt-baik { background: #E4F3F4; color: var(--secondary-hover); font-weight: 800; text-align: center; }
 .kt-row.wajib { background: #FFFBF2; margin: 0 -12px; padding: 9px 12px; border-radius: 8px; border-bottom: none; }
-.kt-row .ket { width: 100%; height: 32px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 10px; font: 600 12px 'Inter', sans-serif; }
+.kt-row .ket { width: 100%; height: 32px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 10px; font: 600 12px 'Montserrat', 'Inter', sans-serif; }
 .kt-row.wajib .ket { border-color: #F0D9A8; background: #fff; }
 .kt-row .ket::placeholder { color: #B0894A; font-weight: 600; }
 
 /* ---------- Bentuk C: Kelengkapan ---------- */
 .fa-lengkap { display: grid; grid-template-columns: 1.6fr 1fr 2.6fr; gap: 10px; align-items: center; padding: 9px 0; }
 .fa-lengkap .nm { font-size: 12.5px; font-weight: 700; color: var(--ink); }
-.fa-lengkap .ket { width: 100%; height: 32px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 10px; font: 600 12px 'Inter', sans-serif; }
+.fa-lengkap .ket { width: 100%; height: 32px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 10px; font: 600 12px 'Montserrat', 'Inter', sans-serif; }
 .fa-lengkap.wajib .ket { border-color: #F0D9A8; background: #fff; }
 .fa-row .ket.kosong, .fa-lengkap .ket.kosong, .kt-row .ket.kosong { border-color: #E08A80; background: #FFF6F5; box-shadow: 0 0 0 2px rgba(201,59,46,.10); }
-.ket-warn { border: none; background: #FBE9E7; color: #A82F24; font: 800 11.5px 'Inter', sans-serif; padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+.ket-warn { border: none; background: #FBE9E7; color: #A82F24; font: 800 11.5px 'Montserrat', 'Inter', sans-serif; padding: 7px 12px; border-radius: 8px; cursor: pointer; }
 .ket-warn:hover { filter: brightness(.96); }
 
 /* ---------- Status kunci Simpan (Laporan Personel shift ini belum ada) ---------- */

@@ -26,11 +26,11 @@
 .lb-panel .sub { font-size:11px; color:#8A94A6; font-weight:600; margin-bottom:14px; }
 .lb-tl { display:flex; flex-direction:column; gap:10px; }
 .lb-row { display:grid; grid-template-columns:96px 1fr 36px; gap:12px; align-items:start; }
-.lb-row input[type=time] { width:100%; height:38px; border:1px solid #D7DEE8; border-radius:8px; padding:0 10px; font:700 13px 'Inter'; color:var(--ink); }
-.lb-row textarea { width:100%; min-height:58px; border:1px solid #D7DEE8; border-radius:8px; padding:10px 12px; font:600 13px 'Inter'; line-height:1.5; resize:vertical; }
+.lb-row input[type=time] { width:100%; height:38px; border:1px solid #D7DEE8; border-radius:8px; padding:0 10px; font:700 13px 'Montserrat', 'Inter'; color:var(--ink); }
+.lb-row textarea { width:100%; min-height:58px; border:1px solid #D7DEE8; border-radius:8px; padding:10px 12px; font:600 13px 'Montserrat', 'Inter'; line-height:1.5; resize:vertical; }
 .lb-row button { height:38px; border-radius:8px; border:1px solid #F3D3CD; background:#FDECEA; color:#A82F24; font-weight:800; cursor:pointer; font-size:15px; }
 .lb-add { align-self:flex-start; font-size:12px; font-weight:800; color:#157A82; background:#E4F3F4; border:none; border-radius:8px; padding:10px 16px; cursor:pointer; margin-top:4px; }
-.lb-pesan { width:100%; min-height:150px; border:2px solid #F0D9A8; background:#FFFBF2; border-radius:10px; padding:14px 16px; font:600 13.5px 'Inter'; line-height:1.6; resize:vertical; }
+.lb-pesan { width:100%; min-height:150px; border:2px solid #F0D9A8; background:#FFFBF2; border-radius:10px; padding:14px 16px; font:600 13.5px 'Montserrat', 'Inter'; line-height:1.6; resize:vertical; }
 .lb-savedcard { background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:14px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:14px; box-shadow:0 1px 3px rgba(16,36,61,.05); }
 .lb-savedcard .ttl { font-weight:800; color:var(--ink); font-size:13.5px; }
 .lb-savedcard .sub { font-size:11.5px; color:#8A94A6; font-weight:600; margin-top:2px; }
@@ -103,10 +103,10 @@
 <div class="panel-box" id="pageSaved" style="display:none; height:100%;">
 <div class="panel-title">DAFTAR LOG BOOK TERSIMPAN</div>
 <div class="stool">
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
 <div style="flex:1"></div>
 </div>
 <div class="sumline" id="sumLine"></div>
@@ -125,7 +125,7 @@
 
 <button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
 <aside class="drawer" id="drawer">
-<div class="dh"><span>PRATINJAU WHATSAPP</span><button type="button" id="btnSalinWA" onclick="salinWA()" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="dh"><span>PRATINJAU WHATSAPP</span><button type="button" id="btnSalinWA" onclick="salinWA()" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Montserrat', 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
 <div class="output-area" id="outputReport">Mengolah catatan...</div>
 </aside>
 <aside class="drawer" id="drawerRw">
@@ -435,9 +435,11 @@ async function unduhPDF(id) {
   const tglCetak = new Date().toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   const html = window.buildLogbookPdfHTML(r, pembuat, personelRec, fasilitasRec, tglCetak);
   $('pdfContent').innerHTML = html;
-  // Beri waktu satu frame + jeda kecil agar logo (gambar async) & layout selesai
-  // sebelum html2canvas "memotret" elemen -- akar penyebab bug PDF kosong sebelumnya.
+  // Beri waktu satu frame + jeda kecil agar logo (gambar async) & layout selesai,
+  // dan pastikan font Montserrat sudah termuat -- akar penyebab bug PDF kosong /
+  // font salah sebelumnya -- sebelum html2canvas "memotret" elemen.
   await new Promise((res) => requestAnimationFrame(() => setTimeout(res, 80)));
+  await AVS.tungguFontSiap();
   await html2pdf().set({
     margin: 10,
     filename: `Log Book - ${String(r.regu).replace(/[\\/:*?"<>|]/g, '')} - (${r.tanggal}).pdf`,
