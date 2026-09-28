@@ -491,7 +491,11 @@ function loadForEdit(id) {
   const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
   editingReportId = id; $('tanggal').value = r.tanggal; $('shift').value = r.shift; $('regu').value = r.regu;
   posFasilitas = clone(r.posFasilitas); dirty = false;
-  $('editBadge').style.display = 'flex'; $('editBadge').innerHTML = `Mengubah laporan ${esc(r.tanggal)} · ${esc(r.shift)} · Regu ${esc(r.regu)} <button type="button" onclick="newReport()">Batal, buat baru</button>`;
+  const k = AVS.ketJejak(r);
+  $('editBadge').style.display = 'flex';
+  $('editBadge').innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
+    `<button type="button" class="rw" onclick="bukaRiwayat('${editingReportId}')">Riwayat ▾</button>` +
+    `<button type="button" onclick="newReport()">Batal, buat baru</button>`;
     renderForm(); refreshPenyusunDanKunci(); switchPage('form');
 }
 function deleteReport(id) {
@@ -640,6 +644,7 @@ window.addEventListener('DOMContentLoaded', () => {
   cekPerangkat();
   const h = new Date();
   $('tanggal').value = tanggalLokalISO(h);
+  $('shift').value = ''; $('regu').value = ''; // cegah browser me-restore pilihan shift/regu terakhir
   $('fMulai').value = tanggalLokalISO(new Date(h.getFullYear(), h.getMonth(), 1));
   $('fSampai').value = tanggalLokalISO(h);
   posFasilitas = posKosong();
