@@ -163,20 +163,18 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
    satu baris tanpa membungkus di lebar layar minimum (1024px). */
 .toolbar.tb-2row { flex-direction: column; align-items: stretch; flex-wrap: nowrap; padding: 8px 10px; }
 .toolbar.tb-2row .tb-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; }
-.toolbar.tb-2row .tb-row #hdrLokasi select { min-width: 118px; }
+.toolbar.tb-2row .tb-row #hdrLokasi input { min-width: 118px; }
 .toolbar.tb-2row .tb-row .fld select { min-width: 118px; }
 
-/* Lokasi kejadian: dropdown di baris 1 */
-#hdrLokasi .lokasi-stack { display: flex; flex-direction: column; gap: 6px; }
+/* Lokasi kejadian: combobox satu kolom (ketik bebas + datalist pos jaga),
+   ikon panah dropdown murni dekoratif (klik di mana saja pada input tetap
+   memicu saran browser dari atribut list=). Tidak ada kolom kedua yang
+   muncul/menimpa elemen lain di bawah toolbar. */
+.lokasi-combo { position: relative; display: flex; }
+.lokasi-combo input { padding-right: 26px !important; }
+.lokasi-combo::after { content: '▾'; position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--text-muted); pointer-events: none; }
 
-/* Manual input di baris 2: posisi absolute supaya tidak mendorong NOMOR
-   (NOMOR tetap statis di posisi asalnya, tidak peduli kolom ini muncul atau tidak) */
-#tbRow2 { position: relative; flex-wrap: nowrap; }
-#hdrLokasiManual { display: none; }
-#hdrLokasiManual.show { display: flex; position: absolute; left: 0; top: 0; }
-#hdrNomor { flex: none; }
-
-/* Samakan lebar Tanggal, Shift, Lokasi Kejadian, dan kolom tulis lokasi manual */
-#tglLap, #shiftLap, #lokasiKejadianSel, #lokasiKejadianManual { width: 150px; }
+/* Samakan lebar Tanggal, Shift, Lokasi Kejadian */
+#tglLap, #shiftLap, #lokasiKejadianSel { width: 150px; }
 .jejak { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .jejak .upd { background: #FFF3DC; color: #8A5A0C; border: 1px solid #F0D9A8; border-radius: 10px; padding: 1px 8px; font-weight: 800; font-size: 10px; }

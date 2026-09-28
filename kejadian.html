@@ -41,18 +41,14 @@
 <option value="Malam (20:00 - 08:00) WIB">Malam (20:00 - 08:00) WIB</option>
 </select></div>
 <div class="fld" id="hdrLokasi"><label for="lokasiKejadianSel">LOKASI KEJADIAN</label>
-<div class="lokasi-stack">
-<select id="lokasiKejadianSel" onchange="lokasiKejadianPilih(this.value)"></select>
+<div class="lokasi-combo">
+<input type="text" id="lokasiKejadianSel" list="lokasiKejadianList" oninput="lokasiKejadianInput(this.value)" placeholder="Pilih atau ketik lokasi" autocomplete="off">
+<datalist id="lokasiKejadianList"></datalist>
 </div>
 </div>
 <span class="tsp"></span>
 <button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Sembunyikan bilah atas agar area isian lebih luas">⛶ Mode fokus</button>
 <button type="button" class="tbtn" onclick="newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
-</div>
-<div class="tb-row tb-row2" id="tbRow2">
-<div class="fld" id="hdrLokasiManual"><label for="lokasiKejadianManual">TULIS LOKASI</label>
-<input type="text" id="lokasiKejadianManual" oninput="lokasiKejadianManualInput(this.value)" placeholder="Tulis lokasi kejadian">
-</div>
 </div>
 </div>
 <div class="strip" id="editBadge" style="display:none"></div>
@@ -505,39 +501,18 @@ function isiForm() {
 }
 function renderSemua() { renderDasar(); renderTL(); renderDR(); renderTerlampir(); renderFoto(); renderTTD(); }
 
-/* ---------- Lokasi kejadian: dropdown pos jaga + opsi tulis manual ---------- */
-const LOKASI_MANUAL_VALUE = '__manual__';
+/* ---------- Lokasi kejadian: combobox (ketik bebas + pilih dari daftar pos jaga) ---------- */
 function daftarPosJaga() { return (typeof POS_BAWAAN !== 'undefined' ? POS_BAWAAN : []).map((p) => p.name); }
 function renderLokasiKejadianOptions() {
-  const sel = $('lokasiKejadianSel'); if (!sel) return;
-  const opsi = daftarPosJaga().map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
-  sel.innerHTML = `<option value="">-</option>${opsi}<option value="${LOKASI_MANUAL_VALUE}">+ Lokasi lain (tulis manual)</option>`;
+  const dl = $('lokasiKejadianList'); if (!dl) return;
+  dl.innerHTML = daftarPosJaga().map((n) => `<option value="${esc(n)}">`).join('');
 }
 function syncLokasiKejadianUI() {
   renderLokasiKejadianOptions();
-  const sel = $('lokasiKejadianSel'), manual = $('lokasiKejadianManual');
-  if (!sel || !manual) return;
-  const v = laporan.lokasiKejadian || '';
-  if (v && !daftarPosJaga().includes(v)) { sel.value = LOKASI_MANUAL_VALUE; $('hdrLokasiManual').classList.add('show'); manual.value = v; posisiLokasiManual(); }
-  else { sel.value = v; $('hdrLokasiManual').classList.remove('show'); manual.value = ''; }
+  const inp = $('lokasiKejadianSel'); if (!inp) return;
+  inp.value = laporan.lokasiKejadian || '';
 }
-function lokasiKejadianPilih(v) {
-  const manual = $('lokasiKejadianManual'), hdr = $('hdrLokasiManual');
-  if (v === LOKASI_MANUAL_VALUE) { hdr.classList.add('show'); manual.value = ''; manual.focus(); laporan.lokasiKejadian = ''; posisiLokasiManual(); }
-  else { hdr.classList.remove('show'); manual.value = ''; laporan.lokasiKejadian = v; }
-  ubah();
-}
-function lokasiKejadianManualInput(v) { laporan.lokasiKejadian = v; ubah(); }
-function posisiLokasiManual() {
-  const hdr = $('hdrLokasiManual'), sel = $('lokasiKejadianSel'), manualInput = $('lokasiKejadianManual');
-  if (!hdr || !sel || !manualInput || !hdr.classList.contains('show')) return;
-  hdr.style.left = '0px';
-  const selLeft = sel.getBoundingClientRect().left;
-  const inputLeft = manualInput.getBoundingClientRect().left;
-  const diff = selLeft - inputLeft;
-  hdr.style.left = (diff > 0 ? diff : 0) + 'px';
-}
-window.addEventListener('resize', posisiLokasiManual);
+function lokasiKejadianInput(v) { laporan.lokasiKejadian = v; ubah(); }
 
 function isiSaran() {
   const sumber = (typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : [];
@@ -1222,7 +1197,6 @@ function switchPage(page) {
   $('pageForm').style.display = form ? 'flex' : 'none';
   $('pageSaved').style.display = form ? 'none' : 'flex';
   $('statBar').style.display = form ? 'flex' : 'none';
-  $('tbRow2').style.display = form ? '' : 'none';
   ['hdrDiv', 'hdrTgl', 'hdrShift', 'hdrLokasi'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
   $('btnFormTab').classList.toggle('on', form);
   $('btnSavedTab').classList.toggle('on', !form);
