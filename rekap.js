@@ -121,11 +121,47 @@
   /* =========================================================
      BLOK PERSONEL
      ========================================================= */
+  // Hitung jumlah hari per alasan dari tanggal[] milik satu personel: { "Sakit": 3, "Cuti Tahunan": 2 }
+  function hitungAlasan(tanggalArray) {
+    const counts = {};
+    (tanggalArray || []).forEach((item) => { counts[item.alasan] = (counts[item.alasan] || 0) + 1; });
+    return counts;
+  }
+  // Render badge "Alasan (N)" untuk kolom tabel, urutan sesuai konstanta ALASAN standar
+  function formatAlasanBadges(tanggalArray) {
+    const counts = hitungAlasan(tanggalArray);
+    return Object.keys(counts)
+      .sort((a, b) => D.ALASAN.indexOf(a) - D.ALASAN.indexOf(b))
+      .map((alasan) => { const w = WARNA_ALASAN[alasan] || '#B9C4D6'; return `<span class="tag" style="background:${w}1A;color:${w}">${E(alasan)} (${counts[alasan]})</span>`; })
+      .join(' ');
+  }
+  // Group tanggal[] per alasan (tanggal digabung, urut ASC), urutan grup sesuai ALASAN standar
+  function kelompokkanTanggal(tanggalArray) {
+    const grouped = {};
+    (tanggalArray || []).forEach((item) => { (grouped[item.alasan] || (grouped[item.alasan] = [])).push(item.tgl); });
+    Object.values(grouped).forEach((arr) => arr.reverse());
+    return Object.keys(grouped)
+      .sort((a, b) => D.ALASAN.indexOf(a) - D.ALASAN.indexOf(b))
+      .map((alasan) => ({ alasan, tanggal: grouped[alasan] }));
+  }
+  // Render badge expand-row: satu badge PER ALASAN berisi semua tanggalnya, mis. "Sakit · 01/09/26; 02/09/26"
+  function badgeAlasanTanggal(tanggalArray) {
+    return kelompokkanTanggal(tanggalArray).map((g) => {
+      const warna = WARNA_ALASAN[g.alasan] || '#B9C4D6';
+      return `<span class="tgi"><i style="background:${warna}"></i>${E(g.alasan)} &middot; ${g.tanggal.map((t) => E(tglPendek(t))).join('; ')}</span>`;
+    }).join('');
+  }
   function tabelPersonel(daftar, penuh) {
     const rows = (penuh ? daftar : daftar.slice(0, 5));
     if (!rows.length) return '<div class="empty">Belum ada data ketidakhadiran<br>pada rentang ini.</div>';
-    const trs = rows.map((x, i) => `<tr class="klik" data-i="${i}"><td>${i + 1}</td><td class="nm">${E(x.nama.toUpperCase())}</td><td>${E(x.regu)}</td><td><b>${x.jumlah}</b></td><td><span class="tag" style="background:#EEF1F6;color:#5C6675">${E(x.alasan)}</span></td></tr>`).join('');
-    return tabelKlik(rows, '<th>#</th><th>Nama</th><th>Regu</th><th>Hari</th><th>Alasan Utama</th>', trs);
+    const id = 'rtbl' + (++nomorTabel);
+    const trs = rows.map((x, i) => `<tr class="klik" data-i="${i}"><td>${i + 1}</td><td class="nm">${E(x.nama.toUpperCase())}</td><td><b>${x.jumlah}</b></td><td>${formatAlasanBadges(x.tanggal)}</td></tr>`).join('');
+    setTimeout(() => {
+      document.querySelectorAll(`#${id} tr.klik`).forEach((tr) => {
+        tr.onclick = () => { const i = +tr.dataset.i; if (rows[i]) toggleMekar(tr, badgeAlasanTanggal(rows[i].tanggal)); };
+      });
+    }, 0);
+    return `<table class="rtbl" id="${id}"><thead><tr><th>#</th><th>Nama</th><th>Hari</th><th>Alasan (N Hari)</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
   function renderPersonel() {
     const r = RP;
