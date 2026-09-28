@@ -504,7 +504,7 @@ function loadForEdit(id) {
   $('editBadge').style.display = 'flex';
   $('editBadge').innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
     `<button type="button" class="rw" onclick="bukaRiwayat('${editingReportId}')">Riwayat ▾</button>` +
-    `<button type="button" onclick="newReport()">Batal, buat baru</button>`;
+    `<button type="button" class="batal" onclick="newReport()">Batal</button>`;
     renderForm(); refreshPenyusunDanKunci(); switchPage('form');
 }
 function deleteReport(id) {

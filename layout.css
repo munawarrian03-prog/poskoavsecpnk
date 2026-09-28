@@ -44,6 +44,8 @@ body.focus #topBar { display: none; }
 .strip b { font-weight: 800; }
 .strip .sep { opacity: .45; }
 .strip .rw { margin-left: auto; font-weight: 800; color: #8A5A0C; background: #FBE7BC; border-radius: 6px; padding: 3px 9px; cursor: pointer; border: none; font-size: 10.5px; }
+.strip .batal { font-weight: 800; color: #5C6675; background: #fff; border: 1px solid #E1C68A; border-radius: 6px; padding: 3px 9px; cursor: pointer; font-size: 10.5px; }
+.strip .batal:hover { background: #FFFBF0; color: #10243D; }
 .strip .rwpop { display: none; position: absolute; right: 8px; top: calc(100% + 4px); z-index: 60; background: #fff; color: var(--text-main); border: 1px solid var(--border-color); border-radius: 10px; box-shadow: 0 12px 32px rgba(16,36,61,.25); padding: 10px 14px; min-width: 300px; max-height: 260px; overflow-y: auto; }
 .strip .rwpop.open { display: block; }
 .strip .rwpop h4 { font-size: 11px; font-weight: 800; margin-bottom: 6px; color: var(--ink); letter-spacing: .3px; }

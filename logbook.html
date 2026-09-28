@@ -353,7 +353,11 @@ function loadForEdit(id) {
   const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
   editingReportId = id; $('tanggal').value = r.tanggal; $('shift').value = r.shift; $('regu').value = r.regu;
   catatanKegiatan = clone(r.catatanKegiatan || []); $('serahTerima').value = r.catatanSerahTerima || ''; dirty = false;
-  $('editBadge').style.display = 'flex'; $('editBadge').innerHTML = `Mengubah catatan ${esc(r.tanggal)} · ${esc(r.shift)} · Regu ${esc(r.regu)} <button type="button" onclick="newReport()">Batal, buat baru</button>`;
+  const k = AVS.ketJejak(r);
+  $('editBadge').style.display = 'flex';
+  $('editBadge').innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
+    `<button type="button" class="rw" onclick="bukaRiwayat('${editingReportId}')">Riwayat ▾</button>` +
+    `<button type="button" class="batal" onclick="newReport()">Batal</button>`;
     renderCatatan(); refreshPenyusunDanKunci(); renderRingkasanOtomatis(); switchPage('form');
 }
 function deleteReport(id) {

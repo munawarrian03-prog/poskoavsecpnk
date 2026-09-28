@@ -676,7 +676,8 @@ function updateBadge() {
   if (!r) { b.style.display = 'none'; b.innerHTML = ''; return; }
   const k = AVS.ketJejak(r);
   b.innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
-    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>`;
+    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>` +
+    `<button type="button" class="batal" onclick="newReport()">Batal</button>`;
   b.style.display = 'flex';
 }
 function bukaRiwayat() {
