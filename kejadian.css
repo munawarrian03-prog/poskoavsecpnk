@@ -166,13 +166,11 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .toolbar.tb-2row .tb-row #hdrLokasi input { min-width: 118px; }
 .toolbar.tb-2row .tb-row .fld select { min-width: 118px; }
 
-/* Lokasi kejadian: combobox satu kolom (ketik bebas + datalist pos jaga),
-   ikon panah dropdown murni dekoratif (klik di mana saja pada input tetap
-   memicu saran browser dari atribut list=). Tidak ada kolom kedua yang
-   muncul/menimpa elemen lain di bawah toolbar. */
-.lokasi-combo { position: relative; display: flex; }
-.lokasi-combo input { padding-right: 26px !important; }
-.lokasi-combo::after { content: '▾'; position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--text-muted); pointer-events: none; }
+/* Lokasi kejadian: combobox satu kolom (ketik bebas + datalist pos jaga).
+   Ikon panah dropdown memakai indikator bawaan browser utk input list=
+   (jangan tambah panah CSS lagi di sini - akan dobel dengan punya browser).
+   Tidak ada kolom kedua yang muncul/menimpa elemen lain di bawah toolbar. */
+.lokasi-combo { display: flex; }
 
 /* Samakan lebar Tanggal, Shift, Lokasi Kejadian */
 #tglLap, #shiftLap, #lokasiKejadianSel { width: 150px; }
