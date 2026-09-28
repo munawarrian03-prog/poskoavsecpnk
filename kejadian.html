@@ -35,16 +35,15 @@
 <span class="tdiv" id="hdrDiv"></span>
 <div class="fld" id="hdrTgl"><label for="tglLap">TANGGAL</label><input type="date" id="tglLap" data-f="tanggal" oninput="fieldChanged(this)"></div>
 <div class="fld" id="hdrShift"><label for="shiftLap">SHIFT</label>
-<div class="dd-combo">
 <select id="shiftLap" data-f="shift" onchange="fieldChanged(this)">
 <option value="">-</option>
 <option value="Pagi (08:00 - 20:00) WIB">Pagi (08:00 - 20:00) WIB</option>
 <option value="Malam (20:00 - 08:00) WIB">Malam (20:00 - 08:00) WIB</option>
-</select></div></div>
+</select></div>
 <div class="fld" id="hdrLokasi"><label for="lokasiKejadianSel">LOKASI KEJADIAN</label>
-<div class="dd-combo lokasi-combo">
-<input type="text" id="lokasiKejadianSel" list="lokasiKejadianList" oninput="lokasiKejadianInput(this.value)" placeholder="Pilih atau ketik lokasi" autocomplete="off">
-<datalist id="lokasiKejadianList"></datalist>
+<div class="lokasi-combo" id="lokasiCombo">
+<input type="text" id="lokasiKejadianSel" oninput="lokasiKejadianInput(this.value)" onfocus="lokasiDropdownBuka()" placeholder="Pilih atau ketik lokasi" autocomplete="off">
+<div class="lokasi-dd" id="lokasiDropdown"></div>
 </div>
 </div>
 <span class="tsp"></span>
@@ -502,11 +501,15 @@ function isiForm() {
 }
 function renderSemua() { renderDasar(); renderTL(); renderDR(); renderTerlampir(); renderFoto(); renderTTD(); }
 
-/* ---------- Lokasi kejadian: combobox (ketik bebas + pilih dari daftar pos jaga) ---------- */
+/* ---------- Lokasi kejadian: combobox custom (ketik bebas + pilih dari daftar pos jaga).
+   Dibuat sendiri (bukan <datalist> bawaan browser) supaya ikon panah &
+   perilaku dropdown sepenuhnya terkendali dan konsisten di semua browser -
+   <input list=> pernah menampilkan indikator native browser + ikon custom
+   sekaligus (dobel), tidak bisa disembunyikan dengan andal lintas browser. */
 function daftarPosJaga() { return (typeof POS_BAWAAN !== 'undefined' ? POS_BAWAAN : []).map((p) => p.name); }
 function renderLokasiKejadianOptions() {
-  const dl = $('lokasiKejadianList'); if (!dl) return;
-  dl.innerHTML = daftarPosJaga().map((n) => `<option value="${esc(n)}">`).join('');
+  const dd = $('lokasiDropdown'); if (!dd) return;
+  dd.innerHTML = daftarPosJaga().map((n, i) => `<div class="opt" onmousedown="lokasiPilih(${i})">${esc(n)}</div>`).join('');
 }
 function syncLokasiKejadianUI() {
   renderLokasiKejadianOptions();
@@ -514,6 +517,18 @@ function syncLokasiKejadianUI() {
   inp.value = laporan.lokasiKejadian || '';
 }
 function lokasiKejadianInput(v) { laporan.lokasiKejadian = v; ubah(); }
+function lokasiDropdownBuka() { const dd = $('lokasiDropdown'); if (dd) dd.classList.add('open'); }
+function lokasiDropdownTutup() { const dd = $('lokasiDropdown'); if (dd) dd.classList.remove('open'); }
+function lokasiPilih(i) {
+  const v = daftarPosJaga()[i]; if (v === undefined) return;
+  const inp = $('lokasiKejadianSel'); if (inp) inp.value = v;
+  laporan.lokasiKejadian = v; ubah();
+  lokasiDropdownTutup();
+}
+document.addEventListener('click', (e) => {
+  const combo = $('lokasiCombo');
+  if (combo && !combo.contains(e.target)) lokasiDropdownTutup();
+});
 
 function isiSaran() {
   const sumber = (typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : [];

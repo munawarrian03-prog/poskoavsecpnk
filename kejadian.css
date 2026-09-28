@@ -166,19 +166,21 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .toolbar.tb-2row .tb-row #hdrLokasi input { min-width: 118px; }
 .toolbar.tb-2row .tb-row .fld select { min-width: 118px; }
 
-/* Dropdown seragam: Shift (select) dan Lokasi Kejadian (input+datalist)
-   pakai satu gaya panah yang sama persis, bukan mengandalkan rendering
-   bawaan browser (beda-beda antar browser & antar jenis elemen -> pernah
-   terlihat dobel/tidak seragam). Native indicator disembunyikan, diganti
-   satu panah custom via ::after. */
-.dd-combo { position: relative; display: flex; }
-.dd-combo select, .dd-combo input { appearance: none; -webkit-appearance: none; -moz-appearance: none; padding-right: 24px !important; }
-.dd-combo input[list]::-webkit-calendar-picker-indicator { display: none; }
-.dd-combo::after { content: '▾'; position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text-muted); pointer-events: none; }
+/* Shift: <select> asli tanpa pembungkus, panah memakai indikator native
+   browser (bawaan) - tidak disentuh sama sekali. */
 
-/* Lokasi kejadian: combobox satu kolom (ketik bebas + datalist pos jaga).
-   Tidak ada kolom kedua yang muncul/menimpa elemen lain di bawah toolbar. */
-.lokasi-combo { display: flex; }
+/* Lokasi kejadian: combobox custom (bukan <select>, bukan <datalist>)
+   supaya bisa diketik bebas TANPA kolom kedua yang menimpa elemen lain,
+   dan panahnya bisa disamakan gayanya dengan panah Shift tanpa risiko
+   dobel indikator (yang terjadi kalau memakai <input list=>, karena
+   indikator native datalist tidak bisa disembunyikan dengan andal). */
+.lokasi-combo { position: relative; display: flex; }
+.lokasi-combo input { padding-right: 24px !important; }
+.lokasi-combo::after { content: '▾'; position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text-muted); pointer-events: none; }
+.lokasi-dd { display: none; position: absolute; left: 0; top: calc(100% + 4px); min-width: 100%; max-height: 220px; overflow-y: auto; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 12px 32px rgba(16,36,61,.18); z-index: 80; }
+.lokasi-dd.open { display: block; }
+.lokasi-dd .opt { padding: 7px 11px; font-size: 12px; font-weight: 600; color: var(--text-main); cursor: pointer; white-space: nowrap; }
+.lokasi-dd .opt:hover { background: #F2F6FB; }
 
 /* Samakan lebar Tanggal, Shift, Lokasi Kejadian */
 #tglLap, #shiftLap, #lokasiKejadianSel { width: 150px; }
