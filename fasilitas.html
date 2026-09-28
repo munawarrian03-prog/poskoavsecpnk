@@ -237,6 +237,15 @@ function posKosong() {
     })
   }));
 }
+// Isian awal utk laporan BARU: bawa kondisi/status/keterangan dari laporan tersimpan TERAKHIR
+// (kondisi fasilitas fisik biasanya sama dari shift ke shift), tapi Tanggal/Shift/Regu tetap
+// dikosongkan terpisah oleh pemanggilnya karena wajib dipilih ulang tiap laporan.
+function posAwalLaporanBaru() {
+  const reports = lsGet(STORAGE_KEY, []).slice()
+    .sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || '') || (b.savedAt || '').localeCompare(a.savedAt || ''));
+  const terakhir = reports[0];
+  return terakhir && Array.isArray(terakhir.posFasilitas) && terakhir.posFasilitas.length ? clone(terakhir.posFasilitas) : posKosong();
+}
 function wajibKeterangan(it) {
   if (it.bentuk === 'A') return it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan';
   if (it.bentuk === 'B') return (it.rusak || 0) > 0;
@@ -484,7 +493,7 @@ function newReport() {
   if (dirty && !confirm('Ada isian yang belum disimpan. Buang perubahan dan mulai laporan baru?')) return;
   editingReportId = null; $('editBadge').style.display = 'none';
   $('tanggal').value = tanggalLokalISO(new Date()); $('shift').value = ''; $('regu').value = '';
-  posFasilitas = posKosong(); dirty = false;
+  posFasilitas = posAwalLaporanBaru(); dirty = false;
     renderForm(); refreshPenyusunDanKunci(); switchPage('form');
 }
 function loadForEdit(id) {
@@ -647,7 +656,7 @@ window.addEventListener('DOMContentLoaded', () => {
   $('shift').value = ''; $('regu').value = ''; // cegah browser me-restore pilihan shift/regu terakhir
   $('fMulai').value = tanggalLokalISO(new Date(h.getFullYear(), h.getMonth(), 1));
   $('fSampai').value = tanggalLokalISO(h);
-  posFasilitas = posKosong();
+  posFasilitas = posAwalLaporanBaru();
   renderForm();
   refreshPenyusunDanKunci();
   if (!POS_AWAL.length) toast('Daftar pos (fasilitas-data.js) tidak terbaca.', 'err');
