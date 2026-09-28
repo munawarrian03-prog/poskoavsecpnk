@@ -150,6 +150,8 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .toolbar .hbtn { background: #EEF1F6; color: var(--ink); border: 1px solid #D0D8E3; }
 .toolbar .hbtn:hover { background: #E1E6EF; }
 .toolbar .fld { gap: 6px; }
+.sc .hbtn { background: #EEF1F6; color: var(--ink); border: 1px solid #D0D8E3; flex: none; }
+.sc .hbtn:hover { background: #E1E6EF; }
 
 /* Toolbar dua baris: baris 1 = tab halaman + Mode fokus/Laporan Baru (sejajar),
    baris 2 = Tanggal/Shift/Lokasi di kiri, Nomor di tengah (grid 3 kolom

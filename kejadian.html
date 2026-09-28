@@ -53,11 +53,6 @@
 <div class="fld" id="hdrLokasiManual"><label for="lokasiKejadianManual">TULIS LOKASI</label>
 <input type="text" id="lokasiKejadianManual" oninput="lokasiKejadianManualInput(this.value)" placeholder="Tulis lokasi kejadian">
 </div>
-<div class="fld" id="hdrNomor"><label for="fileNumber">NOMOR</label>
-<div class="nomor-wrap" id="nomorWrap"><input type="text" id="fileNumber" data-f="fileNumber" oninput="fieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="autoTag">AUTO</span></div>
-<button type="button" class="hbtn" id="btnNomorMode" onclick="ubahModeNomor()" title="Ubah nomor secara manual">✎</button>
-<button type="button" class="hbtn" onclick="bukaUrutan()" title="Atur urutan nomor bulan ini">⚙</button>
-</div>
 </div>
 </div>
 <div class="strip" id="editBadge" style="display:none"></div>
@@ -82,7 +77,14 @@
 <div class="privacy-note">Laporan memuat data pribadi pihak terkait. Draf dan laporan tersimpan hanya di browser komputer ini. Hapus laporan yang sudah tidak diperlukan sesuai ketentuan kantor.</div>
 
 <section class="pn sec acc-red" id="sec1"><div class="hd"><h3>1 · Identitas &amp; pejabat</h3><span class="sp"></span><span class="ct">Nama dipilih dari daftar personel</span></div>
-<div class="sc"><div class="g4">
+<div class="sc">
+<div class="lab">Nomor Laporan <small>File Number</small></div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+<div class="nomor-wrap" id="nomorWrap"><input type="text" id="fileNumber" data-f="fileNumber" oninput="fieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="autoTag">AUTO</span></div>
+<button type="button" class="hbtn" id="btnNomorMode" onclick="ubahModeNomor()" title="Ubah nomor secara manual">✎</button>
+<button type="button" class="hbtn" onclick="bukaUrutan()" title="Atur urutan nomor bulan ini">⚙</button>
+</div>
+<div class="g4">
 <div class="pc"><div class="pt">DISUSUN OLEH <small>Prepared By</small></div>
 <label>Nama</label><input type="text" list="listPersonel" data-f="preparedBy.nama" oninput="fieldChanged(this)" onchange="namaChanged('preparedBy')">
 <label>Jabatan</label><input type="text" list="listJabatan" data-f="preparedBy.jabatan" oninput="fieldChanged(this)"></div>
@@ -1221,7 +1223,7 @@ function switchPage(page) {
   $('pageSaved').style.display = form ? 'none' : 'flex';
   $('statBar').style.display = form ? 'flex' : 'none';
   $('tbRow2').style.display = form ? '' : 'none';
-  ['hdrDiv', 'hdrTgl', 'hdrShift', 'hdrLokasi', 'hdrNomor'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
+  ['hdrDiv', 'hdrTgl', 'hdrShift', 'hdrLokasi'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
   $('btnFormTab').classList.toggle('on', form);
   $('btnSavedTab').classList.toggle('on', !form);
   $('hdlWA').style.display = form ? '' : 'none';
