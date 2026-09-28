@@ -493,7 +493,7 @@ function newReport() {
   if (dirty && !confirm('Ada isian yang belum disimpan. Buang perubahan dan mulai laporan baru?')) return;
   editingReportId = null; $('editBadge').style.display = 'none';
   $('tanggal').value = tanggalLokalISO(new Date()); $('shift').value = ''; $('regu').value = '';
-  posFasilitas = posAwalLaporanBaru(); dirty = false;
+  posFasilitas = posKosong(); dirty = false;
     renderForm(); refreshPenyusunDanKunci(); switchPage('form');
 }
 function loadForEdit(id) {
