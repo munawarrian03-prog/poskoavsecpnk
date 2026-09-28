@@ -35,13 +35,14 @@
 <span class="tdiv" id="hdrDiv"></span>
 <div class="fld" id="hdrTgl"><label for="tglLap">TANGGAL</label><input type="date" id="tglLap" data-f="tanggal" oninput="fieldChanged(this)"></div>
 <div class="fld" id="hdrShift"><label for="shiftLap">SHIFT</label>
+<div class="dd-combo">
 <select id="shiftLap" data-f="shift" onchange="fieldChanged(this)">
 <option value="">-</option>
 <option value="Pagi (08:00 - 20:00) WIB">Pagi (08:00 - 20:00) WIB</option>
 <option value="Malam (20:00 - 08:00) WIB">Malam (20:00 - 08:00) WIB</option>
-</select></div>
+</select></div></div>
 <div class="fld" id="hdrLokasi"><label for="lokasiKejadianSel">LOKASI KEJADIAN</label>
-<div class="lokasi-combo">
+<div class="dd-combo lokasi-combo">
 <input type="text" id="lokasiKejadianSel" list="lokasiKejadianList" oninput="lokasiKejadianInput(this.value)" placeholder="Pilih atau ketik lokasi" autocomplete="off">
 <datalist id="lokasiKejadianList"></datalist>
 </div>
@@ -1283,7 +1284,7 @@ async function mulai() {
     const d = await dbGet(KEY_DRAFT);
     if (d) {
       editingId = d.editingId || null; delete d.editingId; d.id = editingId;
-      laporan = lengkapiModel(d); dirty = true;
+      laporan = lengkapiModel(d);
       toast('Draf terakhir yang belum disimpan dipulihkan.');
     }
   } catch (e) { /* tanpa draf */ }

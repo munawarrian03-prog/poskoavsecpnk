@@ -166,9 +166,17 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .toolbar.tb-2row .tb-row #hdrLokasi input { min-width: 118px; }
 .toolbar.tb-2row .tb-row .fld select { min-width: 118px; }
 
+/* Dropdown seragam: Shift (select) dan Lokasi Kejadian (input+datalist)
+   pakai satu gaya panah yang sama persis, bukan mengandalkan rendering
+   bawaan browser (beda-beda antar browser & antar jenis elemen -> pernah
+   terlihat dobel/tidak seragam). Native indicator disembunyikan, diganti
+   satu panah custom via ::after. */
+.dd-combo { position: relative; display: flex; }
+.dd-combo select, .dd-combo input { appearance: none; -webkit-appearance: none; -moz-appearance: none; padding-right: 24px !important; }
+.dd-combo input[list]::-webkit-calendar-picker-indicator { display: none; }
+.dd-combo::after { content: '▾'; position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text-muted); pointer-events: none; }
+
 /* Lokasi kejadian: combobox satu kolom (ketik bebas + datalist pos jaga).
-   Ikon panah dropdown memakai indikator bawaan browser utk input list=
-   (jangan tambah panah CSS lagi di sini - akan dobel dengan punya browser).
    Tidak ada kolom kedua yang muncul/menimpa elemen lain di bawah toolbar. */
 .lokasi-combo { display: flex; }
 
