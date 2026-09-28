@@ -78,13 +78,13 @@
 
 <section class="pn sec acc-red" id="sec1"><div class="hd"><h3>1 · Identitas &amp; pejabat</h3><span class="sp"></span><span class="ct">Nama dipilih dari daftar personel</span></div>
 <div class="sc">
-<div class="lab">Nomor Laporan <small>File Number</small></div>
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+<div class="g4">
+<div class="pc" style="grid-column:1 / -1"><div class="pt">NOMOR <small>File Number</small></div>
+<div style="display:flex;align-items:center;gap:8px">
 <div class="nomor-wrap" id="nomorWrap"><input type="text" id="fileNumber" data-f="fileNumber" oninput="fieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="autoTag">AUTO</span></div>
 <button type="button" class="hbtn" id="btnNomorMode" onclick="ubahModeNomor()" title="Ubah nomor secara manual">✎</button>
 <button type="button" class="hbtn" onclick="bukaUrutan()" title="Atur urutan nomor bulan ini">⚙</button>
-</div>
-<div class="g4">
+</div></div>
 <div class="pc"><div class="pt">DISUSUN OLEH <small>Prepared By</small></div>
 <label>Nama</label><input type="text" list="listPersonel" data-f="preparedBy.nama" oninput="fieldChanged(this)" onchange="namaChanged('preparedBy')">
 <label>Jabatan</label><input type="text" list="listJabatan" data-f="preparedBy.jabatan" oninput="fieldChanged(this)"></div>
