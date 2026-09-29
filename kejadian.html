@@ -178,12 +178,15 @@
 <div class="panel-box" id="pageSaved" style="display:none;">
 <div class="panel-title">DAFTAR LAPORAN TERSIMPAN</div>
 <div class="saved-filter">
+<div class="f2"><label>Dari Tanggal</label><input type="date" id="filterMulaiTersimpan" onchange="renderTersimpan()"></div>
+<div class="f2"><label>Sampai Tanggal</label><input type="date" id="filterSampaiTersimpan" onchange="renderTersimpan()"></div>
 <div class="f2"><label>Jenis Laporan</label>
 <select id="filterJenisTersimpan" onchange="renderTersimpan()">
 <option value="all">Semua Laporan</option>
 <option value="LK">Laporan Kejadian (LK)</option>
 <option value="BAST">Berita Acara Serah Terima (BAST)</option>
 </select></div>
+<button type="button" class="hbtn" style="align-self:flex-end;width:auto;padding:0 12px" onclick="resetFilterTersimpan()" title="Hapus filter tanggal">✕ Reset Tanggal</button>
 </div>
 <div id="savedList" style="flex:1; overflow-y:auto;"></div>
 </div>
@@ -274,16 +277,16 @@
 <!-- JENDELA ATUR URUTAN NOMOR -->
 <div class="ov" id="urutModal" style="display:none">
 <div class="modal2" style="width:520px">
-<div class="mh"><div><h3>Atur Urutan Nomor</h3><p id="urutSub"></p></div><div class="cx" onclick="tutupUrutan()">✕</div></div>
+<div class="mh"><div><h3>Atur Urutan Nomor</h3><p id="urutSub"></p></div><div class="cx" onclick="modeUrutanAktif === 'BAST' ? bastTutupUrutan() : tutupUrutan()">✕</div></div>
 <div style="padding:18px 20px 8px">
 <label for="urutInput" style="font-weight:700;">Nomor terakhir yang sudah dipakai bulan ini</label>
-<input type="number" id="urutInput" min="0" step="1" oninput="ubahInputUrutan()" style="margin-top:6px;">
+<input type="number" id="urutInput" min="0" step="1" oninput="modeUrutanAktif === 'BAST' ? bastUbahInputUrutan() : ubahInputUrutan()" style="margin-top:6px;">
 <div class="cap" id="urutInfo"></div>
 <div class="urut-next"><span>Nomor berikutnya</span><b id="urutNext">-</b></div>
 <div class="cap" id="urutRiwayat"></div>
 <div class="info-note">Gunakan ini bila ada nomor yang sudah terpakai di komputer lain atau pada surat tertulis, agar tidak terjadi nomor ganda. Nomor tidak akan turun sendiri walaupun laporan dihapus.</div>
 </div>
-<div class="mf"><div class="lock">Urutan dihitung per bulan</div><div class="btns"><button type="button" class="b1" onclick="tutupUrutan()">Batal</button><button type="button" class="b2" onclick="simpanUrutan()">Simpan Urutan</button></div></div>
+<div class="mf"><div class="lock">Urutan dihitung per bulan</div><div class="btns"><button type="button" class="b1" onclick="modeUrutanAktif === 'BAST' ? bastTutupUrutan() : tutupUrutan()">Batal</button><button type="button" class="b2" onclick="modeUrutanAktif === 'BAST' ? bastSimpanUrutan() : simpanUrutan()">Simpan Urutan</button></div></div>
 </div>
 </div>
 
@@ -341,6 +344,7 @@ let editingId = null;
 let dirty = false;
 let draftTimer = null;
 let jenisAktif = 'LK';   // 'LK' | 'BAST' - jenis laporan yang sedang dibuka di tab "Buat Laporan"
+let modeUrutanAktif = 'LK';   // 'LK' | 'BAST' - menentukan modal #urutModal (dipakai bersama) memanggil implementasi yang mana
 
 /* ---------- Utilitas ---------- */
 let toastTimer;
@@ -490,6 +494,7 @@ function catatNomor(rec) { const p = KejadianNomor.parse(rec.fileNumber); if (p)
 
 let UR = null;
 async function bukaUrutan() {
+  modeUrutanAktif = 'LK';
   const t = pecahTgl(laporan.tanggal) || { y: new Date().getFullYear(), m: new Date().getMonth() }, recs = await rekamTersimpan();
   const minim = KejadianNomor.urutTertinggiTersimpan(recs, t.y, t.m), efektif = KejadianNomor.urutTerakhir(recs, bacaCounter(), t.y, t.m);
   UR = { t, minim };
@@ -1222,9 +1227,18 @@ async function renderTersimpan() {
   try { list = (await dbAll()).filter((r) => r.id !== KEY_DRAFT); } catch (e) { box.innerHTML = '<div style="text-align:center;color:#C93B2E;padding:40px 0;">Penyimpanan browser tidak tersedia.</div>'; return; }
   const filter = $('filterJenisTersimpan') ? $('filterJenisTersimpan').value : 'all';
   if (filter !== 'all') list = list.filter((r) => (r.jenis || 'LK') === filter);
+  const mulai = $('filterMulaiTersimpan') ? $('filterMulaiTersimpan').value : '';
+  const sampai = $('filterSampaiTersimpan') ? $('filterSampaiTersimpan').value : '';
+  if (mulai) list = list.filter((r) => (r.tanggal || '') >= mulai);
+  if (sampai) list = list.filter((r) => (r.tanggal || '') <= sampai);
   list.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
   if (!list.length) { box.innerHTML = '<div style="text-align:center;color:#64748b;padding:40px 0;">Belum ada laporan tersimpan.</div>'; return; }
   box.innerHTML = list.map((r) => (r.jenis === 'BAST' ? bastRenderKartu(r) : kartuLK(r))).join('');
+}
+function resetFilterTersimpan() {
+  if ($('filterMulaiTersimpan')) $('filterMulaiTersimpan').value = '';
+  if ($('filterSampaiTersimpan')) $('filterSampaiTersimpan').value = '';
+  renderTersimpan();
 }
 async function unduhId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapiModel(r), 'unduh'); }
 async function pratinjauId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapiModel(r), 'pratinjau'); }

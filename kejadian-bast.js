@@ -99,6 +99,32 @@ async function bastUbahModeNomor() {
   bastLaporan.nomorOtomatis = true; bastLaporan.nomorDikunci = false; bastLaporan.nomorBast = '';
   await bastPerbaruiNomor(); bastUbah();
 }
+
+/* ---------- Atur Urutan Nomor (modal #urutModal, dipakai bersama LK - lihat modeUrutanAktif di kejadian.html) ---------- */
+let bastUR = null;
+async function bastBukaUrutan() {
+  modeUrutanAktif = 'BAST';
+  const t = pecahTgl(bastLaporan.tanggal) || { y: new Date().getFullYear(), m: new Date().getMonth() }, recs = await bastRekamTersimpan();
+  const minim = BastNomor.urutTertinggiTersimpan(recs, t.y, t.m), efektif = BastNomor.urutTerakhir(recs, bastBacaCounter(), t.y, t.m);
+  bastUR = { t, minim };
+  $('urutSub').textContent = `${AVS.BULAN[t.m]} ${t.y} (mengikuti tanggal BAST)`;
+  $('urutInput').min = minim; $('urutInput').value = efektif;
+  const ada = recs.map((r) => BastNomor.parse(r.nomorBast)).filter((p) => p && p.y === t.y && p.m === t.m).map((p) => p.urut).sort((a, b) => a - b);
+  $('urutRiwayat').textContent = ada.length ? 'Nomor yang sudah ada di BAST tersimpan bulan ini: ' + ada.join(', ') + '.' : 'Belum ada BAST bernomor otomatis pada bulan ini.';
+  $('urutInfo').textContent = minim ? `Tidak dapat lebih kecil dari ${minim} (nomor tertinggi yang sudah tersimpan).` : 'Isi 0 untuk memulai dari nomor 1.';
+  bastUbahInputUrutan(); $('urutModal').style.display = 'flex';
+}
+function bastUbahInputUrutan() { if (!bastUR) return; const v = Math.max(bastUR.minim, parseInt($('urutInput').value, 10) || 0); $('urutNext').textContent = BastNomor.format(v + 1, bastUR.t.y, bastUR.t.m); }
+function bastTutupUrutan() { $('urutModal').style.display = 'none'; bastUR = null; }
+async function bastSimpanUrutan() {
+  if (!bastUR) return;
+  const v = parseInt($('urutInput').value, 10);
+  if (!Number.isFinite(v) || v < 0) { toast('Isi angka 0 atau lebih.', 'err'); return; }
+  if (v < bastUR.minim) { toast(`Nomor terakhir tidak boleh kurang dari ${bastUR.minim}.`, 'err'); return; }
+  const t = bastUR.t, c = bastBacaCounter(); c[BastNomor.kunciBulan(t.y, t.m)] = v; bastTulisCounter(c);
+  bastTutupUrutan(); await bastPerbaruiNomor();
+  toast(`Urutan diatur. Nomor berikutnya: ${BastNomor.format(v + 1, t.y, t.m)}`);
+}
 async function bastTetapkanNomor(rec) {
   if (rec.nomorOtomatis) {
     let lama = null; if (bastEditingId) { try { const o = await dbGet(bastEditingId); lama = o && o.nomorBast; } catch (e) { /* abaikan */ } }
@@ -149,18 +175,19 @@ function bastRenderForm() {
 <div class="bast-sec">
   <div class="bast-hd"><div class="bast-num">1</div><b>Info Umum</b></div>
   <div class="bast-bd">
-    <div class="bast-g4">
-      <div class="bast-f"><label>Tanggal</label><input type="date" value="${esc(L.tanggal)}" data-f="tanggal" oninput="bastFieldChanged(this)"></div>
-      <div class="bast-f"><label>Waktu</label><input type="time" value="${esc(L.waktu)}" data-f="waktu" oninput="bastFieldChanged(this)"></div>
-      <div class="bast-f"><label>Tempat</label><input value="${esc(L.tempat)}" data-f="tempat" oninput="bastFieldChanged(this)"></div>
-      <div class="bast-f"><label>Kategori BAST</label><select onchange="bastGantiKategori(this.value)">${bastKategoriOptionsHTML()}</select></div>
-    </div>
-    <div class="bast-f" style="margin-bottom:0">
+    <div class="bast-f">
       <label>Nomor BAST</label>
       <div style="display:flex;align-items:center;gap:8px">
         <div class="nomor-wrap" id="bastNomorWrap"><input type="text" id="bastFileNumber" data-f="nomorBast" oninput="bastFieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="bastAutoTag">AUTO</span></div>
         <button type="button" class="hbtn" id="bastBtnNomorMode" onclick="bastUbahModeNomor()" title="Ubah nomor secara manual">✎</button>
+        <button type="button" class="hbtn" onclick="bastBukaUrutan()" title="Atur urutan nomor bulan ini">⚙</button>
       </div>
+    </div>
+    <div class="bast-g4" style="margin-bottom:0">
+      <div class="bast-f"><label>Tanggal</label><input type="date" value="${esc(L.tanggal)}" data-f="tanggal" oninput="bastFieldChanged(this)"></div>
+      <div class="bast-f"><label>Waktu</label><input type="time" value="${esc(L.waktu)}" data-f="waktu" oninput="bastFieldChanged(this)"></div>
+      <div class="bast-f"><label>Tempat</label><input value="${esc(L.tempat)}" data-f="tempat" oninput="bastFieldChanged(this)"></div>
+      <div class="bast-f"><label>Kategori BAST</label><select onchange="bastGantiKategori(this.value)">${bastKategoriOptionsHTML()}</select></div>
     </div>
   </div>
 </div>
