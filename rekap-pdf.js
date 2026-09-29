@@ -41,10 +41,19 @@
     const rows = daftar.map((x, i) => `<tr><td style="${TD};text-align:center;color:#8A94A6">${i + 1}</td><td style="${TD};font-weight:800;color:#10243D">${esc(x.item)}</td><td style="${TD}">${esc(x.pos)}</td><td style="${TD};text-align:center"><b>${x.jumlah}</b></td><td style="${TD}">${esc(x.jenis)}</td><td style="${TD}">${x.tanggal.map(tglPendek).map(esc).join(', ')}</td></tr>`).join('');
     return `<table style="width:100%;border-collapse:collapse;font-size:8pt"><tr><th style="${TH}">#</th><th style="${TH}">Item</th><th style="${TH}">Pos</th><th style="${TH};text-align:center">Kali</th><th style="${TH}">Jenis</th><th style="${TH}">Tanggal</th></tr>${rows}</table>`;
   }
-  function tabelKejadian(daftar) {
+  function labelKategoriBast(kat) {
+    const K = (typeof KATEGORI_BAST !== 'undefined') ? KATEGORI_BAST : {};
+    return (K[kat] && K[kat].label) || 'Lainnya';
+  }
+  function tabelKejadianLK(daftar) {
     if (!daftar.length) return '<div style="font-size:9pt;color:#8A94A6;font-style:italic">Tidak ada laporan kejadian pada rentang ini.</div>';
-    const rows = daftar.map((x, i) => `<tr><td style="${TD};text-align:center;color:#8A94A6">${i + 1}</td><td style="${TD};white-space:nowrap"><b>${esc(tglPendek(x.tanggal))}</b></td><td style="${TD};font-weight:700;color:#10243D">${esc(x.judul)}</td><td style="${TD}">${esc(x.lokasiKejadian || '-')}</td><td style="${TD}">${esc(x.fileNumber || '-')}</td></tr>`).join('');
-    return `<table style="width:100%;border-collapse:collapse;font-size:8pt"><tr><th style="${TH}">#</th><th style="${TH}">Tanggal</th><th style="${TH}">Ringkasan</th><th style="${TH}">Pos Jaga</th><th style="${TH}">No. Berkas</th></tr>${rows}</table>`;
+    const rows = daftar.map((x, i) => `<tr><td style="${TD};text-align:center;color:#8A94A6">${i + 1}</td><td style="${TD};font-weight:700;color:#10243D">${esc(x.judul)}</td><td style="${TD};white-space:nowrap"><b>${esc(tglPendek(x.tanggal))}</b></td><td style="${TD}">${esc(x.lokasiKejadian || '-')}</td><td style="${TD}">${esc(x.fileNumber || '-')}</td></tr>`).join('');
+    return `<table style="width:100%;border-collapse:collapse;font-size:8pt"><tr><th style="${TH}">No</th><th style="${TH}">Laporan Kejadian</th><th style="${TH}">Tanggal</th><th style="${TH}">Pos Jaga</th><th style="${TH}">No. Berkas</th></tr>${rows}</table>`;
+  }
+  function tabelKejadianBAST(daftar) {
+    if (!daftar.length) return '<div style="font-size:9pt;color:#8A94A6;font-style:italic">Tidak ada BAST pada rentang ini.</div>';
+    const rows = daftar.map((x, i) => `<tr><td style="${TD};text-align:center;color:#8A94A6">${i + 1}</td><td style="${TD};font-weight:700;color:#10243D">${esc(labelKategoriBast(x.kategori))} — ${esc(x.pihakSatu || '-')} &rarr; ${esc(x.pihakDua || '-')}</td><td style="${TD};white-space:nowrap"><b>${esc(tglPendek(x.tanggal))}</b></td><td style="${TD}">${esc(x.nomorBast || '-')}</td></tr>`).join('');
+    return `<table style="width:100%;border-collapse:collapse;font-size:8pt"><tr><th style="${TH}">No</th><th style="${TH}">Serah Terima</th><th style="${TH}">Tanggal</th><th style="${TH}">No. BAST</th></tr>${rows}</table>`;
   }
   function tabelKepatuhan(daftar) {
     if (!daftar.length) return '<div style="font-size:9pt;color:#8A94A6;font-style:italic">Seluruh shift pada rentang ini sudah lengkap dilaporkan.</div>';
@@ -90,9 +99,11 @@ ${tabelFasilitas(RF.daftar)}
 
     const halKejadian = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
 ${kop('Laporan Kejadian', periode, tglCetak)}
-${kpiRow([{ l: 'Jumlah Kejadian', v: RK.jumlah, s: 'kejadian' }])}
-${judulBlok('Daftar Kejadian', '#1D3A5C')}
-${tabelKejadian(RK.daftar)}
+${kpiRow([{ l: 'Jumlah LK', v: RK.lk.jumlah, s: 'kasus' }, { l: 'Jumlah BAST', v: RK.bast.jumlah, s: 'BAST' }])}
+${judulBlok('Daftar Laporan Kejadian', '#1D3A5C')}
+${tabelKejadianLK(RK.lk.daftar)}
+${judulBlok('Daftar Serah Terima', '#0F5F65')}
+${tabelKejadianBAST(RK.bast.daftar)}
 </div>`;
 
     const halKepatuhan = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">

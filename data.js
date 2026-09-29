@@ -294,12 +294,25 @@
   }
 
   // Kejadian, GABUNGAN seluruh rentang (tidak dibedakan regu — Kejadian tidak mencatat regu).
+  // Store 'laporan' (IndexedDB) memuat DUA jenis laporan (dibedakan field `jenis`): Laporan
+  // Kejadian (LK) dan Berita Acara Serah Terima (BAST) — keduanya dihitung & didaftar TERPISAH
+  // supaya BAST tidak ikut mencemari statistik "Laporan Kejadian" (LK tidak punya field `jenis`
+  // pada data lama, jadi dianggap LK bila field itu kosong).
   function statKejadianRentang(list, startISO, endISO) {
-    const daftar = (list || []).filter((r) => dalamRentang(r && r.tanggal, startISO, endISO))
-      .sort((a, b) => String(b.tanggal).localeCompare(String(a.tanggal)) || String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
+    const semua = (list || []).filter((r) => dalamRentang(r && r.tanggal, startISO, endISO));
+    const urutkan = (a, b) => String(b.tanggal).localeCompare(String(a.tanggal)) || String(b.savedAt || '').localeCompare(String(a.savedAt || ''));
+    const daftarLK = semua.filter((r) => (r.jenis || 'LK') !== 'BAST').sort(urutkan)
       .map((r) => ({ id: r.id, tanggal: r.tanggal, judul: rapikan(r.caseInfo) || '(tanpa informasi kasus)', shift: rapikan(r.shift) || '-', lokasiKejadian: rapikan(r.lokasiKejadian) || '-', fileNumber: rapikan(r.fileNumber) }));
-    const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, daftar.map((x) => x.tanggal));
-    return { jumlah: daftar.length, daftar, tren, granularitas: bk.granularitas };
+    const daftarBAST = semua.filter((r) => r.jenis === 'BAST').sort(urutkan)
+      .map((r) => ({ id: r.id, tanggal: r.tanggal, kategori: r.kategori || '', pihakSatu: rapikan(r.pihakSatu && r.pihakSatu.nama), pihakDua: rapikan(r.pihakDua && r.pihakDua.nama), nomorBast: rapikan(r.nomorBast) }));
+    const bk = bucketRentang(startISO, endISO);
+    const trenLK = isiBucket(bk.buckets, daftarLK.map((x) => x.tanggal));
+    const trenBAST = isiBucket(bk.buckets, daftarBAST.map((x) => x.tanggal));
+    return {
+      granularitas: bk.granularitas,
+      lk: { jumlah: daftarLK.length, daftar: daftarLK, tren: trenLK },
+      bast: { jumlah: daftarBAST.length, daftar: daftarBAST, tren: trenBAST }
+    };
   }
 
   // Kepatuhan pelaporan shift, GABUNGAN 3 jenis (Personel/Fasilitas/Log Book), seluruh rentang.

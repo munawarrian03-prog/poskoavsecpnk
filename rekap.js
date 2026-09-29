@@ -29,6 +29,11 @@
     grafikTren[id] = { bucket, warna };
     return `<div class="grafik-tren" id="${id}"></div>`;
   }
+  // Tren dua seri berdampingan per bucket (mis. LK & BAST) - dipakai blok Laporan Kejadian.
+  function wadahGrafikTrenDua(id, bucketA, bucketB, warnaA, warnaB) {
+    grafikTren[id] = { dual: true, bucketA, bucketB, warnaA, warnaB };
+    return `<div class="grafik-tren" id="${id}"></div>`;
+  }
   function svgBatang(d, warna, W, H) {
     if (!d || !d.length) return '<div class="empty">Belum ada data.</div>';
     const padL = 30, padR = 6, top = 16, base = H - 20, n = d.length;
@@ -47,10 +52,31 @@
     });
     return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${s}</svg>`;
   }
+  // Sama seperti svgBatang, tapi dua batang berdampingan per titik (dua seri dibandingkan langsung).
+  function svgBatangDua(dA, dB, warnaA, warnaB, W, H) {
+    if (!dA || !dA.length) return '<div class="empty">Belum ada data.</div>';
+    const padL = 30, padR = 6, top = 16, base = H - 20, n = dA.length;
+    const slot = (W - padL - padR) / n, bw = Math.max(2, Math.min(18, slot * 0.26)), gap = Math.max(2, bw * 0.3);
+    const sk = skalaY(Math.max(0, ...dA.map((x) => x.jumlah), ...dB.map((x) => x.jumlah)));
+    const lebarLabel = Math.max(...dA.map((x) => String(x.label).length)) * 6 + 6, tiapLabel = Math.max(1, Math.ceil(lebarLabel / slot));
+    let s = '';
+    for (let g = 0; g <= sk.max; g += sk.step) { const y = base - g / sk.max * (base - top); s += `<line x1="${padL - 4}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="#E9EDF4"/><text x="${padL - 8}" y="${y + 3.5}" text-anchor="end" font-size="9" fill="#8A94A6" font-weight="600">${g}</text>`; }
+    dA.forEach((wA, i) => {
+      const wB = dB[i], cx = padL + slot * (i + 0.5), xA = cx - gap / 2 - bw, xB = cx + gap / 2;
+      const hA = wA.jumlah / sk.max * (base - top), hB = wB.jumlah / sk.max * (base - top);
+      const rentang = E(wA.mulai === wA.akhir ? tglPendek(wA.mulai) : tglPendek(wA.mulai) + ' s.d. ' + tglPendek(wA.akhir));
+      const judul = `<title>${rentang}: LK ${wA.jumlah}, BAST ${wB.jumlah}</title>`;
+      s += hA === 0 ? `<rect x="${xA}" y="${base - 2}" width="${bw}" height="2" rx="1" fill="#D5DCE7">${judul}</rect>` : `<rect x="${xA}" y="${base - hA}" width="${bw}" height="${hA}" rx="${Math.min(2, bw / 3)}" fill="${warnaA}">${judul}</rect>`;
+      s += hB === 0 ? `<rect x="${xB}" y="${base - 2}" width="${bw}" height="2" rx="1" fill="#D5DCE7">${judul}</rect>` : `<rect x="${xB}" y="${base - hB}" width="${bw}" height="${hB}" rx="${Math.min(2, bw / 3)}" fill="${warnaB}">${judul}</rect>`;
+      if (i % tiapLabel === 0) s += `<text x="${cx}" y="${base + 13}" text-anchor="middle" font-size="9" font-weight="700" fill="#5C6675">${E(wA.label)}</text>`;
+    });
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${s}</svg>`;
+  }
   function gambarGrafikTren() {
     Object.keys(grafikTren).forEach((id) => {
       const el = $(id); if (!el || !el.clientWidth) return;
-      el.innerHTML = svgBatang(grafikTren[id].bucket, grafikTren[id].warna, el.clientWidth, el.clientHeight);
+      const g = grafikTren[id];
+      el.innerHTML = g.dual ? svgBatangDua(g.bucketA, g.bucketB, g.warnaA, g.warnaB, el.clientWidth, el.clientHeight) : svgBatang(g.bucket, g.warna, el.clientWidth, el.clientHeight);
     });
   }
   let rafResize = 0;
@@ -197,28 +223,53 @@
   }
 
   /* =========================================================
-     BLOK KEJADIAN
+     BLOK KEJADIAN (Laporan Kejadian / LK & Berita Acara Serah Terima / BAST, dipisah)
      ========================================================= */
-  function tabelKejadian(daftar, penuh) {
+  // Label kategori BAST dari KATEGORI_BAST (kejadian-bast-data.js) - dimuat sebagai <script>
+  // terpisah di rekap.html, terlihat di sini sebagai variabel bebas lintas-<script> (bukan lewat
+  // window.KATEGORI_BAST, yang tidak ada karena deklarasinya "const" - lihat catatan yang sama
+  // di kejadian-bast-pdf.js).
+  function labelKategoriBast(kat) {
+    const K = (typeof KATEGORI_BAST !== 'undefined') ? KATEGORI_BAST : {};
+    return (K[kat] && K[kat].label) || 'Lainnya';
+  }
+  function ringkasBast(x) { return `${labelKategoriBast(x.kategori)} \u2014 ${x.pihakSatu || '-'} \u2192 ${x.pihakDua || '-'}`; }
+
+  function tabelKejadianLK(daftar, penuh) {
     const rows = (penuh ? daftar : daftar.slice(0, 5));
     if (!rows.length) return '<div class="empty">Belum ada laporan kejadian<br>pada rentang ini.</div>';
-    const trs = rows.map((x, i) => `<tr><td>${i + 1}</td><td style="white-space:nowrap"><b>${E(tglPendek(x.tanggal))}</b></td><td class="nm"><a href="kejadian.html#ubah=${encodeURIComponent(x.id)}" style="color:inherit;text-decoration:none">${E(x.judul)}</a></td><td>${E(x.shift || '-')}</td><td>${E(x.lokasiKejadian || '-')}</td></tr>`).join('');
-    return `<table class="rtbl"><thead><tr><th>#</th><th>Tanggal</th><th>Ringkasan</th><th>Shift</th><th>Pos Jaga</th></tr></thead><tbody>${trs}</tbody></table>`;
+    const trs = rows.map((x, i) => `<tr><td>${i + 1}</td><td class="nm"><a href="kejadian.html#ubah=${encodeURIComponent(x.id)}" style="color:inherit;text-decoration:none">${E(x.judul)}</a></td><td style="white-space:nowrap"><b>${E(tglPendek(x.tanggal))}</b></td></tr>`).join('');
+    return `<table class="rtbl"><thead><tr><th>No</th><th>Laporan Kejadian</th><th>Tanggal</th></tr></thead><tbody>${trs}</tbody></table>`;
+  }
+  function tabelKejadianBAST(daftar, penuh) {
+    const rows = (penuh ? daftar : daftar.slice(0, 5));
+    if (!rows.length) return '<div class="empty">Belum ada BAST<br>pada rentang ini.</div>';
+    const trs = rows.map((x, i) => `<tr><td>${i + 1}</td><td class="nm"><a href="kejadian.html#ubah=${encodeURIComponent(x.id)}" style="color:inherit;text-decoration:none">${E(ringkasBast(x))}</a></td><td style="white-space:nowrap"><b>${E(tglPendek(x.tanggal))}</b></td></tr>`).join('');
+    return `<table class="rtbl"><thead><tr><th>No</th><th>Serah Terima</th><th>Tanggal</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
   function renderKejadian() {
-    const r = RK;
-    const cntLokasi = {}; r.daftar.forEach((x) => { const l = x.lokasiKejadian && x.lokasiKejadian !== '-' ? x.lokasiKejadian : null; if (l) cntLokasi[l] = (cntLokasi[l] || 0) + 1; });
+    const r = RK, unitLabel = UNIT[r.granularitas];
+    const cntLokasi = {}; r.lk.daftar.forEach((x) => { const l = x.lokasiKejadian && x.lokasiKejadian !== '-' ? x.lokasiKejadian : null; if (l) cntLokasi[l] = (cntLokasi[l] || 0) + 1; });
     const lokasiTop = Object.entries(cntLokasi).sort((a, b) => b[1] - a[1])[0];
-    const rataPerUnit = r.tren && r.tren.length ? (r.jumlah / r.tren.length).toFixed(1) : '-';
-    const unitLabel = UNIT[r.granularitas];
+    const cntKategori = {}; r.bast.daftar.forEach((x) => { if (x.kategori) cntKategori[x.kategori] = (cntKategori[x.kategori] || 0) + 1; });
+    const kategoriTop = Object.entries(cntKategori).sort((a, b) => b[1] - a[1])[0];
+    const rataLK = r.lk.tren && r.lk.tren.length ? (r.lk.jumlah / r.lk.tren.length).toFixed(1) : '-';
+    const rataBAST = r.bast.tren && r.bast.tren.length ? (r.bast.jumlah / r.bast.tren.length).toFixed(1) : '-';
     $('kpiKejadian').style.gridTemplateColumns = 'repeat(3, 1fr)';
     $('kpiKejadian').innerHTML = `
-<div class="kpi" style="--acc:#C93B2E;--acc-bg:#FBE9E7;height:96px"><div class="lbl">Jumlah Kejadian</div><div class="val">${r.jumlah}<small>kasus</small></div><div class="ico">${svg(IC.doc)}</div></div>
-<div class="kpi" style="--acc:#D98A22;--acc-bg:#FCF1DF;height:96px"><div class="lbl">Rata-rata per ${unitLabel}</div><div class="val">${rataPerUnit}<small>kasus</small></div><div class="ico">${svg(IC.doc)}</div></div>
-<div class="kpi" style="--acc:#1D3A5C;--acc-bg:#E6ECF4;height:96px"><div class="lbl">Pos Jaga Terbanyak</div><div class="val" style="font-size:16px">${lokasiTop ? E(lokasiTop[0]) : '-'}</div><div class="ico">${svg(IC.doc)}</div></div>`;
+<div class="kpi2"><div class="kpi2-lbl">Jumlah Laporan</div>
+<div class="kpi2-row"><span class="jenis-tag lk">LK</span><span class="kpi2-val">${r.lk.jumlah}<small>kasus</small></span></div>
+<div class="kpi2-row"><span class="jenis-tag bast">BAST</span><span class="kpi2-val">${r.bast.jumlah}<small>BAST</small></span></div></div>
+<div class="kpi2"><div class="kpi2-lbl">Rata-rata per ${unitLabel}</div>
+<div class="kpi2-row"><span class="jenis-tag lk">LK</span><span class="kpi2-val">${rataLK}<small>kasus</small></span></div>
+<div class="kpi2-row"><span class="jenis-tag bast">BAST</span><span class="kpi2-val">${rataBAST}<small>BAST</small></span></div></div>
+<div class="kpi2"><div class="kpi2-lbl">Terbanyak</div>
+<div class="kpi2-row"><span class="jenis-tag lk">LK</span><span class="kpi2-txt"><div class="l">Pos Jaga</div><div class="v">${lokasiTop ? E(lokasiTop[0]) : '-'}</div></span></div>
+<div class="kpi2-row"><span class="jenis-tag bast">BAST</span><span class="kpi2-txt"><div class="l">Kategori</div><div class="v">${kategoriTop ? E(labelKategoriBast(kategoriTop[0])) : '-'}</div></span></div></div>`;
     $('rowKejadian1').innerHTML = `
-<div class="dcard c6 rauto"><div class="h"><div><h3>Tren Kejadian per ${unitLabel}</h3><div class="sub">Rentang terpilih</div></div></div>${wadahGrafikTren('grafikTrenKejadian', r.tren, '#E58A80')}</div>
-<div class="dcard c6 rauto"><div class="h"><div><h3>Daftar Kejadian</h3><div class="sub">5 terbaru \u2022 klik untuk membuka laporan</div></div><div class="sp"></div>${r.daftar.length > 5 ? `<button class="lihatsemua" onclick="Rekap.bukaLaci('kejadian')">Lihat Semua (${r.daftar.length}) \u203a</button>` : ''}</div>${tabelKejadian(r.daftar, false)}</div>`;
+<div class="dcard c12 rauto"><div class="h"><div><h3>Tren Laporan per ${unitLabel}</h3><div class="sub">Rentang terpilih</div></div><div class="sp"></div><div class="tren-legend"><span><i style="background:#E58A80"></i>LK</span><span><i style="background:#7FB9BE"></i>BAST</span></div></div>${wadahGrafikTrenDua('grafikTrenKejadian', r.lk.tren, r.bast.tren, '#E58A80', '#7FB9BE')}</div>
+<div class="dcard c6 rauto"><div class="h"><div><h3>Daftar Laporan Kejadian</h3><div class="sub">5 terbaru \u2022 klik untuk membuka laporan</div></div><div class="sp"></div>${r.lk.daftar.length > 5 ? `<button class="lihatsemua" onclick="Rekap.bukaLaci('kejadianLK')">Lihat Semua (${r.lk.daftar.length}) \u203a</button>` : ''}</div>${tabelKejadianLK(r.lk.daftar, false)}</div>
+<div class="dcard c6 rauto"><div class="h"><div><h3>Daftar Serah Terima</h3><div class="sub">5 terbaru \u2022 klik untuk membuka laporan</div></div><div class="sp"></div>${r.bast.daftar.length > 5 ? `<button class="lihatsemua" onclick="Rekap.bukaLaci('kejadianBAST')">Lihat Semua (${r.bast.daftar.length}) \u203a</button>` : ''}</div>${tabelKejadianBAST(r.bast.daftar, false)}</div>`;
   }
 
   /* =========================================================
@@ -256,7 +307,8 @@
     const map = {
       personel: { judul: 'KETIDAKHADIRAN PER PERSONEL', sub: `Seluruh ${RP.daftar.length} personel - ${tglPendek(filterAktif.mulai)} s.d. ${tglPendek(filterAktif.akhir)}`, html: tabelPersonel(RP.daftar, true) },
       fasilitas: { judul: 'ALAT BERMASALAH', sub: `Seluruh ${RF.daftar.length} item - ${tglPendek(filterAktif.mulai)} s.d. ${tglPendek(filterAktif.akhir)}`, html: tabelFasilitas(RF.daftar, true) },
-      kejadian: { judul: 'DAFTAR KEJADIAN', sub: `Seluruh ${RK.daftar.length} kejadian - ${tglPendek(filterAktif.mulai)} s.d. ${tglPendek(filterAktif.akhir)}`, html: tabelKejadian(RK.daftar, true) },
+      kejadianLK: { judul: 'DAFTAR LAPORAN KEJADIAN', sub: `Seluruh ${RK.lk.daftar.length} laporan - ${tglPendek(filterAktif.mulai)} s.d. ${tglPendek(filterAktif.akhir)}`, html: tabelKejadianLK(RK.lk.daftar, true) },
+      kejadianBAST: { judul: 'DAFTAR SERAH TERIMA', sub: `Seluruh ${RK.bast.daftar.length} BAST - ${tglPendek(filterAktif.mulai)} s.d. ${tglPendek(filterAktif.akhir)}`, html: tabelKejadianBAST(RK.bast.daftar, true) },
       kepatuhan: { judul: 'DAFTAR SHIFT BELUM LENGKAP', sub: `Seluruh ${RQ.daftar.length} shift - ${tglPendek(filterAktif.mulai)} s.d. ${tglPendek(filterAktif.akhir)}`, html: tabelKepatuhan(RQ.daftar, true) }
     };
     const m = map[jenis]; if (!m) return;

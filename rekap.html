@@ -40,6 +40,20 @@ table.rtbl tr.klik:hover td { background: #FAFBFD; }
 .drawer .dbody { padding: 14px 18px; overflow-y: auto; flex: 1; }
 .grafik-tren { position: relative; flex: 1; min-height: 170px; }
 .grafik-tren > svg { position: absolute; inset: 0; }
+
+/* --- Kartu KPI "dua baris" (LK & BAST dipisah dalam satu kartu) --- */
+.kpi2 { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 11px 14px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 7px; height: 96px; }
+.kpi2-lbl { font-size: 9.5px; font-weight: 800; color: #8A94A6; text-transform: uppercase; letter-spacing: .4px; }
+.kpi2-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kpi2-row + .kpi2-row { padding-top: 6px; border-top: 1px solid #EEF1F6; }
+.kpi2-val { font-size: 17px; font-weight: 800; color: #10243D; white-space: nowrap; }
+.kpi2-val small { font-size: 10px; font-weight: 700; color: #8A94A6; margin-left: 4px; }
+.kpi2-txt { text-align: right; }
+.kpi2-txt .l { font-size: 8.5px; font-weight: 700; color: #8A94A6; }
+.kpi2-txt .v { font-size: 12.5px; font-weight: 800; color: #10243D; }
+.tren-legend { display: flex; gap: 16px; }
+.tren-legend span { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #5C6675; }
+.tren-legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
 </style>
 </head>
 <body class="locked">
@@ -98,6 +112,7 @@ table.rtbl tr.klik:hover td { background: #FAFBFD; }
 
 <script src="shell.js"></script>
 <script src="data.js"></script>
+<script src="kejadian-bast-data.js"></script>
 <script src="rekap.js"></script>
 </body>
 </html>
