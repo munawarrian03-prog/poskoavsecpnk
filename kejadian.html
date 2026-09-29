@@ -29,7 +29,14 @@
 <div class="toolbar tb-2row" id="toolbar">
 <div class="tb-row">
 <div class="seg">
-<button type="button" id="btnFormTab" class="on" onclick="switchPage('form')">Buat Laporan</button>
+<div class="seg-btn on" id="segBtnJenis">
+<button type="button" class="lbl" id="btnFormTab" onclick="switchPage('form')">Buat Laporan <span id="jenisLabelNow">— LK</span></button>
+<button type="button" class="caret" onclick="toggleJenisDD(event)" title="Pilih jenis laporan">▾</button>
+<div class="dd-jenis" id="ddJenisLaporan">
+<div class="opt sel" onclick="pilihJenisLaporan('LK')"><span class="chk">✓</span> Laporan Kejadian (LK)</div>
+<div class="opt" onclick="pilihJenisLaporan('BAST')"><span class="chk"></span> Berita Acara Serah Terima (BAST)</div>
+</div>
+</div>
 <button type="button" id="btnSavedTab" onclick="switchPage('saved')">Laporan Tersimpan <span class="badge" id="cntSaved">0</span></button>
 </div>
 <span class="tdiv" id="hdrDiv"></span>
@@ -48,7 +55,7 @@
 </div>
 <span class="tsp"></span>
 <button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Sembunyikan bilah atas agar area isian lebih luas">⛶ Mode fokus</button>
-<button type="button" class="tbtn" onclick="newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
+<button type="button" class="tbtn" onclick="jenisAktif === 'BAST' ? bastNewReport() : newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
 </div>
 </div>
 <div class="strip" id="editBadge" style="display:none"></div>
@@ -158,9 +165,26 @@
 </div>
 </div>
 
-<!-- HALAMAN TERSIMPAN -->
+<!-- FORM BAST: form kiri + live preview A4 kanan (split permanen, bukan drawer) -->
+<div class="bast-split" id="pageFormBast" style="display:none">
+<div class="bast-form-col" id="bastFormCol"></div>
+<div class="bast-prev-col">
+<div class="prev-label"><span class="dot"></span> LIVE PREVIEW A4</div>
+<div class="a4" id="bastPreviewA4"></div>
+</div>
+</div>
+
+<!-- HALAMAN TERSIMPAN (gabungan LK + BAST) -->
 <div class="panel-box" id="pageSaved" style="display:none;">
-<div class="panel-title">DAFTAR LAPORAN KEJADIAN TERSIMPAN</div>
+<div class="panel-title">DAFTAR LAPORAN TERSIMPAN</div>
+<div class="saved-filter">
+<div class="f2"><label>Jenis Laporan</label>
+<select id="filterJenisTersimpan" onchange="renderTersimpan()">
+<option value="all">Semua Laporan</option>
+<option value="LK">Laporan Kejadian (LK)</option>
+<option value="BAST">Berita Acara Serah Terima (BAST)</option>
+</select></div>
+</div>
 <div id="savedList" style="flex:1; overflow-y:auto;"></div>
 </div>
 
@@ -168,9 +192,15 @@
 <div class="stat" id="statBar">
 <span class="hint" id="actionHint"></span>
 <span class="sp"></span>
+<span id="statLK">
 <button type="button" class="sbtn ghost" onclick="togglePratinjauWA()" title="Lihat teks laporan WhatsApp dan kirim (laporan awal)">Pratinjau WA &amp; Kirim</button>
 <button type="button" class="sbtn ghost" onclick="pratinjauPdf()">Pratinjau PDF</button>
 <button type="button" class="sbtn red" onclick="simpan()">Simpan Laporan</button>
+</span>
+<span id="statBAST" style="display:none">
+<button type="button" class="sbtn ghost" onclick="bastPratinjauPdf()">Pratinjau PDF</button>
+<button type="button" class="sbtn red" onclick="bastSimpan()">Simpan BAST</button>
+</span>
 </div>
 </div>
 
@@ -269,6 +299,10 @@
 <script src="kejadian-nomor.js"></script>
 <script src="kejadian-wa.js"></script>
 <script src="kejadian-pdf.js"></script>
+<script src="kejadian-bast-data.js"></script>
+<script src="kejadian-bast-nomor.js"></script>
+<script src="kejadian-bast-pdf.js"></script>
+<script src="kejadian-bast.js"></script>
 <script>
 'use strict';
 
@@ -306,6 +340,7 @@ let laporan = null;
 let editingId = null;
 let dirty = false;
 let draftTimer = null;
+let jenisAktif = 'LK';   // 'LK' | 'BAST' - jenis laporan yang sedang dibuka di tab "Buat Laporan"
 
 /* ---------- Utilitas ---------- */
 let toastTimer;
@@ -372,7 +407,7 @@ const ttdDel = (key) => tx('readwrite', (s) => s.delete(key), STORE_TTD);
 /* ---------- Model ---------- */
 function modelBaru() {
   return {
-    id: null, tanggal: hariIni(), shift: '', lokasiKejadian: '', fileNumber: '', nomorOtomatis: true, nomorDikunci: false, waStatus: 'awal', tempat: TEMPAT_DEF,
+    id: null, jenis: 'LK', tanggal: hariIni(), shift: '', lokasiKejadian: '', fileNumber: '', nomorOtomatis: true, nomorDikunci: false, waStatus: 'awal', tempat: TEMPAT_DEF,
     preparedBy: { nama: '', jabatan: JABATAN_DEF.preparedBy || '' },
     signedBy: { nama: '', jabatan: JABATAN_DEF.signedBy || '' },
     distribution: { nama: '', jabatan: JABATAN_DEF.distribution || '' },
@@ -1129,7 +1164,7 @@ async function kirimWAId(id) {
 async function bukaRiwayat(id) {
   const rid = id || editingId; if (!rid) return;
   let r = null; try { r = await dbGet(rid); } catch (e) { /* abaikan */ } if (!r) return;
-  const judul = `${rapikan(r.fileNumber) || '(tanpa nomor)'} • Laporan Kejadian`;
+  const judul = r.jenis === 'BAST' ? `${rapikan(r.nomorBast) || '(tanpa nomor)'} • Berita Acara Serah Terima` : `${rapikan(r.fileNumber) || '(tanpa nomor)'} • Laporan Kejadian`;
   const out = AVS.renderRiwayat(r, judul);
   $('rwSub').textContent = out.sub; $('rwList').innerHTML = out.html;
   togglePratinjauWA(false); $('drawerRw').classList.add('open');
@@ -1162,16 +1197,11 @@ function jejakHTML(r) {
   if (k.j.pernahDiubah) return `<span class="upd">✎ Diperbarui</span><span>${esc(k.dibuat)}</span><span>•</span><span><b>${esc(k.ubah)}</b></span>`;
   return `<span>${esc(k.dibuat)}</span>${k.j.tercatat ? '<span>•</span><span>Belum pernah diubah</span>' : ''}`;
 }
-async function renderTersimpan() {
-  const box = $('savedList');
-  let list = [];
-  try { list = (await dbAll()).filter((r) => r.id !== KEY_DRAFT); } catch (e) { box.innerHTML = '<div style="text-align:center;color:#C93B2E;padding:40px 0;">Penyimpanan browser tidak tersedia.</div>'; return; }
-  list.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
-  if (!list.length) { box.innerHTML = '<div style="text-align:center;color:#64748b;padding:40px 0;">Belum ada laporan kejadian tersimpan.</div>'; return; }
-  box.innerHTML = list.map((r) => `
+function kartuLK(r) {
+  return `
 <div class="saved-card">
 <div style="min-width:0;">
-<div style="font-weight:bold;color:var(--primary);font-size:14px;">${esc(tglIndo(r.tanggal))}${r.fileNumber ? ' • No. ' + esc(r.fileNumber) : ''}</div>
+<div style="font-weight:bold;color:var(--primary);font-size:14px;"><span class="jenis-tag lk">LK</span>${esc(tglIndo(r.tanggal))}${r.fileNumber ? ' • No. ' + esc(r.fileNumber) : ''}</div>
 <div class="saved-cases">${esc(rapikan(r.caseInfo) || '(tanpa informasi kasus)')}</div>
 <div class="jejak">${jejakHTML(r)}</div>
 <div class="saved-meta">Shift: ${esc(r.shift || '-')} • Lokasi: ${esc(r.lokasiKejadian || '-')}</div>
@@ -1184,7 +1214,17 @@ async function renderTersimpan() {
 <button type="button" class="btn-success" onclick="unduhId('${esc(r.id)}')">Unduh PDF</button>
 <button type="button" class="btn-info" style="background:#EEF1F6;color:#475569" onclick="bukaRiwayat('${esc(r.id)}')">Riwayat</button>
 <button type="button" class="btn-danger" onclick="hapusLaporan('${esc(r.id)}')">Hapus</button>
-</div></div>`).join('');
+</div></div>`;
+}
+async function renderTersimpan() {
+  const box = $('savedList');
+  let list = [];
+  try { list = (await dbAll()).filter((r) => r.id !== KEY_DRAFT); } catch (e) { box.innerHTML = '<div style="text-align:center;color:#C93B2E;padding:40px 0;">Penyimpanan browser tidak tersedia.</div>'; return; }
+  const filter = $('filterJenisTersimpan') ? $('filterJenisTersimpan').value : 'all';
+  if (filter !== 'all') list = list.filter((r) => (r.jenis || 'LK') === filter);
+  list.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
+  if (!list.length) { box.innerHTML = '<div style="text-align:center;color:#64748b;padding:40px 0;">Belum ada laporan tersimpan.</div>'; return; }
+  box.innerHTML = list.map((r) => (r.jenis === 'BAST' ? bastRenderKartu(r) : kartuLK(r))).join('');
 }
 async function unduhId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapiModel(r), 'unduh'); }
 async function pratinjauId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapiModel(r), 'pratinjau'); }
@@ -1208,17 +1248,38 @@ async function newReport() {
   isiForm(); switchPage('form');
 }
 function switchPage(page) {
-  const form = page === 'form';
+  const form = page === 'form', isLK = jenisAktif === 'LK';
   togglePratinjauWA(false);
-  $('pageForm').style.display = form ? 'flex' : 'none';
+  $('pageForm').style.display = (form && isLK) ? 'flex' : 'none';
+  $('pageFormBast').style.display = (form && !isLK) ? 'flex' : 'none';
   $('pageSaved').style.display = form ? 'none' : 'flex';
   $('statBar').style.display = form ? 'flex' : 'none';
-  ['hdrDiv', 'hdrTgl', 'hdrShift', 'hdrLokasi'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
-  $('btnFormTab').classList.toggle('on', form);
+  $('statLK').style.display = isLK ? '' : 'none';
+  $('statBAST').style.display = isLK ? 'none' : '';
+  ['hdrDiv', 'hdrTgl', 'hdrShift', 'hdrLokasi'].forEach((id) => { $(id).style.display = (form && isLK) ? '' : 'none'; });
+  $('segBtnJenis').classList.toggle('on', form);
   $('btnSavedTab').classList.toggle('on', !form);
-  $('hdlWA').style.display = form ? '' : 'none';
-  if (form) updateBadge(); else $('editBadge').style.display = 'none';   // strip "mengubah laporan" hanya di tab isian
+  $('hdlWA').style.display = (form && isLK) ? '' : 'none';
+  if (form) { if (isLK) updateBadge(); else bastUpdateBadge(); } else $('editBadge').style.display = 'none';   // strip "mengubah laporan" hanya di tab isian
   if (!form) renderTersimpan();
+}
+function toggleJenisDD(e) {
+  e.stopPropagation();
+  $('ddJenisLaporan').classList.toggle('open');
+}
+document.addEventListener('click', () => { const dd = $('ddJenisLaporan'); if (dd) dd.classList.remove('open'); });
+function pilihJenisLaporan(j) {
+  if (j === jenisAktif) { $('ddJenisLaporan').classList.remove('open'); switchPage('form'); return; }
+  if (jenisAktif === 'LK' && dirty && !confirm('Isian Laporan Kejadian yang sedang dibuka belum disimpan. Ganti jenis laporan dan kosongkan isian?')) return;
+  if (jenisAktif === 'BAST' && bastDirty && !confirm('Isian BAST yang sedang dibuka belum disimpan. Ganti jenis laporan dan kosongkan isian?')) return;
+  jenisAktif = j;
+  $('jenisLabelNow').textContent = j === 'LK' ? '— LK' : '— BAST';
+  document.querySelectorAll('#ddJenisLaporan .opt').forEach((o) => { o.classList.remove('sel'); o.querySelector('.chk').textContent = ''; });
+  const opt = document.querySelector(`#ddJenisLaporan .opt[onclick*="'${j}'"]`);
+  if (opt) { opt.classList.add('sel'); opt.querySelector('.chk').textContent = '✓'; }
+  $('ddJenisLaporan').classList.remove('open');
+  if (j === 'BAST' && !bastLaporan) { bastLaporan = bastModelBaru(); bastRenderForm(); bastRenderPreview(); }
+  switchPage('form');
 }
 
 /* ---------- Daftar bagian (rail) ---------- */
