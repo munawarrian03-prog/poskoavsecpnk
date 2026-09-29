@@ -41,9 +41,18 @@
   }
 
   function orangPara(label, o) {
-    const nama = rapikan(o && o.nama), jab = rapikan(o && o.jabatan), nik = rapikan(o && o.nik);
-    const detail = [jab, nik ? 'NIK: ' + nik : ''].filter(Boolean).join(' — ');
-    return { text: [{ text: 'Nama: ', bold: true }, nama || '-', { text: '  —  Jabatan: ', bold: true }, jab || '-', nik ? { text: '  —  NIK: ' } : '', nik || '', `\nSelanjutnya disebut sebagai ${label}.`], margin: [0, 0, 0, 8] };
+    const nama = rapikan(o && o.nama), jab = rapikan(o && o.jabatan), nik = rapikan(o && o.nik), inst = rapikan(o && o.instansi);
+    const baris = (lbl, val) => ({ columns: [{ text: lbl, bold: true, width: 46 }, { text: ': ' + (val || '-'), width: '*' }] });
+    return {
+      stack: [
+        baris('Nama', nama),
+        baris('NIK', nik),
+        baris('Jabatan', jab),
+        baris('Instansi', inst),
+        { text: `Selanjutnya disebut sebagai ${label}.`, margin: [0, 2, 0, 0] }
+      ],
+      margin: [0, 0, 0, 8]
+    };
   }
 
   function buildBastDoc(r) {

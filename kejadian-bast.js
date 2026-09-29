@@ -50,8 +50,8 @@ function bastModelBaru() {
     id: null, jenis: 'BAST', kategori: kat,
     tanggal: hariIni(), waktu: `${p2(now.getHours())}:${p2(now.getMinutes())}`, tempat: (typeof TEMPAT_DEF !== 'undefined' ? TEMPAT_DEF : ''),
     nomorBast: '', nomorOtomatis: true, nomorDikunci: false,
-    pihakSatu: { nama: '', jabatan: '', nik: '' },
-    pihakDua: { nama: '', jabatan: '', nik: '' },
+    pihakSatu: { nama: '', jabatan: '', nik: '', instansi: '' },
+    pihakDua: { nama: '', jabatan: '', nik: '', instansi: '' },
     saksi: [],
     items: [bastBarisKosong(kat)],
     catatan: ''
@@ -59,8 +59,8 @@ function bastModelBaru() {
 }
 function bastLengkapiModel(r) {
   const b = bastModelBaru(), m = Object.assign(b, r || {});
-  m.pihakSatu = Object.assign({ nama: '', jabatan: '', nik: '' }, (r && r.pihakSatu) || {});
-  m.pihakDua = Object.assign({ nama: '', jabatan: '', nik: '' }, (r && r.pihakDua) || {});
+  m.pihakSatu = Object.assign({ nama: '', jabatan: '', nik: '', instansi: '' }, (r && r.pihakSatu) || {});
+  m.pihakDua = Object.assign({ nama: '', jabatan: '', nik: '', instansi: '' }, (r && r.pihakDua) || {});
   if (!Array.isArray(m.saksi)) m.saksi = [];
   if (!(typeof KATEGORI_BAST !== 'undefined' && KATEGORI_BAST[m.kategori])) m.kategori = b.kategori;
   if (!Array.isArray(m.items) || !m.items.length) m.items = [bastBarisKosong(m.kategori)];
@@ -199,14 +199,16 @@ function bastRenderForm() {
       <div class="bast-pihak-box">
         <div class="bast-tt">PIHAK PERTAMA (Menyerahkan) <span class="bast-src-tag">dari daftar personel</span></div>
         <div class="bast-f"><label>Nama</label><input list="listPersonel" value="${esc(L.pihakSatu.nama)}" oninput="bastPihakInput('pihakSatu','nama',this.value)"></div>
-        <div class="bast-f"><label>Jabatan</label><input list="listJabatan" value="${esc(L.pihakSatu.jabatan)}" oninput="bastPihakInput('pihakSatu','jabatan',this.value)"></div>
         <div class="bast-f"><label>NIK <small>ditulis manual</small></label><input value="${esc(L.pihakSatu.nik)}" oninput="bastPihakInput('pihakSatu','nik',this.value)"></div>
+        <div class="bast-f"><label>Jabatan</label><input list="listJabatan" value="${esc(L.pihakSatu.jabatan)}" oninput="bastPihakInput('pihakSatu','jabatan',this.value)"></div>
+        <div class="bast-f"><label>Instansi <small>ditulis manual</small></label><input value="${esc(L.pihakSatu.instansi)}" placeholder="Ketik instansi" oninput="bastPihakInput('pihakSatu','instansi',this.value)"></div>
       </div>
       <div class="bast-pihak-box manual">
         <div class="bast-tt">PIHAK KEDUA (Menerima) <span class="bast-src-tag">manual semua</span></div>
         <div class="bast-f"><label>Nama</label><input value="${esc(L.pihakDua.nama)}" placeholder="Ketik nama lengkap" oninput="bastPihakInput('pihakDua','nama',this.value)"></div>
-        <div class="bast-f"><label>Jabatan / Instansi</label><input value="${esc(L.pihakDua.jabatan)}" placeholder="Ketik jabatan atau instansi" oninput="bastPihakInput('pihakDua','jabatan',this.value)"></div>
         <div class="bast-f"><label>NIK <small>ditulis manual</small></label><input value="${esc(L.pihakDua.nik)}" oninput="bastPihakInput('pihakDua','nik',this.value)"></div>
+        <div class="bast-f"><label>Jabatan</label><input value="${esc(L.pihakDua.jabatan)}" placeholder="Ketik jabatan" oninput="bastPihakInput('pihakDua','jabatan',this.value)"></div>
+        <div class="bast-f"><label>Instansi</label><input value="${esc(L.pihakDua.instansi)}" placeholder="Ketik instansi" oninput="bastPihakInput('pihakDua','instansi',this.value)"></div>
       </div>
     </div>
   </div>
@@ -245,6 +247,15 @@ function bastKalimatPembuka() {
   const bulan = (typeof AVS !== 'undefined' && AVS.BULAN) ? AVS.BULAN[t.m] : '';
   return { hari, tglKata: bastAngkaKeKataKapital(d.getDate()), bulan, tahunKata: bastAngkaKeKataKapital(t.y), tglAngka: `${String(d.getDate()).padStart(2, '0')}-${String(t.m + 1).padStart(2, '0')}-${t.y}` };
 }
+function bastIdList(o, label) {
+  return `<table class="id-list">
+<tr><td>Nama</td><td>:</td><td>${esc((o && o.nama) || '-')}</td></tr>
+<tr><td>NIK</td><td>:</td><td>${esc((o && o.nik) || '-')}</td></tr>
+<tr><td>Jabatan</td><td>:</td><td>${esc((o && o.jabatan) || '-')}</td></tr>
+<tr><td>Instansi</td><td>:</td><td>${esc((o && o.instansi) || '-')}</td></tr>
+</table>
+<p class="body" style="margin-top:2px">Selanjutnya disebut <b>${esc(label)}</b>.</p>`;
+}
 function bastRenderPreview() {
   const box = $('bastPreviewA4'); if (!box || !bastLaporan) return;
   const L = bastLaporan, kat = bastKolomKategori(L.kategori), kb = bastKalimatPembuka();
@@ -259,8 +270,8 @@ function bastRenderPreview() {
 <h2>No: ${esc(L.nomorBast || '-')}</h2>
 <div class="line"></div>
 <p class="body">Pada hari ini, <b>${esc(kb.hari)}</b>, tanggal <b>${esc(kb.tglKata)}</b> bulan <b>${esc(kb.bulan)}</b> tahun <b>${esc(kb.tahunKata)}</b> (${esc(kb.tglAngka)}), pukul <b>${esc(bastFormatWaktu(L.waktu))}</b>${L.tempat ? ', bertempat di <b>' + esc(L.tempat) + '</b>' : ''}, kami yang bertanda tangan di bawah ini:</p>
-<p class="body"><b>Nama:</b> ${esc(L.pihakSatu.nama || '-')} — <b>Jabatan:</b> ${esc(L.pihakSatu.jabatan || '-')}${L.pihakSatu.nik ? ' — <b>NIK:</b> ' + esc(L.pihakSatu.nik) : ''}<br>Selanjutnya disebut <b>PIHAK PERTAMA</b>.</p>
-<p class="body"><b>Nama:</b> ${esc(L.pihakDua.nama || '-')} — <b>Jabatan:</b> ${esc(L.pihakDua.jabatan || '-')}${L.pihakDua.nik ? ' — <b>NIK:</b> ' + esc(L.pihakDua.nik) : ''}<br>Selanjutnya disebut <b>PIHAK KEDUA</b>.</p>
+${bastIdList(L.pihakSatu, 'PIHAK PERTAMA')}
+${bastIdList(L.pihakDua, 'PIHAK KEDUA')}
 <p class="body">PIHAK PERTAMA telah menyerahkan kepada PIHAK KEDUA berupa <b>${esc(kat.kalimat)}</b> sebagai berikut:</p>
 <table><tr><th>No</th>${head}</tr>${rows}</table>
 ${saksiHtml}
