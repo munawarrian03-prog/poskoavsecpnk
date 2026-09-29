@@ -398,7 +398,7 @@
   AVS.pasangKunci = function () {
     if (!document.getElementById('lockScreen')) {
       const d = document.createElement('div'); d.id = 'lockScreen';
-      d.innerHTML = '<img src="Logo/AVS.png" alt="Logo AVSEC PNK">';
+      d.innerHTML = '<img src="Logo/AVS.png" alt="Logo AVSEC PNK"><p>Desktop Only</p>';
       document.body.insertBefore(d, document.body.firstChild);
     }
     AVS.cekPerangkat();
