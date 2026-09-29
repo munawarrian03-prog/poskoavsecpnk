@@ -249,7 +249,7 @@ function bastKalimatPembuka() {
 }
 function bastIdList(o, label) {
   return `<table class="id-list">
-<tr><td>Nama</td><td>:</td><td>${esc((o && o.nama) || '-')}</td></tr>
+<tr><td>Nama</td><td>:</td><td>${esc(((o && o.nama) || '-').toUpperCase())}</td></tr>
 <tr><td>NIK</td><td>:</td><td>${esc((o && o.nik) || '-')}</td></tr>
 <tr><td>Jabatan</td><td>:</td><td>${esc((o && o.jabatan) || '-')}</td></tr>
 <tr><td>Instansi</td><td>:</td><td>${esc((o && o.instansi) || '-')}</td></tr>
@@ -278,9 +278,16 @@ ${saksiHtml}
 ${L.catatan ? '<p class="body"><b>Catatan:</b> ' + esc(L.catatan) + '</p>' : ''}
 <p class="body">Demikian Berita Acara ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.</p>
 <div class="ttd">
-  <div class="col">PIHAK PERTAMA<div class="space"></div><div class="nm">${esc(L.pihakSatu.nama || '-')}</div>${esc(L.pihakSatu.jabatan || '-')}</div>
-  <div class="col">PIHAK KEDUA<div class="space"></div><div class="nm">${esc(L.pihakDua.nama || '-')}</div>${esc(L.pihakDua.jabatan || '-')}</div>
-</div>`;
+  <div class="col">PIHAK PERTAMA<div class="space"></div><div class="nm">${esc((L.pihakSatu.nama || '-').toUpperCase())}</div>${esc(L.pihakSatu.jabatan || '-')}</div>
+  <div class="col">PIHAK KEDUA<div class="space"></div><div class="nm">${esc((L.pihakDua.nama || '-').toUpperCase())}</div>${esc(L.pihakDua.jabatan || '-')}</div>
+</div>
+${bastTtdSaksiHTML()}`;
+}
+function bastTtdSaksiHTML() {
+  const saksi = bastLaporan.saksi.filter((s) => rapikan(s.nama));
+  if (!saksi.length) return '';
+  const potong = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
+  return potong(saksi, 3).map((grup) => `<div class="ttd">${grup.map((s) => `<div class="col">SAKSI<div class="space"></div><div class="nm">${esc((s.nama || '-').toUpperCase())}</div>${esc(s.jabatan || '-')}</div>`).join('')}</div>`).join('');
 }
 
 /* ---------- Badge "Mengubah laporan tersimpan" ---------- */
@@ -321,6 +328,7 @@ async function bastSimpan() {
     bastEditingId = bastLaporan.id = rec.id; bastDirty = false; bastUpdateBadge();
     updateCount();
     toast((lama ? 'BAST diperbarui (' + AVS.waktu(rec.diperbaruiPada) + ')' : 'BAST berhasil disimpan') + (rec.nomorBast ? ' dengan nomor ' + rec.nomorBast : '') + '.', 'ok', 5500);
+    switchPage('saved');
   } catch (e) { toast('Gagal menyimpan: penyimpanan browser penuh atau diblokir.', 'err'); }
 }
 function bastNewReport() {

@@ -191,6 +191,12 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
    BERITA ACARA SERAH TERIMA (BAST)
    ===================================================== */
 
+/* --- Bilah aksi (Pratinjau/Simpan): #statLK & #statBAST dulunya <span>
+   polos, sehingga tombol .sbtn (yang memakai display:flex, jadi kotak
+   blok) tidak lagi jadi flex-item langsung dari .stat dan malah tersusun
+   ke bawah satu kolom. Jadikan wrapper-nya sendiri flex row. --- */
+#statLK, #statBAST { display: flex; align-items: center; gap: 10px; }
+
 /* --- Dropdown "Jenis Laporan" pada tombol Buat Laporan (toolbar) --- */
 .seg-btn { display: flex; align-items: center; position: relative; }
 .seg-btn > .lbl { background: transparent; color: var(--text-muted); border: none; padding: 8px 10px 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; border-radius: 8px 0 0 8px; transition: background .15s ease, color .15s ease; }

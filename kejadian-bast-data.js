@@ -60,6 +60,8 @@ const KATEGORI_BAST = {
 const KATEGORI_BAST_URUTAN = ['barang_bukti', 'pax', 'lost_found', 'fasilitas', 'lainnya'];
 const KATEGORI_BAST_AWAL = 'barang_bukti';
 
-// Penomoran otomatis BAST: BA/<NOMOR_AWALAN_BAST>/<urut>/<bulan romawi>/<tahun 2 angka>
-const NOMOR_AWALAN_BAST = 'BA/OOSC';
+// Penomoran otomatis BAST: <NOMOR_AWALAN_BAST>/<urut>/<bulan romawi>/<tahun 2 angka>
+// Sama persis strukturnya dengan penomoran Laporan Kejadian (OOSC/LK/...),
+// hanya kode jenis laporannya yang beda: LK untuk Laporan Kejadian, ST untuk BAST.
+const NOMOR_AWALAN_BAST = 'OOSC/ST';
 const NOMOR_PAD_BAST = 0;

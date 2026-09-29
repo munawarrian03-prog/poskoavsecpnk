@@ -35,13 +35,20 @@
     return `Pada hari ini, ${HARI[d.getDay()]}, tanggal ${terbilangKapital(t.d)} bulan ${BULAN[t.m]} tahun ${terbilangKapital(t.y)} (${tglAngka}), pukul ${formatWaktu(r.waktu)}${r.tempat ? ', bertempat di ' + rapikan(r.tempat) : ''}, kami yang bertanda tangan di bawah ini:`;
   }
 
-  function kolomKategori(kat, KATEGORI_BAST) {
-    const K = KATEGORI_BAST || (typeof root.KATEGORI_BAST !== 'undefined' ? root.KATEGORI_BAST : {});
+  function kolomKategori(kat) {
+    // NB: sengaja pakai identifier KATEGORI_BAST langsung (bukan lewat parameter
+    // atau root.KATEGORI_BAST) - di browser, "const" tingkat atas di file lain
+    // (kejadian-bast-data.js) TIDAK menempel ke objek window, tapi tetap
+    // terlihat sebagai variabel bebas di scope global antar-<script> tag.
+    // Sebelumnya nama parameter di sini bentrok dengan nama ini sehingga
+    // selalu jatuh ke fallback generik - lihat kejadian-bast.js:bastKolomKategori
+    // yang memakai pola yang sama dan sudah benar.
+    const K = (typeof KATEGORI_BAST !== 'undefined') ? KATEGORI_BAST : {};
     return K[kat] || K.lainnya || { label: 'Lainnya', kalimat: 'barang/hal', kolom: [{ key: 'nama', label: 'Nama Item' }, { key: 'jumlah', label: 'Jumlah' }, { key: 'keterangan', label: 'Keterangan' }] };
   }
 
   function orangPara(label, o) {
-    const nama = rapikan(o && o.nama), jab = rapikan(o && o.jabatan), nik = rapikan(o && o.nik), inst = rapikan(o && o.instansi);
+    const nama = rapikan(o && o.nama).toUpperCase(), jab = rapikan(o && o.jabatan), nik = rapikan(o && o.nik), inst = rapikan(o && o.instansi);
     const baris = (lbl, val) => ({ columns: [{ text: lbl, bold: true, width: 46 }, { text: ': ' + (val || '-'), width: '*' }] });
     return {
       stack: [
@@ -63,7 +70,6 @@
 
     const judul = [
       { text: 'BERITA ACARA SERAH TERIMA', bold: true, alignment: 'center', fontSize: 13 },
-      { text: kat.label.toUpperCase(), bold: true, alignment: 'center', fontSize: 10, color: '#157A82', margin: [0, 2, 0, 2] },
       { text: 'No: ' + (rapikan(r.nomorBast) || '-'), alignment: 'center', fontSize: 9.5, margin: [0, 0, 0, 12] }
     ];
 
@@ -101,7 +107,7 @@
       alignment: 'center',
       stack: [
         { text: ' ', margin: [0, 26, 0, 0] },
-        { text: rapikan(o && o.nama) || '(....................)', bold: true, decoration: 'underline' },
+        { text: rapikan(o && o.nama).toUpperCase() || '(....................)', bold: true, decoration: 'underline' },
         { text: rapikan(o && o.jabatan) || ' ' }
       ]
     });
@@ -111,13 +117,28 @@
       layout: 'noBorders'
     };
 
+    const kolomTtdSaksi = (s) => ({
+      alignment: 'center',
+      stack: [
+        { text: 'SAKSI', fontSize: 8.5, margin: [0, 0, 0, 24] },
+        { text: rapikan(s && s.nama).toUpperCase() || '(....................)', bold: true, decoration: 'underline' },
+        { text: rapikan(s && s.jabatan) || ' ' }
+      ]
+    });
+    const potong = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
+    const ttdSaksi = saksi.length ? potong(saksi, 3).map((grup) => ({
+      unbreakable: true, margin: [0, 18, 0, 0],
+      table: { widths: grup.map(() => '*'), body: [grup.map(kolomTtdSaksi)] },
+      layout: 'noBorders'
+    })) : [];
+
     return {
       info: { title: 'Berita Acara Serah Terima - ' + kat.label, subject: kat.label },
       pageSize: 'A4',
       pageMargins: [36, 34, 36, 40],
       defaultStyle: { font: 'Montserrat', fontSize: 10, lineHeight: 1.15 },
       footer: (cur, total) => ({ text: 'Halaman ' + cur + ' dari ' + total, alignment: 'right', fontSize: 8, color: '#666666', margin: [0, 14, 36, 0] }),
-      content: [...judul, pembuka, ...pihak, pengantarItem, tabelItem, ...blokSaksi, ...catatan, penutup, ttd]
+      content: [...judul, pembuka, ...pihak, pengantarItem, tabelItem, ...blokSaksi, ...catatan, penutup, ttd, ...ttdSaksi]
     };
   }
 

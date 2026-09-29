@@ -450,6 +450,7 @@ async function simpanDraft() {
    NOMOR LAPORAN OTOMATIS  (OOSC/LK/<urut>/<bulan romawi>/<tahun>)
    ===================================================== */
 if (typeof KejadianNomor !== 'undefined') KejadianNomor.atur({ prefix: typeof NOMOR_AWALAN !== 'undefined' ? NOMOR_AWALAN : undefined, pad: typeof NOMOR_PAD !== 'undefined' ? NOMOR_PAD : undefined });
+if (typeof BastNomor !== 'undefined') BastNomor.atur({ prefix: typeof NOMOR_AWALAN_BAST !== 'undefined' ? NOMOR_AWALAN_BAST : undefined, pad: typeof NOMOR_PAD_BAST !== 'undefined' ? NOMOR_PAD_BAST : undefined });
 const NOMOR_KEY = 'nomorKejadian';   // pencatat nomor terbesar per bulan; tidak pernah turun, agar nomor tidak dipakai ulang
 function bacaCounter() { try { return JSON.parse(localStorage.getItem(NOMOR_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function tulisCounter(o) { try { localStorage.setItem(NOMOR_KEY, JSON.stringify(o)); } catch (e) { /* penyimpanan diblokir */ } }
@@ -1192,6 +1193,7 @@ async function simpan() {
     clearTimeout(draftTimer);
     editingId = laporan.id = rec.id; dirty = false; updateBadge(); updateKirimState(); updateCount();
     toast((lama ? 'Laporan diperbarui (' + AVS.waktu(rec.diperbaruiPada) + ')' : 'Laporan berhasil disimpan') + (rec.fileNumber ? ' dengan nomor ' + rec.fileNumber : '') + '.', 'ok', 5500);
+    switchPage('saved');
   } catch (e) { toast('Gagal menyimpan: penyimpanan browser penuh atau diblokir.', 'err'); }
 }
 async function updateCount() {

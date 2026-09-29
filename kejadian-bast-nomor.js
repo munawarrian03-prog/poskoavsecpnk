@@ -1,7 +1,9 @@
 /* =====================================================
    PENOMORAN BERITA ACARA SERAH TERIMA (BAST)
-   Format : BA/OOSC/<nomor urut>/<bulan romawi>/<tahun 2 angka>
-   Contoh : BA/OOSC/1/IX/26
+   Format : OOSC/ST/<nomor urut>/<bulan romawi>/<tahun 2 angka>
+   Contoh : OOSC/ST/1/IX/26
+   Sama persis polanya dengan penomoran Laporan Kejadian (OOSC/LK/...),
+   hanya kode jenis laporan yang beda (LK vs ST).
    Nomor urut mulai dari 1 lagi setiap bulan (mengikuti bulan tanggal BAST).
    State counter TERPISAH dari nomor Laporan Kejadian (KejadianNomor) -
    supaya urutan BAST tidak tercampur dengan urutan LK.
@@ -9,7 +11,7 @@
 (function (root) {
   'use strict';
   const ROMAWI = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-  const cfg = { prefix: 'BA/OOSC', pad: 0 };
+  const cfg = { prefix: 'OOSC/ST', pad: 0 };
   const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
 
   function atur(o) { if (o) { if (o.prefix) cfg.prefix = String(o.prefix); if (o.pad != null) cfg.pad = Math.max(0, parseInt(o.pad, 10) || 0); } return Object.assign({}, cfg); }
