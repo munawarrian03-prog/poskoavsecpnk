@@ -46,7 +46,8 @@
     ['personel', 'Laporan Personel', 'laporan-personel.html', 'people'],
     ['fasilitas', 'Laporan Fasilitas', 'fasilitas.html', 'wrench'],
     ['logbook', 'Log Book', 'logbook.html', 'book'],
-    ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc']
+    ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
+    ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
   ];
   AVS.tanggalPendek = (d) => `${AVS.HARI[d.getDay()].slice(0, 3)}, ${d.getDate()} ${AVS.BULAN_PENDEK[d.getMonth()]} ${d.getFullYear()}`;
   AVS.nav = function (aktif, el) {

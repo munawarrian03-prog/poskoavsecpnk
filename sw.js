@@ -1,5 +1,5 @@
 // Naikkan versi ini setiap kali file aplikasi diubah agar browser memperbarui cache
-const CACHE_NAME = 'kekuatan-app-v12';
+const CACHE_NAME = 'kekuatan-app-v13';
 
 // Aset yang disimpan agar aplikasi tetap jalan saat offline
 const ASSETS_TO_CACHE = [
@@ -22,6 +22,9 @@ const ASSETS_TO_CACHE = [
   './kejadian-nomor.js',
   './kejadian-wa.js',
   './kejadian-pdf.js',
+  './jadwal-dinas.html',
+  './jadwal-dinas-import.js',
+  './lib/xlsx.core.min.js',
   './manifest.json',
   './fonts/inter-latin-400-normal.woff2',
   './fonts/inter-latin-500-normal.woff2',
