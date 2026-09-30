@@ -94,6 +94,7 @@
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<button type="button" style="align-self:flex-end;height:30px;padding:0 12px;border-radius:7px;border:1px solid #D7DEE8;background:#fff;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer" onclick="resetFilterTersimpan()" title="Hapus filter tanggal">✕ Reset Tanggal</button>
 <div style="flex:1"></div>
 </div>
 <div class="sumline" id="sumLine"></div>
@@ -106,17 +107,17 @@
 <span id="compStatus" class="compStatus-balance" onclick="togglePratinjau(true)" title="Klik untuk melihat catatan pemeriksaan">✓ SESUAI (BALANCE)</span>
 <span class="tt" id="totalPenempatanDisplay">TOTAL PENEMPATAN: 0 PERSONEL</span>
 <span class="sp"></span>
-<button type="button" class="sbtn ghost" onclick="togglePratinjau()">Pratinjau</button>
-<button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button>
+<button type="button" class="sbtn ghost" onclick="bukaLihatDraft()">Pratinjau Web</button>
 <button type="button" class="sbtn red" onclick="saveReport()">Simpan Laporan</button>
 </div>
 </div>
 
-<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
+<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU WA ‹</button>
 <aside class="drawer" id="drawer">
-<div class="dh"><span>PRATINJAU LAPORAN</span><button type="button" onclick="copyReport()" title="Salin teks laporan" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Montserrat', 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="dh"><span>Pratinjau Laporan WA</span><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
 <div class="issue-box" id="issueBox"></div>
 <div class="output-area" id="outputReport">Mengolah laporan...</div>
+<div class="dfoot"><button type="button" class="sbtn ghost" onclick="copyReport()">Salin</button><button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button></div>
 </aside>
 <aside class="drawer" id="drawerRw">
 <div class="dh"><span>RIWAYAT PERUBAHAN</span><button type="button" onclick="tutupRiwayat()" title="Tutup">✕</button></div>
@@ -705,11 +706,9 @@ function togglePratinjau(force) {
 }
 
 /* ---------- Laci "Lihat" (tampilan web hanya-baca, tidak dapat diubah) ---------- */
-function bukaLihat(id) {
-  const r = getReports().find((x) => x.id === id); if (!r) return;
-  const info = hitungData(r.kategoriKekuatan, r.posPenempatan);
-  const pb = getPembuatLaporanInfo(r.posPenempatan, 'text');
-  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
+function renderLihatHTML(kat, pos) {
+  const info = hitungData(kat, pos);
+  const pb = getPembuatLaporanInfo(pos, 'text');
   let html = info.rows.map((row) => {
     const judul = `${esc(labelKategori(row.k))} &mdash; Jumlah ${row.jml} &bull; Hadir ${row.hdr} &bull; Kurang ${row.krg || 0}`;
     const isi = row.valid.length
@@ -726,7 +725,17 @@ function bukaLihat(id) {
   }).join('') || '<div class="lihat-empty">Belum ada pos penempatan.</div>';
   html += `<div class="lihat-total">TOTAL PENEMPATAN: <b>${info.totalPenempatan}</b> PERSONEL</div>`;
   html += `<div class="lihat-footer">Dibuat oleh, ${esc(pb.jabatanLabel.replace(/\n/g, ' '))} &mdash; ${esc(pb.nama)}</div>`;
-  $('lihatIsi').innerHTML = html;
+  return html;
+}
+function bukaLihat(id) {
+  const r = getReports().find((x) => x.id === id); if (!r) return;
+  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
+  $('lihatIsi').innerHTML = renderLihatHTML(r.kategoriKekuatan, r.posPenempatan);
+  togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
+}
+function bukaLihatDraft() {
+  $('lihatSub').textContent = `Regu ${$('regu').value || '-'} • ${($('shift').value || '').split(' (')[0]} • ${$('tanggal').value ? formatTanggalIndo($('tanggal').value) : '-'} • (draf belum disimpan)`;
+  $('lihatIsi').innerHTML = renderLihatHTML(kategoriKekuatan, posPenempatan);
   togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
 }
 function tutupLihat() { $('drawerLihat').classList.remove('open'); }
@@ -783,6 +792,7 @@ function jejakHTML(r) {
   if (k.j.pernahDiubah) return `<span class="upd">✎ Diperbarui</span><span>${esc(k.dibuat)}</span><span>•</span><span><b>${esc(k.ubah)}</b></span>`;
   return `<span>${esc(k.dibuat)}</span>${k.j.tercatat ? '<span>•</span><span>Belum pernah diubah</span>' : ''}`;
 }
+function resetFilterTersimpan() { $('fMulai').value = ''; $('fSampai').value = ''; renderSavedReports(); }
 function renderSavedReports() {
   const box = $('savedReportsList');
   const { semua, list } = laporanTerfilter();
@@ -918,10 +928,6 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeVie
 
 window.addEventListener('DOMContentLoaded', () => {
   AVS.nav('personel');
-  const semuaLap = getReports(), hIni = new Date();
-  const terbaru = semuaLap.map((r) => r.tanggal).filter(Boolean).sort().reverse()[0];
-  const awalRentang = terbaru ? `${terbaru.slice(0, 8)}01` : tanggalLokalISO(new Date(hIni.getFullYear(), hIni.getMonth(), 1));
-  $('fMulai').value = awalRentang; $('fSampai').value = tanggalLokalISO(hIni);
   updateCount();
   cekPerangkat();
   isiDaftarPersonel();

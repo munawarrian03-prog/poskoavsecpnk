@@ -275,12 +275,29 @@
   /* =========================================================
      BLOK KEPATUHAN
      ========================================================= */
+  function reguBertugasJadwal(tanggalISO, shiftLabel) {
+    const kode = shiftLabel === 'Pagi' ? 'P' : shiftLabel === 'Malam' ? 'M' : null;
+    if (!kode) return null;
+    let semua; try { semua = JSON.parse(localStorage.getItem('savedJadwalDinas') || '{}'); } catch (e) { return null; }
+    const data = semua[tanggalISO.slice(0, 7)]; if (!data || !data.units) return null;
+    const unit = data.units.find((u) => u.punyaGrup && /ORGANIK/i.test(u.nama)) || data.units.find((u) => u.punyaGrup);
+    if (!unit) return null;
+    const PETA = { ALPHA: 'A', BRAVO: 'B', CHARLIE: 'C', DELTA: 'D' };
+    for (const g of unit.grup) {
+      if (!g.orang.length) continue;
+      const cnt = {};
+      g.orang.forEach((o) => { const k = (o.jadwal && o.jadwal[tanggalISO]) || '-'; cnt[k] = (cnt[k] || 0) + 1; });
+      const kodeUtama = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+      if (kodeUtama === kode) { const nama = String(g.nama || '').toUpperCase(); return PETA[nama] || nama.slice(0, 1) || null; }
+    }
+    return null;
+  }
   function tabelKepatuhan(daftar, penuh) {
     const rows = (penuh ? daftar : daftar.slice(0, 5));
     if (!rows.length) return '<div class="empty">Semua shift pada rentang ini<br>sudah lengkap dilaporkan.</div>';
     const tagW = (j) => j === 'Personel' ? ['#E6ECF4', '#1D3A5C'] : j === 'Fasilitas' ? ['#FCF1DF', '#9A5F12'] : ['#FBE9E7', '#A82F24'];
-    const trs = rows.map((x) => `<tr><td style="white-space:nowrap"><b>${E(tglPendek(x.tanggal))}</b></td><td>${E(x.shift)}</td><td>${x.kurang.map((j) => { const c = tagW(j); return `<span class="tag" style="background:${c[0]};color:${c[1]};margin-right:4px">${E(j)}</span>`; }).join('')}</td></tr>`).join('');
-    return `<table class="rtbl"><thead><tr><th>Tanggal</th><th>Shift</th><th>Belum Diisi</th></tr></thead><tbody>${trs}</tbody></table>`;
+    const trs = rows.map((x) => `<tr><td style="white-space:nowrap"><b>${E(tglPendek(x.tanggal))}</b></td><td>${E(x.shift)}</td><td>${E(x.regu || '-')}</td><td>${x.kurang.map((j) => { const c = tagW(j); return `<span class="tag" style="background:${c[0]};color:${c[1]};margin-right:4px">${E(j)}</span>`; }).join('')}</td></tr>`).join('');
+    return `<table class="rtbl"><thead><tr><th>Tanggal</th><th>Shift</th><th>Regu</th><th>Belum Diisi</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
   function renderKepatuhan() {
     const r = RQ;
@@ -297,7 +314,7 @@
     ]);
     $('rowKepatuhan1').innerHTML = `
 <div class="dcard c6 rauto"><div class="h"><div><h3>Shift Belum Diisi - per Jenis Laporan</h3><div class="sub">Dari ${r.total} shift dalam rentang terpilih</div></div></div><div style="padding:8px 4px;max-width:420px">${grafik}</div></div>
-<div class="dcard c6 rauto"><div class="h"><div><h3>Daftar Shift Belum Lengkap</h3><div class="sub">5 teratas - rentang terpilih</div></div><div class="sp"></div>${r.daftar.length > 5 ? `<button class="lihatsemua" onclick="Rekap.bukaLaci('kepatuhan')">Lihat Semua (${r.daftar.length}) &rsaquo;</button>` : ''}</div>${tabelKepatuhan(r.daftar, false)}<div style="font-size:10px;color:#8A94A6;font-weight:600;margin-top:8px">Belum dapat dikelompokkan per regu karena aplikasi belum memiliki data jadwal dinas.</div></div>`;
+<div class="dcard c6 rauto"><div class="h"><div><h3>Daftar Shift Belum Lengkap</h3><div class="sub">5 teratas - rentang terpilih</div></div><div class="sp"></div>${r.daftar.length > 5 ? `<button class="lihatsemua" onclick="Rekap.bukaLaci('kepatuhan')">Lihat Semua (${r.daftar.length}) &rsaquo;</button>` : ''}</div>${tabelKepatuhan(r.daftar, false)}<div style="font-size:10px;color:#8A94A6;font-weight:600;margin-top:8px">Dikelompokkan otomatis per regu berdasarkan data Jadwal Dinas yang diunggah.</div></div>`;
   }
 
   /* =========================================================
@@ -333,6 +350,8 @@
     RF = D.statFasilitasRentang(fasilitas, mulai, akhir, regu);
     RK = D.statKejadianRentang(kejadian, mulai, akhir);
     RQ = D.kepatuhanRentang(personel, fasilitas, logbook, mulai, akhir, HARI_INI);
+    RQ.daftar.forEach((x) => { x.regu = reguBertugasJadwal(x.tanggal, x.shift); });
+    if (regu !== 'all') RQ.daftar = RQ.daftar.filter((x) => x.regu === regu);
   }
   function renderSemua() { renderPersonel(); renderFasilitas(); renderKejadian(); renderKepatuhan(); gambarGrafikTren(); }
 

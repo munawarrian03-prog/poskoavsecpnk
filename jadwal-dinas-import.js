@@ -69,11 +69,11 @@
       for (let c = 0; c < Math.min(row.length, batasKolom); c++) {
         const norm = bersih(row[c]).replace(/\s+/g, '').toUpperCase();
         if (!norm) continue;
-        if (norm === 'GRUP') hasil.colGrup = c;
-        else if (norm === 'NO') hasil.colNo = c;
+        if (norm.includes('GRUP')) hasil.colGrup = c;
         else if (norm.includes('JABATAN')) hasil.colJabatan = c;
-        else if (norm === 'NAMA') hasil.colNama = c;
+        else if (norm.includes('NAMA')) hasil.colNama = c;
         else if (norm.includes('NIK')) hasil.colNik = c;
+        else if (norm === 'NO') hasil.colNo = c;
       }
     }
     return hasil;
@@ -172,13 +172,19 @@
       if (!rows.length) { dilewati.push({ sheet: nama, alasan: 'sheet kosong' }); return; }
       const tglDate = cariBarisTanggalDate(rows, 12);
       if (tglDate) {
+        const kolom = cariKolomHeader(rows, tglDate.row, tglDate.minCol);
+        if (kolom.colNama == null) { dilewati.push({ sheet: nama, alasan: 'ada baris tanggal, tapi kolom NAMA tidak ditemukan' }); return; }
         const hasil = parseSheetGrup(rows, tglDate);
         if (hasil && hasil.grup.some((g) => g.orang.length)) { units.push(Object.assign({ nama, key: nama }, hasil)); return; }
+        dilewati.push({ sheet: nama, alasan: 'ada baris tanggal dan kolom NAMA, tapi tidak ada baris personel yang cocok' }); return;
       }
       const tglAngka = cariBarisTanggalAngka(rows, 6);
       if (tglAngka) {
+        const kolom = cariKolomHeader(rows, tglAngka.row, tglAngka.minCol);
+        if (kolom.colNama == null) { dilewati.push({ sheet: nama, alasan: 'ada baris tanggal, tapi kolom NAMA tidak ditemukan' }); return; }
         const hasil = parseSheetDatar(rows, tglAngka, bulanTerpilih);
         if (hasil && hasil.grup[0].orang.length) { units.push(Object.assign({ nama, key: nama }, hasil)); return; }
+        dilewati.push({ sheet: nama, alasan: 'ada baris tanggal dan kolom NAMA, tapi tidak ada baris personel yang cocok' }); return;
       }
       dilewati.push({ sheet: nama, alasan: 'tidak dikenali sebagai format jadwal harian (tidak ada baris tanggal)' });
     });

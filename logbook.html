@@ -107,6 +107,7 @@
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<button type="button" style="align-self:flex-end;height:30px;padding:0 12px;border-radius:7px;border:1px solid #D7DEE8;background:#fff;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer" onclick="resetFilterTersimpan()" title="Hapus filter tanggal">✕ Reset Tanggal</button>
 <div style="flex:1"></div>
 </div>
 <div class="sumline" id="sumLine"></div>
@@ -117,16 +118,16 @@
 <div class="stat" id="statBar">
 <span class="tt" id="penyusunDisplay">DISUSUN OLEH: (....................)</span>
 <span class="sp"></span>
-<button type="button" class="sbtn ghost" onclick="togglePratinjau()">Pratinjau WA</button>
-<button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button>
+<button type="button" class="sbtn ghost" onclick="bukaLihatDraft()">Pratinjau Web</button>
 <button type="button" class="sbtn red" id="btnSimpan" onclick="saveReport()">Simpan Catatan</button>
 </div>
 </div>
 
-<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
+<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU WA ‹</button>
 <aside class="drawer" id="drawer">
-<div class="dh"><span>PRATINJAU WHATSAPP</span><button type="button" id="btnSalinWA" onclick="salinWA()" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Montserrat', 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="dh"><span>Pratinjau Laporan WA</span><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
 <div class="output-area" id="outputReport">Mengolah catatan...</div>
+<div class="dfoot"><button type="button" class="sbtn ghost" onclick="salinWA()">Salin</button><button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button></div>
 </aside>
 <aside class="drawer" id="drawerRw">
 <div class="dh"><span>RIWAYAT PERUBAHAN</span><button type="button" onclick="tutupRiwayat()" title="Tutup">✕</button></div>
@@ -345,8 +346,7 @@ function newReport() {
   if (dirty && !confirm('Ada isian yang belum disimpan. Buang perubahan dan mulai catatan baru?')) return;
   editingReportId = null; $('editBadge').style.display = 'none';
   const hIni = new Date(); $('tanggal').value = tanggalLokalISO(hIni);
-  $('fMulai').value = tanggalLokalISO(new Date(hIni.getFullYear(), hIni.getMonth(), 1));
-  $('fSampai').value = tanggalLokalISO(hIni); $('shift').value = ''; $('regu').value = '';
+  $('shift').value = ''; $('regu').value = '';
   catatanKegiatan = []; $('serahTerima').value = ''; dirty = false;   renderCatatan(); refreshPenyusunDanKunci(); renderRingkasanOtomatis(); switchPage('form');
 }
 function loadForEdit(id) {
@@ -378,6 +378,7 @@ function switchPage(p) {
   $('hdl').style.display = p === 'form' ? '' : 'none';
   if (p === 'saved') renderSavedReports();
 }
+function resetFilterTersimpan() { $('fMulai').value = ''; $('fSampai').value = ''; renderSavedReports(); }
 function renderSavedReports() {
   const mulai = $('fMulai').value, sampai = $('fSampai').value, fr = $('fRegu').value, fs = $('fShift').value;
   let reports = lsGet(STORAGE_KEY, []).slice().sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || '') || (b.savedAt || '').localeCompare(a.savedAt || ''));
@@ -464,18 +465,25 @@ function bukaRiwayat(id) {
 function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
 
 /* ---------- Laci "Lihat" (tampilan web hanya-baca, tidak dapat diubah) ---------- */
-function bukaLihat(id) {
-  const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
-  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
-  const catatan = r.catatanKegiatan || [];
+function renderLihatHTML(catatan, catatanSerahTerima) {
   let html = `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${catatan.length})</div>`;
   html += catatan.length
     ? catatan.map((c) => `<div class="lb-auto-item"><span>${esc(rapikan(c.uraian)) || '(kosong)'}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(c.jam || '--:--')}</span></div>`).join('')
     : '<div class="lihat-empty">Belum ada catatan waktu.</div>';
   html += '</div>';
-  const st = rapikan(r.catatanSerahTerima);
+  const st = rapikan(catatanSerahTerima);
   html += `<div class="lb-auto"><div class="t"><i></i>Catatan Serah Terima</div><div style="font-size:12.5px;color:var(--ink);line-height:1.6;white-space:pre-wrap">${st ? esc(st) : '<span class="lihat-empty">(kosong)</span>'}</div></div>`;
-  $('lihatIsi').innerHTML = html;
+  return html;
+}
+function bukaLihat(id) {
+  const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
+  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
+  $('lihatIsi').innerHTML = renderLihatHTML(r.catatanKegiatan || [], r.catatanSerahTerima);
+  togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
+}
+function bukaLihatDraft() {
+  $('lihatSub').textContent = `Regu ${$('regu').value || '-'} • ${($('shift').value || '').split(' (')[0]} • ${$('tanggal').value ? formatTanggalIndo($('tanggal').value) : '-'} • (draf belum disimpan)`;
+  $('lihatIsi').innerHTML = renderLihatHTML(catatanKegiatan, $('serahTerima').value);
   togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
 }
 function tutupLihat() { $('drawerLihat').classList.remove('open'); }
@@ -489,8 +497,6 @@ window.addEventListener('DOMContentLoaded', () => {
   updateCount();
   cekPerangkat();
   const hIni = new Date(); $('tanggal').value = tanggalLokalISO(hIni);
-  $('fMulai').value = tanggalLokalISO(new Date(hIni.getFullYear(), hIni.getMonth(), 1));
-  $('fSampai').value = tanggalLokalISO(hIni);
   catatanKegiatan = [];
   renderCatatan();
   refreshPenyusunDanKunci();

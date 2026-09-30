@@ -13,13 +13,15 @@
 <link rel="stylesheet" href="beranda.css">
 <link rel="stylesheet" href="kejadian.css">
 <style>
-.jd-toolbar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 16px; box-shadow: 0 1px 3px rgba(16,36,61,.05); flex-shrink: 0; flex-wrap: wrap; }
-.jd-sp { flex: 1; }
 .jd-btn { height: 34px; padding: 0 14px; border-radius: 8px; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .jd-btn.teal { background: var(--secondary); color: #fff; }
-.jd-btn.ghost { background: #EEF1F6; color: #475569; }
 .jd-btn.danger { background: #FBE9E7; color: #A82F24; }
-.jd-search { height: 34px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 10px; font: 700 12px 'Montserrat', 'Inter'; color: var(--ink); min-width: 180px; }
+#jdToolbar .monthpick { height: 30px; border-radius: 7px; }
+#jdToolbar .monthpick .cur { min-width: 148px; padding: 0 10px; font-size: 12px; }
+#jdToolbar .monthpick .arr { width: 28px; font-size: 13px; }
+#jdToolbar .monthpick .cur svg { width: 13px; height: 13px; }
+#jdToolbar .monthpick .cur small { display: none; }
+#jdToolbar .jd-search { height: 30px; padding: 0 9px; border: 1px solid #D0D8E3; border-radius: 7px; background: #fff; font-size: 12px; font-weight: 600; color: var(--text-main); width: 148px; }
 .jd-hari-ini { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 2px 0; }
 .jd-hi-chip { display: flex; align-items: center; gap: 7px; background: #fff; border: 1px solid var(--border-color); border-radius: 10px; padding: 7px 12px; font-size: 11.5px; font-weight: 700; color: var(--ink); box-shadow: 0 1px 3px rgba(16,36,61,.05); }
 .jd-hi-chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
@@ -34,10 +36,10 @@
 table.jdtbl { border-collapse: collapse; font-size: 11px; white-space: nowrap; }
 table.jdtbl th, table.jdtbl td { border-bottom: 1px solid #EEF1F6; border-right: 1px solid #F3F5F8; padding: 5px 6px; text-align: center; }
 table.jdtbl thead th { position: sticky; top: 0; background: #F7F9FC; color: #8A94A6; font-size: 9.5px; font-weight: 800; text-transform: uppercase; z-index: 2; }
-table.jdtbl td.nm, table.jdtbl th.nm { position: sticky; left: 0; background: #fff; text-align: left; font-weight: 700; color: var(--ink); z-index: 1; min-width: 170px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+table.jdtbl td.nm, table.jdtbl th.nm { position: sticky; left: 0; background: #fff; text-align: left; font-weight: 700; color: var(--ink); z-index: 1; min-width: 200px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 table.jdtbl thead th.nm { background: #F7F9FC; z-index: 3; }
-table.jdtbl td.jb { position: sticky; left: 170px; background: #fff; text-align: left; color: #8A94A6; font-weight: 600; font-size: 10px; min-width: 130px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; z-index: 1; }
-table.jdtbl thead th.jb { background: #F7F9FC; left: 170px; z-index: 3; }
+table.jdtbl td.jb { position: sticky; left: 200px; background: #fff; text-align: left; color: #8A94A6; font-weight: 600; font-size: 10px; min-width: 130px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; z-index: 1; }
+table.jdtbl thead th.jb { background: #F7F9FC; left: 200px; z-index: 3; }
 table.jdtbl tr.grp td { background: #EEF1F6; color: #10243D; font-weight: 800; text-align: left; padding: 6px 10px; position: static; }
 table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
 .jd-empty-cta { text-align: center; padding: 70px 20px; color: #8A94A6; }
@@ -51,12 +53,12 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
 <div class="main-wrapper">
 <div id="topBar"></div>
 
-<div class="jd-toolbar">
-<div id="bulanPicker"></div>
-<div class="jd-sp"></div>
-<input type="text" class="jd-search" id="jdCari" placeholder="Cari nama…" oninput="JD.renderTabelUnit()">
-<button type="button" class="jd-btn ghost" id="btnHapusBulan" style="display:none" onclick="JD.hapusBulanIni()">🗑 Hapus Jadwal Bulan Ini</button>
-<button type="button" class="jd-btn teal" onclick="JD.bukaUpload()">⬆ Unggah Jadwal (.xlsx)</button>
+<div class="toolbar" id="jdToolbar">
+<div class="fld"><label>Bulan</label><div id="bulanPicker"></div></div>
+<div class="fld"><label>Cari</label><input type="text" class="jd-search" id="jdCari" placeholder="Cari nama…" oninput="JD.renderTabelUnit()"></div>
+<span class="tsp"></span>
+<button type="button" class="tbtn" onclick="JD.bukaUpload()">⬆ Unggah Jadwal (.xlsx)</button>
+<button type="button" class="tbtn" id="btnHapusBulan" style="display:none" onclick="JD.hapusBulanIni()">🗑 Hapus Jadwal Bulan Ini</button>
 </div>
 
 <div id="jdHariIni"></div>
@@ -105,6 +107,7 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
   const KUNCI = (y, m) => `${y}-${pad2(m + 1)}`;
   const HARI_INI = new Date(); const ISO_HARI_INI = `${HARI_INI.getFullYear()}-${pad2(HARI_INI.getMonth() + 1)}-${pad2(HARI_INI.getDate())}`;
 
+  const MAKS_BULAN = { y: HARI_INI.getFullYear() + 1, m: HARI_INI.getMonth() }; // jadwal dinas wajar diunggah untuk bulan mendatang
   let bulanAktif = { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() };
   let unitAktifKey = null;
   let pending = null; // hasil parsing yang menunggu disimpan
@@ -130,7 +133,7 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
       get: () => bulanAktif,
       set: (y, m) => { bulanAktif = { y, m }; unitAktifKey = null; render(); },
       info: (y, m) => { const d = dataBulan(y, m); return { teks: d ? `${d.units.length} unit` : '—' }; },
-      maks: { y: HARI_INI.getFullYear() + 1, m: HARI_INI.getMonth() } // jadwal dinas wajar diunggah untuk bulan mendatang
+      maks: MAKS_BULAN
     });
   }
 
@@ -185,7 +188,7 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
 <div class="jd-unit-tabs">${data.units.map((u) => `<button type="button" class="${u.key === unitAktifKey ? 'on' : ''}" onclick="JD.pilihUnit('${u.key.replace(/'/g, "\\'")}')">${E(u.nama)}</button>`).join('')}</div>
 ${legenda}
 <div class="jd-tbl-wrap" style="margin-top:10px"><table class="jdtbl"><thead><tr><th class="nm">Nama</th><th class="jb">Jabatan</th>${thHari}</tr></thead><tbody>${baris}</tbody></table></div>
-${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8A94A6;font-weight:600;margin-top:8px">Dilewati saat impor: ${data.dilewati.map((d) => E(d.sheet)).join(', ')} (bukan format jadwal harian).</div>` : ''}`;
+${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8A94A6;font-weight:600;margin-top:8px">Dilewati saat impor: ${data.dilewati.map((d) => `${E(d.sheet)} (${E(d.alasan)})`).join(', ')}.</div>` : ''}`;
   }
 
   function pilihUnit(key) { unitAktifKey = key; renderTabelUnit(); }
@@ -203,12 +206,19 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
   }
 
   /* ---------- Modal unggah ---------- */
+  function renderOpsiBulanUpload() {
+    const selB = $('upBulan'), thn = +$('upTahun').value;
+    const maksBulanTahunIni = thn >= MAKS_BULAN.y ? MAKS_BULAN.m : 11;
+    const terpilihSebelumnya = selB.value !== '' ? +selB.value : bulanAktif.m;
+    const bulanAwal = Math.min(terpilihSebelumnya, maksBulanTahunIni);
+    selB.innerHTML = AVS.BULAN.map((n, i) => `<option value="${i}" ${i > maksBulanTahunIni ? 'disabled' : ''} ${i === bulanAwal ? 'selected' : ''}>${n}</option>`).join('');
+  }
   function bukaUpload() {
-    const selB = $('upBulan'), selT = $('upTahun');
-    selB.innerHTML = AVS.BULAN.map((n, i) => `<option value="${i}" ${i === bulanAktif.m ? 'selected' : ''}>${n}</option>`).join('');
-    const thn = bulanAktif.y;
-    const opsiT = []; for (let y = thn - 1; y <= thn + 1; y++) opsiT.push(y);
+    const selT = $('upTahun'), thn = bulanAktif.y;
+    const opsiT = []; for (let y = thn - 1; y <= MAKS_BULAN.y; y++) opsiT.push(y);
     selT.innerHTML = opsiT.map((y) => `<option value="${y}" ${y === thn ? 'selected' : ''}>${y}</option>`).join('');
+    selT.onchange = renderOpsiBulanUpload;
+    renderOpsiBulanUpload();
     $('fileJadwal').value = '';
     $('hasilProses').innerHTML = '';
     $('btnSimpanJadwal').style.display = 'none';
@@ -229,12 +239,13 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
         const sheetToRows = (nama) => XLSX.utils.sheet_to_json(wb.Sheets[nama], { header: 1, raw: true, defval: null });
         const hasil = AVS.JadwalImport.praProsesWorkbook(wb.SheetNames, sheetToRows, { tahun, bulan });
         if (!hasil.units.length) {
-          $('hasilProses').innerHTML = `<div class="empty" style="padding:20px 0">Tidak ada sheet yang dikenali sebagai jadwal harian di berkas ini.</div>`;
+          const alasanLewat = hasil.dilewati.map((d) => `${E(d.sheet)} — ${E(d.alasan)}`).join('<br>');
+          $('hasilProses').innerHTML = `<div class="empty" style="padding:20px 0">Tidak ada sheet yang dikenali sebagai jadwal harian di berkas ini.${alasanLewat ? '<br><br>' + alasanLewat : ''}</div>`;
           $('btnSimpanJadwal').style.display = 'none'; pending = null; return;
         }
         pending = { diimporPada: new Date().toISOString(), namaBerkas: file.name, units: hasil.units, dilewati: hasil.dilewati, bulan: { tahun, bulan } };
         const ringkasUnit = hasil.units.map((u) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #EEF1F6"><span><b>${E(u.nama)}</b>${u.punyaGrup ? ` <span style="color:#8A94A6;font-weight:600">(${u.grup.length} grup)</span>` : ''}</span><span style="color:#8A94A6;font-weight:700">${u.grup.reduce((n, g) => n + g.orang.length, 0)} orang</span></div>`).join('');
-        const ringkasLewat = hasil.dilewati.length ? `<div style="margin-top:10px;font-size:11px;color:#8A94A6;font-weight:600">Dilewati: ${hasil.dilewati.map((d) => E(d.sheet)).join(', ')}</div>` : '';
+        const ringkasLewat = hasil.dilewati.length ? `<div style="margin-top:10px;font-size:11px;color:#8A94A6;font-weight:600">Dilewati: ${hasil.dilewati.map((d) => `${E(d.sheet)} — ${E(d.alasan)}`).join('; ')}</div>` : '';
         $('hasilProses').innerHTML = `<div style="font-size:11.5px;font-weight:800;color:#8A94A6;text-transform:uppercase;margin-bottom:4px">Ditemukan ${hasil.units.length} unit</div>${ringkasUnit}${ringkasLewat}`;
         $('btnSimpanJadwal').style.display = '';
       } catch (e) {

@@ -78,6 +78,7 @@
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
 <div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<button type="button" style="align-self:flex-end;height:30px;padding:0 12px;border-radius:7px;border:1px solid #D7DEE8;background:#fff;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer" onclick="resetFilterTersimpan()" title="Hapus filter tanggal">✕ Reset Tanggal</button>
 <div style="flex:1"></div>
 </div>
 <div class="sumline" id="sumLine"></div>
@@ -89,16 +90,16 @@
 <span class="tt" id="penyusunDisplay">DISUSUN OLEH: (....................)</span>
 <span class="sp"></span>
 <button type="button" class="ket-warn" id="ketWarn" onclick="keKetKosong()" style="display:none"></button>
-<button type="button" class="sbtn ghost" onclick="togglePratinjau()">Pratinjau WA</button>
-<button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button>
+<button type="button" class="sbtn ghost" onclick="bukaLihatDraft()">Pratinjau Web</button>
 <button type="button" class="sbtn red" id="btnSimpan" onclick="saveReport()">Simpan Laporan</button>
 </div>
 </div>
 
-<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
+<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU WA ‹</button>
 <aside class="drawer" id="drawer">
-<div class="dh"><span>PRATINJAU WHATSAPP</span><button type="button" id="btnSalinWA" onclick="salinWA()" style="width:auto;background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Montserrat', 'Inter';white-space:nowrap;cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="dh"><span>Pratinjau Laporan WA</span><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
 <div class="output-area" id="outputReport">Mengolah laporan...</div>
+<div class="dfoot"><button type="button" class="sbtn ghost" onclick="salinWA()">Salin</button><button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button></div>
 </aside>
 <aside class="drawer" id="drawerRw">
 <div class="dh"><span>RIWAYAT PERUBAHAN</span><button type="button" onclick="tutupRiwayat()" title="Tutup">✕</button></div>
@@ -537,6 +538,7 @@ function switchPage(p) {
   $('hdl').style.display = p === 'form' ? '' : 'none';
   if (p === 'saved') renderSavedReports();
 }
+function resetFilterTersimpan() { $('fMulai').value = ''; $('fSampai').value = ''; renderSavedReports(); }
 function renderSavedReports() {
   const mulai = $('fMulai').value, sampai = $('fSampai').value, fr = $('fRegu').value, fs = $('fShift').value;
   let reports = lsGet(STORAGE_KEY, []).slice().sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || '') || (b.savedAt || '').localeCompare(a.savedAt || ''));
@@ -620,10 +622,8 @@ function bukaRiwayat(id) {
 function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
 
 /* ---------- Laci "Lihat" (tampilan web hanya-baca, tidak dapat diubah) ---------- */
-function bukaLihat(id) {
-  const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
-  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
-  const html = (r.posFasilitas || []).map((p) => {
+function renderLihatHTML(pos) {
+  return (pos || []).map((p) => {
     const isi = (p.items || []).map((it) => {
       if (it.bentuk === 'C') {
         const masalah = !it.lengkap;
@@ -638,7 +638,16 @@ function bukaLihat(id) {
     }).join('') || '<div class="lihat-empty">Belum ada item.</div>';
     return `<div class="lb-auto"><div class="t"><i></i>${esc(p.name)}</div>${isi}</div>`;
   }).join('') || '<div class="lihat-empty">Belum ada pos.</div>';
-  $('lihatIsi').innerHTML = html;
+}
+function bukaLihat(id) {
+  const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
+  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
+  $('lihatIsi').innerHTML = renderLihatHTML(r.posFasilitas);
+  togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
+}
+function bukaLihatDraft() {
+  $('lihatSub').textContent = `Regu ${$('regu').value || '-'} • ${($('shift').value || '').split(' (')[0]} • ${$('tanggal').value ? formatTanggalIndo($('tanggal').value) : '-'} • (draf belum disimpan)`;
+  $('lihatIsi').innerHTML = renderLihatHTML(posFasilitas);
   togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
 }
 function tutupLihat() { $('drawerLihat').classList.remove('open'); }
@@ -654,8 +663,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const h = new Date();
   $('tanggal').value = tanggalLokalISO(h);
   $('shift').value = ''; $('regu').value = ''; // cegah browser me-restore pilihan shift/regu terakhir
-  $('fMulai').value = tanggalLokalISO(new Date(h.getFullYear(), h.getMonth(), 1));
-  $('fSampai').value = tanggalLokalISO(h);
   posFasilitas = posAwalLaporanBaru();
   renderForm();
   refreshPenyusunDanKunci();

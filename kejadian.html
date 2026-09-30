@@ -186,7 +186,7 @@
 <option value="LK">Laporan Kejadian (LK)</option>
 <option value="BAST">Berita Acara Serah Terima (BAST)</option>
 </select></div>
-<button type="button" class="hbtn" style="align-self:flex-end;width:auto;padding:0 12px" onclick="resetFilterTersimpan()" title="Hapus filter tanggal">✕ Reset Tanggal</button>
+<button type="button" class="hbtn" style="align-self:flex-end;width:auto;padding:0 12px;font-size:11.5px;font-weight:700" onclick="resetFilterTersimpan()" title="Hapus filter tanggal">✕ Reset Tanggal</button>
 </div>
 <div id="savedList" style="flex:1; overflow-y:auto;"></div>
 </div>
@@ -196,12 +196,11 @@
 <span class="hint" id="actionHint"></span>
 <span class="sp"></span>
 <span id="statLK">
-<button type="button" class="sbtn ghost" onclick="togglePratinjauWA()" title="Lihat teks laporan WhatsApp dan kirim (laporan awal)">Pratinjau WA &amp; Kirim</button>
-<button type="button" class="sbtn ghost" onclick="pratinjauPdf()">Pratinjau PDF</button>
+<button type="button" class="sbtn ghost" onclick="togglePratinjauWebLaci()">Pratinjau Web</button>
 <button type="button" class="sbtn red" onclick="simpan()">Simpan Laporan</button>
 </span>
 <span id="statBAST" style="display:none">
-<button type="button" class="sbtn ghost" onclick="bastPratinjauPdf()">Pratinjau PDF</button>
+<button type="button" class="sbtn ghost" onclick="togglePratinjauWebLaci()">Pratinjau Web</button>
 <button type="button" class="sbtn red" onclick="bastSimpan()">Simpan BAST</button>
 </span>
 </div>
@@ -224,6 +223,10 @@
 <button type="button" class="sbtn ghost" onclick="salinTeksWA()">Salin Teks</button>
 <button type="button" class="sbtn grn" onclick="kirimAwalWA()" title="Buka WhatsApp Web dengan teks di atas dan lampirkan kolase foto">Kirim ke WA</button>
 </div>
+</aside>
+<aside class="drawer" id="drawerWeb">
+<div class="dh"><span>PRATINJAU WEB (PDF)</span><button type="button" onclick="togglePratinjauWebLaci(false)" title="Tutup">✕</button></div>
+<iframe id="pdfFrameWeb" style="flex:1;width:100%;border:0;border-radius:8px;background:#525659"></iframe>
 </aside>
 <aside class="drawer" id="drawerRw">
 <div class="dh"><span>RIWAYAT PERUBAHAN</span><button type="button" onclick="tutupRiwayat()" title="Tutup">✕</button></div>
@@ -997,7 +1000,21 @@ async function cetakPdf(r, mode) {
   } catch (e) { if (win) win.close(); toast('Gagal membuat PDF: ' + e.message, 'err'); }
 }
 const unduhPdf = () => cetakPdf(laporan, 'unduh');
-const pratinjauPdf = () => cetakPdf(laporan, 'pratinjau');
+async function cetakPdfKeIframe(r) {
+  if (!konfirmasiCatatan(r, 'melihat pratinjau')) return false;
+  try {
+    siapPdf();
+    const pdf = pdfMake.createPdf(await siapkanDoc(r));
+    return new Promise((resolve) => pdf.getBlob((blob) => { $('pdfFrameWeb').src = URL.createObjectURL(blob); resolve(true); }));
+  } catch (e) { toast('Gagal membuat PDF: ' + e.message, 'err'); return false; }
+}
+async function togglePratinjauWebLaci(force) {
+  const d = $('drawerWeb'), buka = force === undefined ? !d.classList.contains('open') : !!force;
+  if (!buka) { d.classList.remove('open'); return; }
+  const r = jenisAktif === 'BAST' ? bastLaporan : laporan;
+  const ok = await (jenisAktif === 'BAST' ? bastCetakPdfKeIframe(r) : cetakPdfKeIframe(r));
+  if (ok) d.classList.add('open');
+}
 
 /* =====================================================
    KIRIM KE WHATSAPP: langsung membuka WhatsApp Web + mengunduh PDF
@@ -1246,7 +1263,9 @@ async function unduhId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapi
 async function pratinjauId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapiModel(r), 'pratinjau'); }
 async function editReport(id) {
   const r = await dbGet(id); if (!r) return;
-  if (dirty && !confirm('Isian yang sedang dibuka belum disimpan dan akan diganti. Lanjutkan?')) return;
+  if (jenisAktif === 'BAST' && bastDirty && !confirm('Isian BAST yang sedang dibuka belum disimpan dan akan diganti. Lanjutkan?')) return;
+  if (jenisAktif === 'LK' && dirty && !confirm('Isian yang sedang dibuka belum disimpan dan akan diganti. Lanjutkan?')) return;
+  pilihJenisLaporan('LK');
   laporan = lengkapiModel(clone(r)); editingId = r.id; laporan.id = r.id; dirty = false;
   isiForm(); switchPage('form');
 }
@@ -1294,7 +1313,7 @@ function pilihJenisLaporan(j) {
   const opt = document.querySelector(`#ddJenisLaporan .opt[onclick*="'${j}'"]`);
   if (opt) { opt.classList.add('sel'); opt.querySelector('.chk').textContent = '✓'; }
   $('ddJenisLaporan').classList.remove('open');
-  if (j === 'BAST' && !bastLaporan) { bastLaporan = bastModelBaru(); bastRenderForm(); bastRenderPreview(); }
+  if (j === 'BAST' && !bastLaporan) { bastLaporan = bastModelBaru(); bastRenderForm(); bastRenderPreview(); bastRenderNomor(); bastPerbaruiNomor(); }
   switchPage('form');
 }
 

@@ -82,7 +82,7 @@ function bastCatatNomor(rec) { const p = BastNomor.parse(rec.nomorBast); if (p) 
 function bastRenderNomor() {
   const inp = $('bastFileNumber'); if (!inp || !bastLaporan) return;
   const auto = !!bastLaporan.nomorOtomatis;
-  inp.value = bastLaporan.nomorBast || ''; inp.readOnly = auto;
+  inp.value = bastLaporan.nomorBast || '';
   inp.placeholder = auto ? 'Menghitung nomor…' : 'Ketik nomor BAST (boleh dikosongkan)';
   const tag = $('bastAutoTag'); if (tag) tag.style.display = auto ? '' : 'none';
   const btn = $('bastBtnNomorMode'); if (btn) { btn.textContent = auto ? '✎' : '↺'; btn.title = auto ? 'Ubah nomor secara manual' : 'Kembali ke nomor otomatis'; }
@@ -134,8 +134,37 @@ async function bastTetapkanNomor(rec) {
 }
 
 /* ---------- Render Form ---------- */
-function bastFieldChanged(el) { setPath(bastLaporan, el.dataset.f, el.value); if (el.dataset.f === 'tanggal') bastPerbaruiNomor(); bastUbah(); }
+function bastFieldChanged(el) {
+  if (el.dataset.f === 'nomorBast' && bastLaporan.nomorOtomatis && el.value !== bastLaporan.nomorBast) {
+    bastLaporan.nomorOtomatis = false; bastLaporan.nomorDikunci = false;
+    const tag = $('bastAutoTag'); if (tag) tag.style.display = 'none';
+    const btn = $('bastBtnNomorMode'); if (btn) { btn.textContent = '↺'; btn.title = 'Kembali ke nomor otomatis'; }
+  }
+  setPath(bastLaporan, el.dataset.f, el.value); if (el.dataset.f === 'tanggal') bastPerbaruiNomor(); bastUbah();
+}
 function bastPihakInput(slot, field, val) { bastLaporan[slot][field] = val; bastUbah(); }
+function cariNikDariJadwal(nama) {
+  const norm = (s) => rapikan(s).toUpperCase().replace(/\s+/g, ' ');
+  const target = norm(nama); if (!target) return null;
+  let semua; try { semua = JSON.parse(localStorage.getItem('savedJadwalDinas') || '{}'); } catch (e) { return null; }
+  const kunciUrut = Object.keys(semua).sort().reverse();
+  for (const k of kunciUrut) {
+    for (const unit of ((semua[k] && semua[k].units) || [])) {
+      for (const g of (unit.grup || [])) {
+        for (const o of (g.orang || [])) {
+          if (norm(o.nama) === target && o.nik) return o.nik;
+        }
+      }
+    }
+  }
+  return null;
+}
+function bastIsiNikDariJadwal(nama) {
+  const nik = cariNikDariJadwal(nama); if (!nik) return;
+  bastLaporan.pihakSatu.nik = nik;
+  const inp = $('bastPihakSatuNik'); if (inp) inp.value = nik;
+  bastUbah();
+}
 function bastItemInput(i, key, val) { if (bastLaporan.items[i]) { bastLaporan.items[i][key] = val; bastUbah(); } }
 function bastSaksiInput(i, field, val) { if (bastLaporan.saksi[i]) { bastLaporan.saksi[i][field] = val; bastUbah(); } }
 function bastTambahItem() { bastLaporan.items.push(bastBarisKosong(bastLaporan.kategori)); bastRenderForm(); bastUbah(); }
@@ -198,8 +227,8 @@ function bastRenderForm() {
     <div class="bast-pihak2">
       <div class="bast-pihak-box">
         <div class="bast-tt">PIHAK PERTAMA (Menyerahkan) <span class="bast-src-tag">dari daftar personel</span></div>
-        <div class="bast-f"><label>Nama</label><input list="listPersonel" value="${esc(L.pihakSatu.nama)}" oninput="bastPihakInput('pihakSatu','nama',this.value)"></div>
-        <div class="bast-f"><label>NIK <small>ditulis manual</small></label><input value="${esc(L.pihakSatu.nik)}" oninput="bastPihakInput('pihakSatu','nik',this.value)"></div>
+        <div class="bast-f"><label>Nama</label><input list="listPersonel" value="${esc(L.pihakSatu.nama)}" oninput="bastPihakInput('pihakSatu','nama',this.value)" onblur="bastIsiNikDariJadwal(this.value)"></div>
+        <div class="bast-f"><label>NIK <small>ditulis manual</small></label><input id="bastPihakSatuNik" value="${esc(L.pihakSatu.nik)}" oninput="bastPihakInput('pihakSatu','nik',this.value)"></div>
         <div class="bast-f"><label>Jabatan</label><input list="listJabatan" value="${esc(L.pihakSatu.jabatan)}" oninput="bastPihakInput('pihakSatu','jabatan',this.value)"></div>
         <div class="bast-f"><label>Instansi <small>ditulis manual</small></label><input value="${esc(L.pihakSatu.instansi)}" placeholder="Ketik instansi" oninput="bastPihakInput('pihakSatu','instansi',this.value)"></div>
       </div>
@@ -313,8 +342,17 @@ function bastValidasi() {
   if (!rapikan(L.pihakDua.nama)) return 'Isi Nama Pihak Kedua terlebih dahulu.';
   return null;
 }
+async function bastCekDuplikatNomor(nomor, kecualiId) {
+  const target = rapikan(nomor).toUpperCase(); if (!target) return null;
+  const recs = await bastRekamTersimpan();
+  return recs.find((r) => r.id !== kecualiId && rapikan(r.nomorBast).toUpperCase() === target) || null;
+}
 async function bastSimpan() {
   const err = bastValidasi(); if (err) { toast(err, 'err'); return; }
+  if (!bastLaporan.nomorOtomatis) {
+    const bentrok = await bastCekDuplikatNomor(bastLaporan.nomorBast, bastEditingId);
+    if (bentrok) { toast(`Nomor BAST "${rapikan(bastLaporan.nomorBast)}" sudah dipakai pada laporan lain. Gunakan nomor lain.`, 'err'); return; }
+  }
   const rec = clone(bastLaporan);
   rec.id = bastEditingId || ('ba' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5));
   rec.jenis = 'BAST'; rec.savedAt = new Date().toISOString(); rec.versi = 1;
@@ -375,7 +413,13 @@ async function bastCetakPdf(r, mode) {
     });
   } catch (e) { toast('Gagal membuat PDF: ' + e.message, 'err'); }
 }
-function bastPratinjauPdf() { bastCetakPdf(bastLaporan, 'pratinjau'); }
+async function bastCetakPdfKeIframe(r) {
+  try {
+    bastSiapPdf();
+    const pdf = pdfMake.createPdf(buildBastDoc(r));
+    return new Promise((resolve) => pdf.getBlob((blob) => { document.getElementById('pdfFrameWeb').src = URL.createObjectURL(blob); resolve(true); }));
+  } catch (e) { toast('Gagal membuat PDF: ' + e.message, 'err'); return false; }
+}
 async function bastUnduhId(id) { const r = await dbGet(id); if (r) bastCetakPdf(bastLengkapiModel(r), 'unduh'); }
 async function bastPratinjauId(id) { const r = await dbGet(id); if (r) bastCetakPdf(bastLengkapiModel(r), 'pratinjau'); }
 
