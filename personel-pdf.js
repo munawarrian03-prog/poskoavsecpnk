@@ -34,7 +34,7 @@
 
   function kop(judul, tglCetak) {
     return `<div style="display:flex;align-items:center;gap:10px;border-bottom:2.5px solid #157A82;padding-bottom:8px;margin-bottom:12px">
-<img src="Logo/AVS.png" style="height:34px">
+<img src="Logo/AVS-kop.png" style="height:34px">
 <div><div style="font-size:16pt;font-weight:700;color:#10243D">${esc(judul)}</div><div style="font-size:8pt;color:#5C6675;font-weight:600">AVSEC Bandara Supadio</div></div>
 <div style="flex:1"></div>
 <div style="font-size:8pt;color:#5C6675;font-weight:700;text-align:right">${esc(tglCetak)}</div>

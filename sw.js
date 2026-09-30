@@ -1,5 +1,5 @@
 // Naikkan versi ini setiap kali file aplikasi diubah agar browser memperbarui cache
-const CACHE_NAME = 'kekuatan-app-v14';
+const CACHE_NAME = 'kekuatan-app-v15';
 
 // Aset yang disimpan agar aplikasi tetap jalan saat offline
 const ASSETS_TO_CACHE = [
@@ -53,7 +53,7 @@ const ASSETS_TO_CACHE = [
   './lib/pdfmake.min.js',
   './lib/html2pdf.bundle.min.js',
   './lib/xlsx.core.min.js',
-  './Logo/AVS.png',
+  './Logo/AVS-kop.png',
   './Logo/AVS-192.png',
   './Logo/AVS-512.png',
   './Logo/AVS-maskable-512.png'

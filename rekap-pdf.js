@@ -20,7 +20,7 @@
   const TD = 'padding:5px 6px;border-bottom:1px solid #F1F4F8';
   function kop(judul, sub, tglCetak) {
     return `<div style="display:flex;align-items:center;gap:10px;border-bottom:2.5px solid #10243D;padding-bottom:8px;margin-bottom:12px">
-<img src="Logo/AVS.png" style="height:30px">
+<img src="Logo/AVS-kop.png" style="height:30px">
 <div><div style="font-size:12pt;font-weight:800;color:#10243D">${esc(judul)}</div><div style="font-size:7.5pt;color:#5C6675;font-weight:600">${esc(sub)}</div></div>
 <div style="flex:1"></div>
 <div style="font-size:7.5pt;color:#8A94A6;font-weight:700;text-align:right">Dicetak ${esc(tglCetak)}</div>
@@ -75,7 +75,7 @@
     const reguLabel = REGU_NAMA[filter.regu] || filter.regu;
 
     const sampul = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;text-align:center;min-height:250mm;display:flex;flex-direction:column;align-items:center;justify-content:center">
-<img src="Logo/AVS.png" style="height:100px;margin-bottom:18px">
+<img src="Logo/AVS-kop.png" style="height:100px;margin-bottom:18px">
 <div style="font-size:19pt;font-weight:800;color:#10243D">REKAP LAPORAN AVSEC</div>
 <div style="font-size:12pt;font-weight:700;color:#5C6675;margin-top:4px">Bandara Supadio Pontianak</div>
 <div style="margin-top:28px;font-size:11pt;font-weight:700;color:#10243D">${periode}</div>

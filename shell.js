@@ -54,7 +54,7 @@
     el = el || document.getElementById('topBar') || document.getElementById('mainNav');
     if (!el) return;
     el.className = 'topbar';
-    el.innerHTML = `<div class="lg"><img src="Logo/AVS.png" alt="Logo AVSEC PNK"></div>` +
+    el.innerHTML = `<div class="lg"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"></div>` +
       `<div class="ttl"><b>SISTEM PELAPORAN AVSEC</b><span>Bandara Supadio</span></div>` +
       `<nav>${MENU.map(([k, t, href, ic]) => `<a class="nav-btn ${k === aktif ? 'active' : ''}" href="${href}">${AVS.svg(IC[ic])}<span>${t}</span></a>`).join('')}</nav>` +
       `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>`;
@@ -399,7 +399,7 @@
   AVS.pasangKunci = function () {
     if (!document.getElementById('lockScreen')) {
       const d = document.createElement('div'); d.id = 'lockScreen';
-      d.innerHTML = '<img src="Logo/AVS.png" alt="Logo AVSEC PNK"><p>Desktop Only</p>';
+      d.innerHTML = '<img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"><p>Desktop Only</p>';
       document.body.insertBefore(d, document.body.firstChild);
     }
     AVS.cekPerangkat();
