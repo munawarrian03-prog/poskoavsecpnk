@@ -55,7 +55,7 @@
     if (!el) return;
     el.className = 'topbar';
     el.innerHTML = `<div class="lg"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"></div>` +
-      `<div class="ttl"><b>SISTEM PELAPORAN AVSEC</b><span>Bandara Supadio</span></div>` +
+      `<div class="ttl"><b>KAPUAS Supadio</b><span>Kanal Aplikasi Pelaporan Unit Airport Security</span></div>` +
       `<nav>${MENU.map(([k, t, href, ic]) => `<a class="nav-btn ${k === aktif ? 'active' : ''}" href="${href}">${AVS.svg(IC[ic])}<span>${t}</span></a>`).join('')}</nav>` +
       `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>`;
   };

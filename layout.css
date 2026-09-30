@@ -13,8 +13,8 @@
 #topBar .lg { width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,.1); display: flex; align-items: center; justify-content: center; flex: none; }
 #topBar .lg img { width: 26px; height: 26px; object-fit: contain; }
 #topBar .ttl { color: #fff; line-height: 1.15; white-space: nowrap; }
-#topBar .ttl b { display: block; font-size: 12.5px; font-weight: 800; letter-spacing: .5px; }
-#topBar .ttl span { font-size: 10px; color: #A9BBD4; font-weight: 600; }
+#topBar .ttl b { display: block; font-size: 15px; font-weight: 800; letter-spacing: 4px; }
+#topBar .ttl span { font-size: 8.5px; color: #A9BBD4; font-weight: 600; letter-spacing: -.2px; }
 #topBar nav { display: flex; gap: 4px; margin-left: 18px; }
 #topBar nav a.nav-btn { display: flex; gap: 7px; align-items: center; color: #C9D6E8; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 8px; text-decoration: none; background: transparent; box-shadow: none; white-space: nowrap; }
 #topBar nav a.nav-btn svg { width: 15px; height: 15px; fill: currentColor; }
