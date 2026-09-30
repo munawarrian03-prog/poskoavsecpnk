@@ -22,7 +22,7 @@ CARA PASANG
        fonts/  Logo/  lib/ (termasuk lib/xlsx.core.min.js untuk impor Jadwal Dinas)
   2. Buka sekali dengan internet agar aplikasi tersimpan untuk pemakaian offline.
   3. Setiap kali ada berkas yang diubah, naikkan angka versi di sw.js
-     (baris: const CACHE_NAME = 'kekuatan-app-v13';) supaya browser memakai versi baru.
+     (baris: const CACHE_NAME = 'kekuatan-app-v14';) supaya browser memakai versi baru.
 
 CATATAN
   - Data laporan tersimpan di browser komputer yang dipakai. Gunakan Ekspor Backup secara berkala.
@@ -90,3 +90,20 @@ MENU BARU: JADWAL DINAS (v6 / cache v13)
     ditampilkan adalah bulan berjalan.
   - Berkas Excel TIDAK diunggah ke server mana pun — dibaca sepenuhnya di peramban lalu disimpan ke
     localStorage komputer yang sama seperti laporan lain.
+
+PERBAIKAN SEBELUM DEPLOY NETLIFY (v7 / cache v14)
+  - lib/pdfmake.min.js, lib/html2pdf.bundle.min.js, lib/fonts-carlito.js: sebelumnya TIDAK ADA di
+    berkas proyek meski direferensikan (ekspor PDF Laporan Personel/Fasilitas/Log Book/Kejadian/BAST/
+    Rekap akan gagal total tanpa berkas ini). Sudah ditambahkan dan DIUJI benar-benar bisa membuat PDF.
+    PENTING: lib/pdfmake.min.js harus tetap versi 0.1.72 — versi pdfmake yang lebih baru (0.2.x/0.3.x)
+    mengubah cara kerja penyimpanan font custom (vfs) dan TIDAK kompatibel dengan cara kode aplikasi ini
+    memakainya (pdfMake.vfs = {...}; pdfMake.fonts = {...};). Jangan diganti ke versi terbaru tanpa
+    menguji ulang ekspor PDF Laporan Kejadian & BAST.
+  - fonts/inter-latin-*.woff2 (5 berkas bobot): sebelumnya TIDAK ADA meski dirujuk di style.css, membuat
+    peramban gagal memuat (404) dan jatuh ke font Montserrat/sistem saja. Sudah dilengkapi.
+  - sw.js: daftar ASSETS_TO_CACHE sebelumnya HANYA mencakup sebagian halaman (Beranda, Laporan Personel,
+    Laporan Kejadian) — Laporan Fasilitas, Log Book, Semua Rekap, dan berkas CSS/JS pendukungnya TIDAK
+    tersimpan untuk offline. Sudah dilengkapi mencakup SELURUH halaman & aset yang ada di proyek.
+  - netlify.toml ditambahkan: publish = "." (folder ini sendiri, tanpa proses build), plus header
+    Cache-Control: no-cache khusus untuk sw.js & manifest.json supaya mekanisme "Ada pembaruan aplikasi"
+    tetap bekerja normal di Netlify (CDN Netlify tidak boleh menyimpan kedua berkas ini terlalu lama).
