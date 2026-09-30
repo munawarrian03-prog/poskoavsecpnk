@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="beranda.css">
 <link rel="stylesheet" href="kejadian.css">
 <style>
-.jd-toolbar { display: flex; align-items: center; gap: 10px; background: #fff; border-bottom: 1px solid var(--border-color); padding: 10px 16px; box-shadow: 0 2px 6px rgba(16,36,61,.07); flex-shrink: 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.jd-toolbar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 16px; box-shadow: 0 1px 3px rgba(16,36,61,.05); flex-shrink: 0; flex-wrap: wrap; }
 .jd-sp { flex: 1; }
 .jd-btn { height: 34px; padding: 0 14px; border-radius: 8px; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .jd-btn.teal { background: var(--secondary); color: #fff; }
@@ -51,8 +51,6 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
 <div class="main-wrapper">
 <div id="topBar"></div>
 
-<div class="d-wrap" id="dash">
-
 <div class="jd-toolbar">
 <div id="bulanPicker"></div>
 <div class="jd-sp"></div>
@@ -62,6 +60,9 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
 </div>
 
 <div id="jdHariIni"></div>
+
+<div class="d-wrap" id="dash">
+
 <div id="isiJadwal"><div class="empty" style="padding:60px 0">Memuat…</div></div>
 
 </div>

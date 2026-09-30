@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="beranda.css">
 <link rel="stylesheet" href="kejadian.css">
 <style>
-.rk-toolbar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 10px 16px; box-shadow: 0 2px 6px rgba(16,36,61,.07); flex-shrink: 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.rk-toolbar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 16px; box-shadow: 0 1px 3px rgba(16,36,61,.05); flex-shrink: 0; flex-wrap: wrap; }
 .rk-toolbar .fld2 { display: flex; flex-direction: column; gap: 2px; }
 .rk-toolbar .fld2 label { font-size: 9px; font-weight: 800; color: #8A94A6; letter-spacing: .4px; text-transform: uppercase; }
 .rk-toolbar .fld2 input, .rk-toolbar .fld2 select { height: 34px; border: 1px solid #D7DEE8; border-radius: 8px; padding: 0 9px; font: 700 12px 'Montserrat', 'Inter'; color: var(--ink); }
@@ -63,8 +63,6 @@ table.rtbl tr.klik:hover td { background: #FAFBFD; }
 <div class="main-wrapper">
 <div id="topBar"></div>
 
-<div class="d-wrap" id="dash">
-
 <div class="rk-toolbar">
 <div class="fld2"><label>Dari Tanggal</label><input type="date" id="fMulai"></div>
 <div class="fld2"><label>Sampai Tanggal</label><input type="date" id="fAkhir"></div>
@@ -74,6 +72,8 @@ table.rtbl tr.klik:hover td { background: #FAFBFD; }
 <button type="button" class="rk-btn ghost" onclick="Rekap.bukaBackup()">⇅ Cadangkan / Pulihkan</button>
 <button type="button" class="rk-btn teal" id="btnPdf" onclick="Rekap.unduhPDF()">⬇ Unduh Rekap (PDF)</button>
 </div>
+
+<div class="d-wrap" id="dash">
 
 <div id="isiRekap"><div class="empty" style="padding:60px 0">Memuat…</div></div>
 
