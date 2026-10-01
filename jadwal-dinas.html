@@ -22,10 +22,6 @@
 #jdToolbar .monthpick .cur svg { width: 13px; height: 13px; }
 #jdToolbar .monthpick .cur small { display: none; }
 #jdToolbar .jd-search { height: 30px; padding: 0 9px; border: 1px solid #D0D8E3; border-radius: 7px; background: #fff; font-size: 12px; font-weight: 600; color: var(--text-main); width: 148px; }
-.jd-hari-ini { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 2px 0; }
-.jd-hi-chip { display: flex; align-items: center; gap: 7px; background: #fff; border: 1px solid var(--border-color); border-radius: 10px; padding: 7px 12px; font-size: 11.5px; font-weight: 700; color: var(--ink); box-shadow: 0 1px 3px rgba(16,36,61,.05); }
-.jd-hi-chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-.jd-hi-chip small { color: #8A94A6; font-weight: 600; }
 .jd-unit-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .jd-unit-tabs button { border: 1px solid #D7DEE8; background: #fff; color: #475569; font-weight: 700; font-size: 12px; padding: 7px 14px; border-radius: 20px; cursor: pointer; }
 .jd-unit-tabs button.on { background: #10243D; color: #fff; border-color: #10243D; }
@@ -60,8 +56,6 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
 <button type="button" class="tbtn" onclick="JD.bukaUpload()">⬆ Unggah Jadwal (.xlsx)</button>
 <button type="button" class="tbtn" id="btnHapusBulan" style="display:none" onclick="JD.hapusBulanIni()">🗑 Hapus Jadwal Bulan Ini</button>
 </div>
-
-<div id="jdHariIni"></div>
 
 <div class="d-wrap" id="dash">
 
@@ -105,7 +99,7 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
   function toast(msg, tipe, ms) { const t = $('toast'); t.textContent = msg; t.className = 'show ' + (tipe || 'ok'); clearTimeout(toast.t); toast.t = setTimeout(() => { t.className = ''; }, ms || 4200); }
   const pad2 = (n) => String(n).padStart(2, '0');
   const KUNCI = (y, m) => `${y}-${pad2(m + 1)}`;
-  const HARI_INI = new Date(); const ISO_HARI_INI = `${HARI_INI.getFullYear()}-${pad2(HARI_INI.getMonth() + 1)}-${pad2(HARI_INI.getDate())}`;
+  const HARI_INI = new Date();
 
   const MAKS_BULAN = { y: HARI_INI.getFullYear() + 1, m: HARI_INI.getMonth() }; // jadwal dinas wajar diunggah untuk bulan mendatang
   let bulanAktif = { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() };
@@ -135,22 +129,6 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
       info: (y, m) => { const d = dataBulan(y, m); return { teks: d ? `${d.units.length} unit` : '—' }; },
       maks: MAKS_BULAN
     });
-  }
-
-  /* ---------- "Regu bertugas hari ini" ---------- */
-  function renderHariIni(data) {
-    const el = $('jdHariIni');
-    if (!data || bulanAktif.y !== HARI_INI.getFullYear() || bulanAktif.m !== HARI_INI.getMonth()) { el.innerHTML = ''; return; }
-    const unit = data.units.find((u) => u.punyaGrup && /ORGANIK/i.test(u.nama)) || data.units.find((u) => u.punyaGrup);
-    if (!unit) { el.innerHTML = ''; return; }
-    const chips = unit.grup.filter((g) => g.orang.length).map((g) => {
-      const cnt = {};
-      g.orang.forEach((o) => { const k = o.jadwal[ISO_HARI_INI] || '-'; cnt[k] = (cnt[k] || 0) + 1; });
-      const kodeUtama = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
-      const w = warnaKode(kodeUtama);
-      return `<div class="jd-hi-chip"><i class="dot" style="background:${w.bg === '#fff' ? '#C7CDD6' : w.bg};border:1px solid ${w.fg}"></i>${E(g.nama)}<small>${E(kodeUtama || '-')}</small></div>`;
-    }).join('');
-    el.innerHTML = `<div class="jd-hari-ini"><div class="jd-hi-chip" style="background:#10243D;color:#fff;border-color:#10243D">Hari ini · ${E(unit.nama)}</div>${chips}</div>`;
   }
 
   /* ---------- Tabel jadwal per unit ---------- */
@@ -197,7 +175,6 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
     if (pickerCtrl) pickerCtrl.refresh();
     const data = dataBulan(bulanAktif.y, bulanAktif.m);
     $('btnHapusBulan').style.display = data ? '' : 'none';
-    renderHariIni(data);
     if (!data || !data.units.length) {
       $('isiJadwal').innerHTML = `<div class="jd-empty-cta"><div style="font-size:15px;font-weight:800;color:var(--ink)">Belum ada jadwal dinas untuk ${AVS.BULAN[bulanAktif.m]} ${bulanAktif.y}</div><div style="margin-top:6px">Unggah berkas Excel jadwal dinas bulan ini untuk mulai menampilkannya di sini.</div><button type="button" class="jd-btn teal" onclick="JD.bukaUpload()">⬆ Unggah Jadwal (.xlsx)</button></div>`;
       return;
