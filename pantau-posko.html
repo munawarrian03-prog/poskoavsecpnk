@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pantau Posko - Sistem Pelaporan AVSEC Bandara Supadio</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10243D">
+<link rel="icon" type="image/png" href="Logo/AVS-192.png">
+<link rel="apple-touch-icon" href="Logo/AVS-192.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="layout.css">
+<link rel="stylesheet" href="beranda.css">
+<style>
+body { background: #EEF1F6; }
+.pp-toolbar { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 0 14px; min-height: 46px; box-shadow: 0 1px 3px rgba(16,36,61,.05); flex-wrap: wrap; }
+.pp-tbl-wrap { overflow: auto; border: 1px solid var(--border-color); border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(16,36,61,.05); max-height: 62vh; }
+table.pptbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.pptbl th { text-align: left; font-size: 10px; font-weight: 800; color: #8A94A6; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid #EEF1F6; background: #F7F9FC; position: sticky; top: 0; }
+table.pptbl td { padding: 9px 12px; border-bottom: 1px solid #F1F4F8; vertical-align: middle; }
+table.pptbl tr.hari-ini { background: #FCF8E8; }
+table.pptbl tr.hari-ini td:first-child { box-shadow: inset 3px 0 0 #C9922E; }
+.pp-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+.pp-badge.terisi { background: #EEF5E7; color: #3F6B2E; }
+.pp-badge.proses { background: #FCF1DF; color: #9A5F12; }
+.pp-badge.belum { background: #FBE9E7; color: #A82F24; }
+.pp-tgl { font-weight: 800; color: var(--ink); }
+.pp-tgl small { display: block; font-weight: 600; color: #8A94A6; font-size: 10px; }
+.pp-shift { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 7px; background: #EEF1F6; color: #475569; }
+.pp-shift.m { background: #1D3A5C; color: #fff; }
+.pp-legend { display: flex; gap: 16px; flex-wrap: wrap; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 14px; box-shadow: 0 1px 3px rgba(16,36,61,.05); }
+.pp-legend .it { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; color: var(--ink); }
+.pp-legend .sw { width: 20px; height: 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; flex: none; }
+.pp-legend small { display: block; font-weight: 600; color: #8A94A6; font-size: 10px; margin-top: 1px; }
+</style>
+</head>
+<body class="locked">
+
+<div id="lockScreen"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"><p>Desktop Only</p></div>
+
+<div class="main-wrapper" style="gap:14px" id="ppIsi">
+<div id="topBar"></div>
+
+<div class="pp-toolbar">
+<div style="font-size:13px;font-weight:800;color:var(--ink)">PANTAU KETERISIAN POSKO</div>
+<div id="bulanPicker"></div>
+<div style="flex:1"></div>
+<a class="btn-semua-rekap" href="index.html" title="Kembali ke Beranda" style="background:#fff;color:var(--ink);border:1px solid var(--border-color);box-shadow:none">&larr; Dashboard</a>
+</div>
+
+<div class="pp-legend">
+<div class="it"><span class="sw" style="background:#EEF5E7;color:#3F6B2E">&#10003;</span><div>Terisi<small>Laporan sudah masuk utk shift ini</small></div></div>
+<div class="it"><span class="sw" style="background:#FCF1DF;color:#9A5F12">&#8987;</span><div>Proses<small>Belum ada laporan, shift belum berakhir</small></div></div>
+<div class="it"><span class="sw" style="background:#FBE9E7;color:#A82F24">&#10007;</span><div>Belum Terisi<small>Belum ada laporan, shift sudah berakhir</small></div></div>
+</div>
+
+<div class="kpis" id="kpiRow"></div>
+
+<div class="pp-tbl-wrap">
+<table class="pptbl">
+<thead><tr><th>Tanggal</th><th>Shift</th><th>Personel</th><th>Fasilitas</th><th>Log Book</th></tr></thead>
+<tbody id="ppBody"></tbody>
+</table>
+</div>
+<div class="note" id="ppCatatan" style="flex-shrink:0"></div>
+
+</div>
+
+<script src="akses.js"></script>
+<script src="shell.js"></script>
+<script src="data.js"></script>
+<script>
+function $(id) { return document.getElementById(id); }
+const D = window.AVS_DATA, HARI_INI = new Date();
+let bulanAktif = { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() };
+const ISO_HARI_INI = `${HARI_INI.getFullYear()}-${String(HARI_INI.getMonth() + 1).padStart(2, '0')}-${String(HARI_INI.getDate()).padStart(2, '0')}`;
+
+function badge(st) {
+  const peta = { terisi: ['&#10003;', 'Terisi'], proses: ['&#8987;', 'Proses'], belum: ['&#10007;', 'Belum Terisi'] };
+  const [ic, lbl] = peta[st];
+  return `<span class="pp-badge ${st}">${ic} ${lbl}</span>`;
+}
+const BULAN_PENDEK = AVS.BULAN_PENDEK, BULAN = AVS.BULAN;
+function tglIndo(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return { atas: `${d} ${BULAN_PENDEK[m - 1]} ${y}`, bawah: AVS.HARI[dt.getDay()] };
+}
+
+function render() {
+  const personel = D.bacaPersonel(), fasilitas = D.bacaFasilitas(), logbook = D.bacaLogbook();
+  const daftar = D.statusPantauPosko(personel, fasilitas, logbook, bulanAktif.y, bulanAktif.m, HARI_INI);
+
+  $('ppBody').innerHTML = daftar.length ? daftar.map((r) => {
+    const t = tglIndo(r.tanggal);
+    return `<tr class="${r.tanggal === ISO_HARI_INI ? 'hari-ini' : ''}">
+<td class="pp-tgl">${t.atas}<small>${t.bawah}</small></td>
+<td><span class="pp-shift ${r.shift === 'Malam' ? 'm' : ''}">${r.shift}</span></td>
+<td>${badge(r.personel)}</td>
+<td>${badge(r.fasilitas)}</td>
+<td>${badge(r.logbook)}</td>
+</tr>`;
+  }).join('') : '<tr><td colspan="5"><div class="empty">Belum ada shift yang dinilai pada bulan ini.</div></td></tr>';
+
+  const hitung = (jenis) => { const acc = { terisi: 0, proses: 0, belum: 0 }; daftar.forEach((r) => acc[r[jenis]]++); return acc; };
+  const p = hitung('personel'), f = hitung('fasilitas'), l = hitung('logbook');
+  $('kpiRow').innerHTML = `
+<div class="kpi" style="--acc:#10243D;--acc-bg:#E6ECF4"><div class="lbl">Shift Dinilai</div><div class="val">${daftar.length}</div></div>
+<div class="kpi" style="--acc:#3F6B2E;--acc-bg:#EEF5E7"><div class="lbl">Personel Terisi</div><div class="val">${p.terisi}<small>/ ${daftar.length} shift</small></div></div>
+<div class="kpi" style="--acc:#3F6B2E;--acc-bg:#EEF5E7"><div class="lbl">Fasilitas Terisi</div><div class="val">${f.terisi}<small>/ ${daftar.length} shift</small></div></div>
+<div class="kpi" style="--acc:#A82F24;--acc-bg:#FBE9E7"><div class="lbl">Belum Terisi (semua jenis)</div><div class="val">${p.belum + f.belum + l.belum}</div></div>`;
+
+  $('ppCatatan').textContent = `Menampilkan ${BULAN[bulanAktif.m]} ${bulanAktif.y} • data digabung dari seluruh perangkat yang mengisi laporan di browser ini.`;
+}
+
+window.AVS_gerbangAdminSaja(function () {
+  AVS.pasangKunci();
+  AVS.nav('pantau');
+  AVS.pemilihBulan($('bulanPicker'), {
+    get: () => bulanAktif,
+    set: (y, m) => { bulanAktif = { y, m }; render(); },
+    info: () => ({ teks: '' }),
+    maks: { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() }
+  });
+  render();
+});
+</script>
+</body>
+</html>

@@ -181,6 +181,29 @@
     return `*LAPORAN BELUM LENGKAP*\n*AVSEC BANDARA SUPADIO*\n\n${BULAN_ID[m]} ${y} — mohon segera dilengkapi:\n\n${baris}\n\nTerima kasih.`;
   }
 
+  // Status 3-tingkat (Terisi/Proses/Belum Terisi) per shift per jenis laporan, GABUNGAN 3 jenis
+  // (Personel/Fasilitas/Log Book) -- dipakai halaman "Pantau Posko". Batas akhir shift sama dengan
+  // shiftKosongGabungan (Pagi berakhir 20:00 hari itu, Malam berakhir 08:00 hari berikutnya), TANPA
+  // tenggang: begitu lewat batas dan belum ada laporan, langsung dianggap "belum" (bukan "proses").
+  function statusPantauPosko(personelList, fasilitasList, logbookList, y, m, hariIni) {
+    hariIni = hariIni || new Date();
+    const bikinSet = (list) => { const s = new Set(); (list || []).forEach((r) => { const t = pecah(r && r.tanggal); if (t && t.y === y && t.m === m) s.add(t.d + '|' + shiftKey(r.shift)); }); return s; };
+    const adaP = bikinSet(personelList), adaF = bikinSet(fasilitasList), adaL = bikinSet(logbookList);
+    const batas = hariBerjalan(y, m, hariIni), now = hariIni.getTime(), out = [];
+    const status = (ada, akhir) => ada ? 'terisi' : (now < akhir ? 'proses' : 'belum');
+    for (let d = 1; d <= batas; d++) {
+      [['P', 'Pagi', 20, 0, 0], ['M', 'Malam', 8, 0, 1]].forEach(([k, label, jam, menit, tambahHari]) => {
+        const akhir = new Date(y, m, d + tambahHari, jam, menit, 0, 0).getTime();
+        const key = d + '|' + k;
+        out.push({
+          tanggal: fmtISO(y, m, d), hari: HARI_ID[new Date(y, m, d).getDay()], shift: label,
+          personel: status(adaP.has(key), akhir), fasilitas: status(adaF.has(key), akhir), logbook: status(adaL.has(key), akhir)
+        });
+      });
+    }
+    return out.reverse();
+  }
+
   /* =====================================================
      Tahap 4 — "Lihat Semua Rekap": statistik berbasis RENTANG TANGGAL
      bebas (bukan per-bulan seperti statPersonel/statKejadian di atas).
@@ -407,7 +430,7 @@
     });
   }
 
-  const API = { ALASAN, REGU, reguKey, statPersonel, statKejadian, statFasilitas, rekapBulan, ringkasTahun, bacaPersonel, bacaFasilitas, bacaLogbook, bacaKejadian, hariBulan, cmpBulan, geser, shiftKosong, teksPengingatKosong, shiftSebelumnya, shiftKosongGabungan, teksPengingatKosongGabungan, statPersonelRentang, statFasilitasRentang, statKejadianRentang, kepatuhanRentang, bucketRentang };
+  const API = { ALASAN, REGU, reguKey, statPersonel, statKejadian, statFasilitas, rekapBulan, ringkasTahun, bacaPersonel, bacaFasilitas, bacaLogbook, bacaKejadian, hariBulan, cmpBulan, geser, shiftKosong, teksPengingatKosong, shiftSebelumnya, shiftKosongGabungan, teksPengingatKosongGabungan, statusPantauPosko, statPersonelRentang, statFasilitasRentang, statKejadianRentang, kepatuhanRentang, bucketRentang };
   root.AVS_DATA = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
 })(typeof window !== 'undefined' ? window : globalThis);
