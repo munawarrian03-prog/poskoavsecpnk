@@ -26,8 +26,8 @@
 .jd-unit-tabs button { border: 1px solid #D7DEE8; background: #fff; color: #475569; font-weight: 700; font-size: 12px; padding: 7px 14px; border-radius: 20px; cursor: pointer; }
 .jd-unit-tabs button.on { background: #10243D; color: #fff; border-color: #10243D; }
 .jd-legenda { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
-.jd-legenda span { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; color: #475569; background: #F3F5F8; border-radius: 6px; padding: 3px 8px; }
-.jd-legenda i { width: 8px; height: 8px; border-radius: 2px; }
+.jd-legenda span { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 700; color: #475569; background: #F3F5F8; border-radius: 20px; padding: 4px 10px 4px 6px; }
+.jd-legenda i { width: 14px; height: 14px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(16,36,61,.08); }
 .jd-tbl-wrap { overflow: auto; border: 1px solid var(--border-color); border-radius: 10px; background: #fff; max-height: 62vh; }
 table.jdtbl { border-collapse: collapse; font-size: 11px; white-space: nowrap; }
 table.jdtbl th, table.jdtbl td { border-bottom: 1px solid #EEF1F6; border-right: 1px solid #F3F5F8; padding: 5px 6px; text-align: center; }
@@ -37,7 +37,8 @@ table.jdtbl thead th.nm { background: #F7F9FC; z-index: 3; }
 table.jdtbl td.jb { position: sticky; left: 200px; background: #fff; text-align: left; color: #8A94A6; font-weight: 600; font-size: 10px; min-width: 130px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; z-index: 1; }
 table.jdtbl thead th.jb { background: #F7F9FC; left: 200px; z-index: 3; }
 table.jdtbl tr.grp td { background: #EEF1F6; color: #10243D; font-weight: 800; text-align: left; padding: 6px 10px; position: static; }
-table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
+table.jdtbl td.kd { min-width: 34px; padding: 4px 3px; }
+.kd-chip { display: inline-block; min-width: 28px; font-size: 10.5px; font-weight: 800; letter-spacing: .2px; border-radius: 6px; padding: 3px 0; box-shadow: inset 0 0 0 1px rgba(16,36,61,.06); }
 .jd-empty-cta { text-align: center; padding: 70px 20px; color: #8A94A6; }
 .jd-empty-cta .jd-btn { margin: 16px auto 0; }
 </style>
@@ -113,11 +114,11 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
   /* ---------- Klasifikasi warna kode shift (heuristik umum, bukan per-unit) ---------- */
   function warnaKode(kode) {
     const k = String(kode || '').toUpperCase();
-    if (k === 'L') return { bg: '#EEF1F6', fg: '#5C6675' };           // Libur
-    if (k.startsWith('PJD')) return { bg: '#FCF1DF', fg: '#9A5F12' }; // Dinas luar
-    if (k.startsWith('M')) return { bg: '#1D3A5C', fg: '#fff' };      // Malam
-    if (!k) return { bg: '#fff', fg: '#C7CDD6' };
-    return { bg: '#E4F3F4', fg: '#0F5F65' };                          // Pagi/OH/lainnya
+    if (k === 'L') return { bg: '#D9ECFB', fg: '#0B6BB8' };           // Libur (biru cerah)
+    if (k.startsWith('PJD')) return { bg: '#FDEBCF', fg: '#B4650C' }; // Dinas luar (amber)
+    if (k.startsWith('M')) return { bg: '#1D3A5C', fg: '#fff' };      // Malam (navy pekat)
+    if (!k) return { bg: 'transparent', fg: '#C7CDD6' };
+    return { bg: '#D9F0EE', fg: '#0B6B66' };                          // Pagi/OH/lainnya (teal)
   }
 
   /* ---------- Pemilih bulan (dipakai lintas halaman lain, lihat shell.js) ---------- */
@@ -155,7 +156,8 @@ table.jdtbl td.kd { font-weight: 700; min-width: 34px; }
           const iso = `${bulanAktif.y}-${pad2(bulanAktif.m + 1)}-${pad2(i + 1)}`;
           const kode = o.jadwal[iso] || '';
           const w = warnaKode(kode);
-          return `<td class="kd" style="background:${w.bg};color:${w.fg}" title="${E(iso)}">${E(kode)}</td>`;
+          const isi = kode ? `<span class="kd-chip" style="background:${w.bg};color:${w.fg}">${E(kode)}</span>` : `<span style="color:${w.fg}">–</span>`;
+          return `<td class="kd" title="${E(iso)}">${isi}</td>`;
         }).join('');
         baris += `<tr><td class="nm" title="${E(o.nama)}">${E(o.nama)}</td><td class="jb" title="${E(o.jabatan)}">${E(o.jabatan)}</td>${sel}</tr>`;
       });
