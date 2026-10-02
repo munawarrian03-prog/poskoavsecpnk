@@ -36,7 +36,8 @@ table.jdtbl td.nm, table.jdtbl th.nm { position: sticky; left: 0; background: #f
 table.jdtbl thead th.nm { background: #F7F9FC; z-index: 3; }
 table.jdtbl td.jb { position: sticky; left: 200px; background: #fff; text-align: left; color: #8A94A6; font-weight: 600; font-size: 10px; min-width: 130px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; z-index: 1; }
 table.jdtbl thead th.jb { background: #F7F9FC; left: 200px; z-index: 3; }
-table.jdtbl tr.grp td { background: #EEF1F6; color: #10243D; font-weight: 800; text-align: left; padding: 6px 10px; position: static; }
+table.jdtbl tr.grp td { background: #EEF1F6; color: #10243D; font-weight: 800; text-align: left; padding: 6px 10px; }
+table.jdtbl tr.grp td.nm { min-width: 0; max-width: none; }
 table.jdtbl td.kd { min-width: 34px; padding: 4px 3px; }
 .kd-chip { display: inline-block; min-width: 28px; font-size: 10.5px; font-weight: 800; letter-spacing: .2px; border-radius: 6px; padding: 3px 0; box-shadow: inset 0 0 0 1px rgba(16,36,61,.06); }
 .jd-empty-cta { text-align: center; padding: 70px 20px; color: #8A94A6; }
@@ -150,7 +151,7 @@ table.jdtbl td.kd { min-width: 34px; padding: 4px 3px; }
     unit.grup.forEach((g) => {
       const orang = g.orang.filter((o) => !cari || o.nama.toLowerCase().includes(cari));
       if (!orang.length) return;
-      if (unit.punyaGrup) baris += `<tr class="grp"><td class="nm" colspan="${2 + nHari}">${E(g.nama)} <span style="font-weight:600;color:#8A94A6">(${orang.length} orang)</span></td></tr>`;
+      if (unit.punyaGrup) baris += `<tr class="grp"><td class="nm" colspan="2">${E(g.nama)} <span style="font-weight:600;color:#8A94A6">(${orang.length} orang)</span></td><td colspan="${nHari}"></td></tr>`;
       orang.forEach((o) => {
         const sel = Array.from({ length: nHari }, (_, i) => {
           const iso = `${bulanAktif.y}-${pad2(bulanAktif.m + 1)}-${pad2(i + 1)}`;
