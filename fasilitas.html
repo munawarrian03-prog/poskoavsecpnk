@@ -541,12 +541,14 @@ function switchPage(p) {
 function resetFilterTersimpan() { $('fMulai').value = ''; $('fSampai').value = ''; renderSavedReports(); }
 function renderSavedReports() {
   const mulai = $('fMulai').value, sampai = $('fSampai').value, fr = $('fRegu').value, fs = $('fShift').value;
-  let reports = lsGet(STORAGE_KEY, []).slice().sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || '') || (b.savedAt || '').localeCompare(a.savedAt || ''));
+  const semua = lsGet(STORAGE_KEY, []).slice().sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || '') || (b.savedAt || '').localeCompare(a.savedAt || ''));
+  let reports = semua;
   if (mulai) reports = reports.filter((r) => (r.tanggal || '') >= mulai);
   if (sampai) reports = reports.filter((r) => (r.tanggal || '') <= sampai);
   if (fr !== 'all') reports = reports.filter((r) => (r.regu || '').startsWith(fr));
   if (fs !== 'all') reports = reports.filter((r) => (fs === 'P') === /pagi/i.test(r.shift || ''));
-  $('sumLine').textContent = `${reports.length} laporan ditemukan`;
+  const rentangTeks = (mulai || sampai) ? `${mulai ? mulai.split('-').reverse().join('/') : '…'} – ${sampai ? sampai.split('-').reverse().join('/') : '…'}` : 'Semua tanggal';
+  $('sumLine').innerHTML = `Menampilkan <b>${reports.length}</b> dari <b>${semua.length}</b> laporan • ${rentangTeks}`;
   $('savedReportsList').innerHTML = reports.map((r) => {
     const s = ringkasLaporan(r);
     const chips = [];
