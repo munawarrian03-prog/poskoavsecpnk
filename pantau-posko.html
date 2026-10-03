@@ -68,6 +68,12 @@ table.pptbl tr.hari-ini td:first-child { box-shadow: inset 3px 0 0 #C9922E; }
 
 </div>
 
+<aside class="drawer" id="drawerLihat">
+<div class="dh"><span>LIHAT LAPORAN</span><button type="button" onclick="tutupLihat()" title="Tutup">&#10005;</button></div>
+<div class="lhsub" id="lihatSub"></div>
+<div class="lhbody" id="lihatIsi"></div>
+</aside>
+
 <script src="akses.js"></script>
 <script src="shell.js"></script>
 <script src="data.js"></script>
@@ -78,11 +84,66 @@ let bulanAktif = { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() };
 const ISO_HARI_INI = `${HARI_INI.getFullYear()}-${String(HARI_INI.getMonth() + 1).padStart(2, '0')}-${String(HARI_INI.getDate()).padStart(2, '0')}`;
 
 const EYE_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
-function badge(st, href) {
+function badge(st, jenis, tanggal, sk) {
   const peta = { terisi: ['&#10003;', 'Terisi'], proses: ['&#8987;', 'Proses'], belum: ['&#10007;', 'Belum Terisi'] };
   const [ic, lbl] = peta[st];
-  const mata = (st === 'terisi' && href) ? `<a href="${href}" target="_blank" rel="noopener" class="pp-mata" title="Lihat pratinjau web laporan ini">${EYE_SVG}</a>` : '';
+  const mata = (st === 'terisi') ? `<button type="button" class="pp-mata" onclick="bukaPratinjau('${jenis}','${tanggal}','${sk}')" title="Lihat pratinjau web laporan ini">${EYE_SVG}</button>` : '';
   return `<span class="pp-badge ${st}">${ic} ${lbl}</span>${mata}`;
+}
+
+/* ---------- Pratinjau laporan (laci dari samping, tanpa pindah halaman) ----------
+   Porting renderLihatHTML dari laporan-personel.html / fasilitas.html / logbook.html
+   supaya tampilannya identik dengan laci "Lihat Laporan" yang sudah ada di tiap halaman. */
+function renderLihatPersonel(kat) {
+  return (kat || []).map((k) => {
+    const absen = (k.absen || []).filter((p) => p && String(p.nama || '').trim());
+    const jml = parseInt(k.jml, 10) || 0, hadir = jml - absen.length;
+    const judul = `${esc(k.nama)} &mdash; Jumlah ${jml} &bull; Hadir ${hadir} &bull; Kurang ${absen.length}`;
+    const isi = absen.length
+      ? absen.map((p) => `<div class="lb-auto-item"><span>${esc(p.nama)}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(p.alasan === 'Lainnya' ? (p.ket || 'Lainnya') : p.alasan)}</span></div>`).join('')
+      : '<div class="lihat-empty">Lengkap, tidak ada yang tidak hadir.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${judul}</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada kategori kekuatan.</div>';
+}
+function renderLihatFasilitas(pos) {
+  return (pos || []).map((p) => {
+    const isi = (p.items || []).map((it) => {
+      if (it.bentuk === 'C') {
+        const masalah = !it.lengkap;
+        return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${it.lengkap ? 'Lengkap' : 'Tidak Lengkap'}</span></div>`;
+      }
+      if (it.bentuk === 'B') {
+        const baik = Math.max(0, (it.jumlah || 0) - (it.rusak || 0)), masalah = (it.rusak || 0) > 0;
+        return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${it.jumlah || 0} unit &bull; Baik ${baik}${masalah ? ` &bull; Rusak ${it.rusak}` : ''}</span></div>`;
+      }
+      const masalah = it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan';
+      return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${esc(it.kondisi)} &bull; ${esc(it.status)}</span></div>`;
+    }).join('') || '<div class="lihat-empty">Belum ada item.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${esc(p.name)}</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada pos.</div>';
+}
+function renderLihatLogbook(catatan, catatanSerahTerima) {
+  let html = `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${(catatan || []).length})</div>`;
+  html += (catatan || []).length
+    ? catatan.map((c) => `<div class="lb-auto-item"><span>${esc(c.uraian) || '(kosong)'}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(c.jam || '--:--')}</span></div>`).join('')
+    : '<div class="lihat-empty">Belum ada catatan waktu.</div>';
+  html += '</div>';
+  const st = String(catatanSerahTerima || '').trim();
+  html += `<div class="lb-auto"><div class="t"><i></i>Catatan Serah Terima</div><div style="font-size:12.5px;color:var(--ink);line-height:1.6;white-space:pre-wrap">${st ? esc(st) : '<span class="lihat-empty">(kosong)</span>'}</div></div>`;
+  return html;
+}
+function esc(s) { return AVS.esc(s); }
+function tutupLihat() { $('drawerLihat').classList.remove('open'); }
+function bukaPratinjau(jenis, tanggal, sk) {
+  const cocok = (r) => r.tanggal === tanggal && ((r.shift || '').toLowerCase().startsWith('malam') ? 'M' : 'P') === sk;
+  let r, isi, labelJenis;
+  if (jenis === 'personel') { r = D.bacaPersonel().find(cocok); isi = r ? renderLihatPersonel(r.kategoriKekuatan) : ''; labelJenis = 'Laporan Personel'; }
+  else if (jenis === 'fasilitas') { r = D.bacaFasilitas().find(cocok); isi = r ? renderLihatFasilitas(r.posFasilitas) : ''; labelJenis = 'Laporan Fasilitas'; }
+  else { r = D.bacaLogbook().find(cocok); isi = r ? renderLihatLogbook(r.catatanKegiatan, r.catatanSerahTerima) : ''; labelJenis = 'Log Book'; }
+  if (!r) return;
+  $('lihatSub').textContent = `${labelJenis} • Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${tglIndo(tanggal).atas}`;
+  $('lihatIsi').innerHTML = isi;
+  $('drawerLihat').classList.add('open');
 }
 const BULAN_PENDEK = AVS.BULAN_PENDEK, BULAN = AVS.BULAN;
 function tglIndo(iso) {
@@ -98,13 +159,12 @@ function render() {
   $('ppBody').innerHTML = daftar.length ? daftar.map((r) => {
     const t = tglIndo(r.tanggal);
     const sk = r.shift === 'Malam' ? 'M' : 'P';
-    const hrefFor = (halaman) => `${halaman}#lihat=${encodeURIComponent(r.tanggal)}|${sk}`;
     return `<tr class="${r.tanggal === ISO_HARI_INI ? 'hari-ini' : ''}">
 <td class="pp-tgl">${t.atas}<small>${t.bawah}</small></td>
 <td><span class="pp-shift ${sk === 'M' ? 'm' : ''}">${r.shift}</span></td>
-<td>${badge(r.personel, hrefFor('laporan-personel.html'))}</td>
-<td>${badge(r.fasilitas, hrefFor('fasilitas.html'))}</td>
-<td>${badge(r.logbook, hrefFor('logbook.html'))}</td>
+<td>${badge(r.personel, 'personel', r.tanggal, sk)}</td>
+<td>${badge(r.fasilitas, 'fasilitas', r.tanggal, sk)}</td>
+<td>${badge(r.logbook, 'logbook', r.tanggal, sk)}</td>
 </tr>`;
   }).join('') : '<tr><td colspan="5"><div class="empty">Belum ada shift yang dinilai pada bulan ini.</div></td></tr>';
 
