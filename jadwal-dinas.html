@@ -200,6 +200,7 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
     const opsiT = []; for (let y = thn - 1; y <= MAKS_BULAN.y; y++) opsiT.push(y);
     selT.innerHTML = opsiT.map((y) => `<option value="${y}" ${y === thn ? 'selected' : ''}>${y}</option>`).join('');
     selT.onchange = renderOpsiBulanUpload;
+    $('upBulan').innerHTML = ''; // reset supaya ikut bulan yang sedang aktif di halaman, bukan sisa pilihan modal sebelumnya
     renderOpsiBulanUpload();
     $('fileJadwal').value = '';
     $('hasilProses').innerHTML = '';
