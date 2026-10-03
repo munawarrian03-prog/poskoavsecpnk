@@ -14,15 +14,15 @@ BERKAS YANG BOLEH ANDA UBAH
 
 CARA PASANG
   1. Upload SELURUH isi folder ini ke hosting (alamat harus https), dengan struktur yang sama:
-       index.html, laporan-personel.html, kejadian.html
+       index.html, laporan-personel.html, kejadian.html, jadwal-dinas.html
        style.css, layout.css, beranda.css, laporan-personel.css, kejadian.css
        shell.js, data.js, beranda.js, rekap-pdf.js, kejadian-pdf.js, kejadian-nomor.js, kejadian-wa.js
-       personel.js, kategori.js, kejadian-data.js
+       personel.js, kategori.js, kejadian-data.js, jadwal-dinas-import.js
        sw.js, manifest.json
-       fonts/  Logo/  lib/
+       fonts/  Logo/  lib/ (termasuk lib/xlsx.core.min.js untuk impor Jadwal Dinas)
   2. Buka sekali dengan internet agar aplikasi tersimpan untuk pemakaian offline.
   3. Setiap kali ada berkas yang diubah, naikkan angka versi di sw.js
-     (baris: const CACHE_NAME = 'kekuatan-app-v12';) supaya browser memakai versi baru.
+     (baris: const CACHE_NAME = 'kekuatan-app-v15';) supaya browser memakai versi baru.
 
 CATATAN
   - Data laporan tersimpan di browser komputer yang dipakai. Gunakan Ekspor Backup secara berkala.
@@ -72,3 +72,50 @@ PEMBARUAN LANJUTAN (v5 / cache v12)
     sebagai SATU kali (bukan dua); alasan & regu yang ditampilkan diambil dari shift paling awal hari itu
     (Pagi sebelum Malam). Rata-rata Kehadiran (%) TIDAK berpengaruh oleh mode ini. Pilihan mode ikut
     dipakai di PDF Rekap Bulanan dan bertahan selama sesi browser (sessionStorage).
+
+MENU BARU: JADWAL DINAS (v6 / cache v13)
+  - Halaman baru "Jadwal Dinas" di bilah navigasi utama. Mengunggah berkas Excel (.xlsx) jadwal dinas
+    bulanan (boleh berisi beberapa sheet/unit, mis. Organik, IASS, dst.) dan menampilkannya sebagai
+    tabel per orang per tanggal, dikelompokkan per Grup/Regu bila sheet-nya memilikinya.
+  - Sheet yang dikenali otomatis: (a) berbentuk GRUP — ada kolom "GRUP"+"NAMA" dan baris tanggal
+    (satu bulan penuh); (b) berbentuk DATAR — kolom "NO"+"NAMA" lalu baris angka 1..31 tanpa kolom Grup.
+    Sheet lain (mis. rekap jumlah jam dinas, daftar nama tanpa tanggal) otomatis DILEWATI dan ditampilkan
+    sebagai catatan, bukan dianggap gagal.
+  - Legenda kode shift (P, M, L, PJD, dll.) dibaca otomatis dari baris "KETERANGAN:" di bagian bawah
+    tiap sheet dan ditampilkan sebagai chip warna di atas tabel.
+  - Data tersimpan PER BULAN (localStorage, kunci savedJadwalDinas) — mengunggah ulang berkas bulan
+    berikutnya tidak menghapus bulan-bulan sebelumnya; bulan yang sudah ada akan ditanya dulu sebelum ditimpa.
+  - Widget "Hari ini" menampilkan kode shift yang berlaku hari ini per Grup/Regu, diambil dari unit yang
+    namanya mengandung "ORGANIK" (atau unit ber-Grup pertama bila tidak ada), khusus saat bulan yang
+    ditampilkan adalah bulan berjalan.
+  - Berkas Excel TIDAK diunggah ke server mana pun — dibaca sepenuhnya di peramban lalu disimpan ke
+    localStorage komputer yang sama seperti laporan lain.
+
+PERBAIKAN SEBELUM DEPLOY NETLIFY (v7 / cache v14)
+  - lib/pdfmake.min.js, lib/html2pdf.bundle.min.js, lib/fonts-carlito.js: sebelumnya TIDAK ADA di
+    berkas proyek meski direferensikan (ekspor PDF Laporan Personel/Fasilitas/Log Book/Kejadian/BAST/
+    Rekap akan gagal total tanpa berkas ini). Sudah ditambahkan dan DIUJI benar-benar bisa membuat PDF.
+    PENTING: lib/pdfmake.min.js harus tetap versi 0.1.72 — versi pdfmake yang lebih baru (0.2.x/0.3.x)
+    mengubah cara kerja penyimpanan font custom (vfs) dan TIDAK kompatibel dengan cara kode aplikasi ini
+    memakainya (pdfMake.vfs = {...}; pdfMake.fonts = {...};). Jangan diganti ke versi terbaru tanpa
+    menguji ulang ekspor PDF Laporan Kejadian & BAST.
+  - fonts/inter-latin-*.woff2 (5 berkas bobot): sebelumnya TIDAK ADA meski dirujuk di style.css, membuat
+    peramban gagal memuat (404) dan jatuh ke font Montserrat/sistem saja. Sudah dilengkapi.
+  - sw.js: daftar ASSETS_TO_CACHE sebelumnya HANYA mencakup sebagian halaman (Beranda, Laporan Personel,
+    Laporan Kejadian) — Laporan Fasilitas, Log Book, Semua Rekap, dan berkas CSS/JS pendukungnya TIDAK
+    tersimpan untuk offline. Sudah dilengkapi mencakup SELURUH halaman & aset yang ada di proyek.
+  - netlify.toml ditambahkan: publish = "." (folder ini sendiri, tanpa proses build), plus header
+    Cache-Control: no-cache khusus untuk sw.js & manifest.json supaya mekanisme "Ada pembaruan aplikasi"
+    tetap bekerja normal di Netlify (CDN Netlify tidak boleh menyimpan kedua berkas ini terlalu lama).
+
+LOGO BARU "KAPUAS SUPADIO" (v8 / cache v15)
+  - Logo aplikasi diganti ke logo "KAPUAS SUPADIO" yang baru, TAPI KHUSUS untuk tampilan web (bilah atas,
+    layar kunci "Desktop Only", favicon tab browser, ikon PWA) -- Logo/AVS-192.png, Logo/AVS-512.png,
+    Logo/AVS-maskable-512.png digenerate dari logo baru ini.
+  - Kop/kepala surat di SEMUA PDF (Laporan Personel, Fasilitas, Log Book, Kejadian, BAST, Rekap) SENGAJA
+    TETAP memakai logo AVSEC lama -- kini disimpan terpisah sebagai Logo/AVS-kop.png supaya kedua logo
+    bisa diganti independen tanpa saling mempengaruhi. Logo/AVS.png (berkas asli lama) masih ada di folder
+    tapi sudah tidak dipakai halaman mana pun (boleh dihapus kalau mau, atau dibiarkan sebagai arsip).
+  - Kalau suatu saat logo kop PDF juga ingin diganti, cukup timpa Logo/AVS-kop.png -- TIDAK memengaruhi
+    tampilan web. Sebaliknya, ganti tampilan web cukup timpa Logo/AVS-192.png/AVS-512.png/AVS-maskable-512.png
+    -- TIDAK memengaruhi PDF manapun.

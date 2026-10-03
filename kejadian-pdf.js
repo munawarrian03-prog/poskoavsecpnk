@@ -49,8 +49,8 @@
 
     /* ---------- Judul ---------- */
     const judul = [
-      { text: 'SECURITY INCIDENT/ACCIDENT REPORT', bold: true, alignment: 'center', fontSize: 11 },
-      { text: 'SUPADIO INTERNATIONAL AIRPORT', bold: true, alignment: 'center', fontSize: 11, margin: [0, 2, 0, 12] }
+      { text: 'SECURITY INCIDENT/ACCIDENT REPORT', bold: true, alignment: 'center', fontSize: 13 },
+      { text: 'SUPADIO INTERNATIONAL AIRPORT', bold: true, alignment: 'center', fontSize: 10.5, margin: [0, 2, 0, 12] }
     ];
 
     /* ---------- Tabel kepala ---------- */
@@ -216,7 +216,7 @@
       info: { title: 'Security Incident/Accident Report - Supadio International Airport', subject: rapikan(r.caseInfo).slice(0, 120) },
       pageSize: 'A4',
       pageMargins: [36, 34, 36, 40],
-      defaultStyle: { font: 'Carlito', fontSize: 10, lineHeight: 1.05 },
+      defaultStyle: { font: 'Montserrat', fontSize: 10, lineHeight: 1.15 },
       footer: (cur, total) => ({ text: 'Halaman ' + cur + ' dari ' + total, alignment: 'right', fontSize: 8, color: '#666666', margin: [0, 14, 36, 0] }),
       content: isi
     };

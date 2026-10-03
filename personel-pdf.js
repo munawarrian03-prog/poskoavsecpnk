@@ -34,8 +34,8 @@
 
   function kop(judul, tglCetak) {
     return `<div style="display:flex;align-items:center;gap:10px;border-bottom:2.5px solid #157A82;padding-bottom:8px;margin-bottom:12px">
-<img src="Logo/AVS.png" style="height:34px">
-<div><div style="font-size:14pt;font-weight:800;color:#10243D">${esc(judul)}</div><div style="font-size:8pt;color:#5C6675;font-weight:600">AVSEC Bandara Supadio</div></div>
+<img src="Logo/AVS-kop.png" style="height:34px">
+<div><div style="font-size:16pt;font-weight:700;color:#10243D">${esc(judul)}</div><div style="font-size:8pt;color:#5C6675;font-weight:600">AVSEC Bandara Supadio</div></div>
 <div style="flex:1"></div>
 <div style="font-size:8pt;color:#5C6675;font-weight:700;text-align:right">${esc(tglCetak)}</div>
 </div>`;
@@ -92,7 +92,7 @@
     opts = opts || {};
     const kk = tabelKekuatan(r.kategoriKekuatan);
     const pp = tabelPenempatan(r.posPenempatan);
-    return `<div style="font-family:'Inter',Arial,sans-serif;padding:${opts.noPad ? '0' : '18px'};font-size:9.5pt;color:#000">
+    return `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:${opts.noPad ? '0' : '18px'};font-size:9.5pt;color:#000">
 ${opts.noKop ? '' : kop('Laporan Personel', tglCetak)}
 ${idList(r)}
 <div style="font-size:10pt;font-weight:800;color:#10243D;margin:0 0 6px">I. Kekuatan Personel</div>

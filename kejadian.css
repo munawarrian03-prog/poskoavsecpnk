@@ -138,9 +138,9 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .kj-main .sec { width: 100%; max-width: 1040px; flex: none; overflow: visible; }
 .kj-main .sec > .hd { padding: 10px 16px; }
 .kj-main .sec > .sc { padding: 12px 16px 14px; overflow: visible; }
-.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-@media (max-width: 1240px) { .g4 { grid-template-columns: 1fr 1fr; } }
+.g2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.g4 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 720px) { .g4 { grid-template-columns: 1fr; } .g4 .pc { grid-column: 1 !important; } }
 .pc { border: 1px solid #E9EDF4; border-radius: 10px; background: #FAFBFD; padding: 9px 11px 11px; }
 .pc .pt { font-size: 10.5px; font-weight: 800; color: var(--ink); margin-bottom: 6px; letter-spacing: .3px; } .pc .pt small { font-weight: 600; color: #8A94A6; letter-spacing: 0; }
 .pc input { margin-bottom: 6px; }
@@ -150,5 +150,134 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .toolbar .hbtn { background: #EEF1F6; color: var(--ink); border: 1px solid #D0D8E3; }
 .toolbar .hbtn:hover { background: #E1E6EF; }
 .toolbar .fld { gap: 6px; }
+.sc .hbtn { background: #EEF1F6; color: var(--ink); border: 1px solid #D0D8E3; flex: none; }
+.sc .hbtn:hover { background: #E1E6EF; }
+
+/* Toolbar dua baris: baris 1 = tab halaman + Mode fokus/Laporan Baru (sejajar),
+   baris 2 = Tanggal/Shift/Lokasi di kiri, Nomor di tengah (grid 3 kolom
+   supaya Nomor tetap di tengah terlepas dari lebar grup kiri). */
+/* Baris 1: tab halaman, Tanggal/Shift/Lokasi, dan Mode fokus/+Laporan Baru
+   semua sejajar satu baris. Baris 2: Nomor sendiri, rata kiri sejajar
+   dengan tab (kolom kiri kedua baris sama-sama mulai dari padding toolbar).
+   Gap dipersempit & lebar field disesuaikan supaya semuanya cukup dalam
+   satu baris tanpa membungkus di lebar layar minimum (1024px). */
+.toolbar.tb-2row { flex-direction: column; align-items: stretch; flex-wrap: nowrap; padding: 8px 10px; }
+.toolbar.tb-2row .tb-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; }
+.toolbar.tb-2row .tb-row #hdrLokasi input { min-width: 118px; }
+.toolbar.tb-2row .tb-row .fld select { min-width: 118px; }
+
+/* Shift: <select> asli tanpa pembungkus, panah memakai indikator native
+   browser (bawaan) - tidak disentuh sama sekali. */
+
+/* Lokasi kejadian: combobox custom (bukan <select>, bukan <datalist>)
+   supaya bisa diketik bebas TANPA kolom kedua yang menimpa elemen lain,
+   dan panahnya bisa disamakan gayanya dengan panah Shift tanpa risiko
+   dobel indikator (yang terjadi kalau memakai <input list=>, karena
+   indikator native datalist tidak bisa disembunyikan dengan andal). */
+.lokasi-combo { position: relative; display: flex; }
+.lokasi-combo input { padding-right: 24px !important; }
+.lokasi-combo::after { content: '▾'; position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text-muted); pointer-events: none; }
+.lokasi-dd { display: none; position: absolute; left: 0; top: calc(100% + 4px); min-width: 100%; max-height: 220px; overflow-y: auto; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 12px 32px rgba(16,36,61,.18); z-index: 80; }
+.lokasi-dd.open { display: block; }
+.lokasi-dd .opt { padding: 7px 11px; font-size: 12px; font-weight: 600; color: var(--text-main); cursor: pointer; white-space: nowrap; }
+.lokasi-dd .opt:hover { background: #F2F6FB; }
+
+/* Samakan lebar Tanggal, Shift, Lokasi Kejadian */
+#tglLap, #shiftLap, #lokasiKejadianSel { width: 150px; }
 .jejak { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .jejak .upd { background: #FFF3DC; color: #8A5A0C; border: 1px solid #F0D9A8; border-radius: 10px; padding: 1px 8px; font-weight: 800; font-size: 10px; }
+
+/* =====================================================
+   BERITA ACARA SERAH TERIMA (BAST)
+   ===================================================== */
+
+/* --- Bilah aksi (Pratinjau/Simpan): #statLK & #statBAST dulunya <span>
+   polos, sehingga tombol .sbtn (yang memakai display:flex, jadi kotak
+   blok) tidak lagi jadi flex-item langsung dari .stat dan malah tersusun
+   ke bawah satu kolom. Jadikan wrapper-nya sendiri flex row. --- */
+#statLK, #statBAST { display: flex; align-items: center; gap: 10px; }
+
+/* --- Dropdown "Jenis Laporan" pada tombol Buat Laporan (toolbar) --- */
+.seg-btn { display: flex; align-items: center; position: relative; }
+.seg-btn > .lbl { background: transparent; color: var(--text-muted); border: none; padding: 8px 10px 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; border-radius: 8px 0 0 8px; transition: background .15s ease, color .15s ease; }
+.seg-btn > .lbl:hover { color: var(--ink); }
+.seg-btn > .caret { background: transparent; color: var(--ink); border: none; width: 22px; padding: 8px 6px; font-size: 9px; cursor: pointer; border-radius: 0 8px 8px 0; opacity: 0; transition: opacity .15s ease, background .15s ease; }
+.seg-btn:hover > .caret, .seg-btn.ddopen > .caret { opacity: 1; background: #EEF1F6; }
+.seg-btn.on > .lbl { background: #fff; color: var(--ink); }
+.dd-jenis { display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 250px; background: #fff; border: 1px solid var(--border-color); border-radius: 10px; box-shadow: 0 12px 32px rgba(16,36,61,.22); z-index: 90; overflow: hidden; }
+.dd-jenis.open { display: block; }
+.dd-jenis .opt { padding: 10px 14px; font-size: 12px; font-weight: 700; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.dd-jenis .opt:hover { background: #F2F6FB; }
+.dd-jenis .opt .chk { width: 14px; color: var(--secondary); font-weight: 900; }
+.dd-jenis .opt.sel { background: #E4F3F4; }
+
+/* --- Filter jenis laporan pada tab "Laporan Tersimpan" --- */
+.saved-filter { display: flex; gap: 10px; align-items: flex-end; padding: 6px 2px 16px; flex-wrap: wrap; }
+.saved-filter .f2 label { font-size: 9.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 4px; }
+.saved-filter .f2 select, .saved-filter .f2 input { height: 32px; border: 1px solid var(--border-color); border-radius: 7px; padding: 0 9px; font-size: 12px; font-weight: 700; color: var(--ink); }
+.saved-filter .f2 select { min-width: 220px; }
+.saved-filter .f2 input[type=date] { min-width: 150px; }
+.saved-filter .hbtn { background: #EEF1F6; color: var(--ink); border: 1px solid #D0D8E3; height: 32px; }
+.saved-filter .hbtn:hover { background: #E1E6EF; }
+.jenis-tag { display: inline-block; font-size: 9.5px; font-weight: 800; padding: 3px 8px; border-radius: 6px; margin-right: 8px; vertical-align: middle; }
+.jenis-tag.lk { background: #E6ECF4; color: #1D3A5C; }
+.jenis-tag.bast { background: #E4F3F4; color: #0F5F52; }
+
+/* --- Layout form BAST: kolom form (kiri) + live preview A4 permanen (kanan) --- */
+.bast-split { display: flex; flex: 1; min-height: 0; }
+.bast-form-col { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px; }
+.bast-prev-col { width: 380px; flex: none; background: #E7EBF1; padding: 16px; overflow-y: auto; border-left: 1px solid var(--border-color); }
+.prev-label { font-size: 10.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.prev-label .dot { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; animation: bastPulse 1.6s infinite; }
+@keyframes bastPulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+/* --- Section form BAST (prefix bast- supaya tidak bentrok dgn .sec/.pc milik LK) --- */
+.bast-sec { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 14px; overflow: visible; }
+.bast-sec .bast-hd { display: flex; align-items: center; gap: 8px; padding: 11px 16px; border-bottom: 1px solid #EEF1F6; background: #FAFBFD; }
+.bast-sec .bast-hd b { font-size: 12.5px; color: var(--ink); }
+.bast-num { width: 20px; height: 20px; border-radius: 50%; background: var(--secondary); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: none; }
+.bast-bd { padding: 14px 16px; }
+.bast-bd .hbtn { background: #EEF1F6; color: var(--ink); border: 1px solid #D0D8E3; }
+.bast-bd .hbtn:hover { background: #E1E6EF; }
+.bast-g4 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+@media (max-width: 900px) { .bast-g4 { grid-template-columns: 1fr; } }
+.bast-f label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; display: block; margin-bottom: 4px; }
+.bast-f label small { font-weight: 600; text-transform: none; color: #94A3B8; margin-left: 4px; }
+.bast-f input, .bast-f select, .bast-f textarea { width: 100%; height: 34px; border: 1px solid var(--border-color); border-radius: 7px; padding: 0 10px; font-size: 12px; font-weight: 600; color: var(--ink); }
+.bast-f textarea { height: auto; padding: 8px 10px; resize: vertical; }
+.bast-f { margin-bottom: 10px; }
+
+.bast-pihak2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 900px) { .bast-pihak2 { grid-template-columns: 1fr; } }
+.bast-pihak-box { border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; background: #FAFBFD; }
+.bast-pihak-box.manual { background: #FFF8ED; border-color: #F0D9A8; }
+.bast-tt { font-size: 10.5px; font-weight: 800; color: var(--secondary); text-transform: uppercase; margin-bottom: 8px; letter-spacing: .3px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+.bast-pihak-box.manual .bast-tt { color: #9A5F12; }
+.bast-src-tag { font-size: 8.5px; font-weight: 700; background: #E4F3F4; color: #0F5F65; padding: 2px 7px; border-radius: 5px; text-transform: none; letter-spacing: 0; }
+.bast-pihak-box.manual .bast-src-tag { background: #FCF1DF; color: #9A5F12; }
+
+.bast-dyn { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.bast-dyn th { background: #EEF1F6; font-size: 9.5px; text-transform: uppercase; color: var(--text-muted); padding: 7px 8px; text-align: left; font-weight: 800; }
+.bast-dyn td { padding: 6px 8px; border-bottom: 1px solid #EEF1F6; }
+.bast-dyn td input { width: 100%; height: 30px; border: 1px solid #E2E8F0; border-radius: 5px; padding: 0 8px; font-size: 11.5px; }
+.bast-rm { width: 26px; height: 26px; border-radius: 6px; border: none; background: #FBE9E7; color: #C93B2E; font-weight: 800; cursor: pointer; }
+.bast-addrow { margin-top: 8px; background: #EEF1F6; border: none; color: var(--secondary); font-weight: 800; font-size: 11px; padding: 7px 12px; border-radius: 7px; cursor: pointer; }
+
+/* --- Live Preview A4 --- */
+.a4 { background: #fff; width: 100%; aspect-ratio: 210/297; box-shadow: 0 4px 18px rgba(16,36,61,.18); border-radius: 2px; padding: 24px 22px; font-size: 8.2px; color: #111; position: relative; overflow-y: auto; }
+.a4 h1 { font-size: 10.5px; text-align: center; font-weight: 800; }
+.a4 h2 { font-size: 8.5px; text-align: center; font-weight: 700; margin-bottom: 4px; }
+.a4 .line { border-top: 1.5px solid #111; margin: 6px 0 9px; }
+.a4 .body { text-align: justify; line-height: 1.5; margin-bottom: 7px; }
+.a4 table { width: 100%; border-collapse: collapse; margin: 7px 0; font-size: 7.4px; }
+.a4 table th, .a4 table td { border: .75px solid #111; padding: 2.5px 4px; }
+.a4 table th { background: #F1F1F1; font-weight: 700; text-align: center; }
+.a4 .id-list { width: auto; margin: 2px 0 3px; }
+.a4 .id-list td { border: none; padding: .5px 0; }
+.a4 .id-list td:first-child { width: 48px; font-weight: 700; white-space: nowrap; }
+.a4 .id-list td:nth-child(2) { width: 8px; }
+.a4 .ttd { display: flex; justify-content: space-between; margin-top: 22px; }
+.a4 .ttd .col { width: 44%; text-align: center; }
+.a4 .ttd .space { height: 30px; }
+.a4 .ttd .nm { font-weight: 700; text-decoration: underline; }
+.a4 .badge-cat { display: inline-block; background: var(--secondary); color: #fff; font-size: 7px; font-weight: 800; padding: 2px 6px; border-radius: 5px; position: absolute; top: 12px; right: 12px; }
