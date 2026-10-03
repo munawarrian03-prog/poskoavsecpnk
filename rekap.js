@@ -12,6 +12,7 @@
 
   let personel = [], fasilitas = [], logbook = [], kejadian = [];
   let RP = null, RF = null, RK = null, RQ = null, filterAktif = { mulai: '', akhir: '', regu: 'all' };
+  let tataDibangun = false;
 
   function toast(msg, tipe, ms) { const t = $('toast'); t.textContent = msg; t.className = 'show ' + (tipe || 'ok'); clearTimeout(toast.t); toast.t = setTimeout(() => { t.className = ''; }, ms || 4200); }
   const pad2 = (n) => String(n).padStart(2, '0');
@@ -342,7 +343,13 @@
     if (!mulai || !akhir) { toast('Lengkapi tanggal mulai dan akhir.', 'err'); return; }
     if (mulai > akhir) { toast('Tanggal mulai tidak boleh setelah tanggal akhir.', 'err'); return; }
     filterAktif = { mulai, akhir, regu };
+    if (!tataDibangun) { bangunTata(); tataDibangun = true; }
+    $('btnPdf').disabled = false;
     hitungUlang(); renderSemua();
+  }
+  function tampilkanKosong() {
+    $('isiRekap').innerHTML = '<div class="empty" style="padding:70px 20px">Pilih rentang tanggal, lalu klik <b>Terapkan</b> untuk menampilkan rekap.</div>';
+    $('btnPdf').disabled = true;
   }
   function hitungUlang() {
     const { mulai, akhir, regu } = filterAktif;
@@ -459,14 +466,9 @@
   /* ---------- Mulai ---------- */
   async function mulai() {
     A.pasangKunci(); A.nav('beranda');
-    bangunTata();
-    const awalBulan = new Date(HARI_INI.getFullYear(), HARI_INI.getMonth(), 1);
-    $('fMulai').value = isoHariIni(awalBulan); $('fAkhir').value = isoHariIni(HARI_INI);
     personel = D.bacaPersonel(); fasilitas = D.bacaFasilitas(); logbook = D.bacaLogbook();
-    filterAktif = { mulai: $('fMulai').value, akhir: $('fAkhir').value, regu: 'all' };
-    hitungUlang(); renderSemua();
+    tampilkanKosong();
     kejadian = await D.bacaKejadian();
-    hitungUlang(); renderSemua();
   }
 
   window.Rekap = { terapkanFilter, bukaLaci, tutupLaci, unduhPDF, bukaBackup, tutupBackup, ekspor, impor };
