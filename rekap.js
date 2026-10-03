@@ -347,9 +347,19 @@
     $('btnPdf').disabled = false;
     hitungUlang(); renderSemua();
   }
-  function tampilkanKosong() {
-    $('isiRekap').innerHTML = '<div class="empty" style="padding:70px 20px">Pilih rentang tanggal, lalu klik <b>Terapkan</b> untuk menampilkan rekap.</div>';
-    $('btnPdf').disabled = true;
+  // Tanggal laporan paling awal dari seluruh jenis (Personel/Fasilitas/Log Book/Kejadian) --
+  // dipakai sbg batas awal baku saat kotak "Dari Tanggal" masih dikosongkan pengguna.
+  function tanggalPalingAwal() {
+    const semua = [].concat(personel, fasilitas, logbook, kejadian).map((r) => r && r.tanggal).filter(Boolean);
+    return semua.length ? semua.reduce((min, t) => (t < min ? t : min)) : isoHariIni(HARI_INI);
+  }
+  // Tampilkan rekap "sampai hari ini" secara otomatis (kotak tanggal TETAP terlihat kosong,
+  // mengikuti gaya Laporan Tersimpan) -- pengguna masih bisa mempersempit lewat Terapkan.
+  function terapkanDefault() {
+    filterAktif = { mulai: tanggalPalingAwal(), akhir: isoHariIni(HARI_INI), regu: 'all' };
+    if (!tataDibangun) { bangunTata(); tataDibangun = true; }
+    $('btnPdf').disabled = false;
+    hitungUlang(); renderSemua();
   }
   function hitungUlang() {
     const { mulai, akhir, regu } = filterAktif;
@@ -467,8 +477,9 @@
   async function mulai() {
     A.pasangKunci(); A.nav('beranda');
     personel = D.bacaPersonel(); fasilitas = D.bacaFasilitas(); logbook = D.bacaLogbook();
-    tampilkanKosong();
+    terapkanDefault();
     kejadian = await D.bacaKejadian();
+    terapkanDefault();
   }
 
   window.Rekap = { terapkanFilter, bukaLaci, tutupLaci, unduhPDF, bukaBackup, tutupBackup, ekspor, impor };
