@@ -38,6 +38,20 @@ body.focus #topBar { display: none; }
 #topBar nav .nav-dd a.sel { color: var(--secondary); background: #E4F3F4; }
 #topBar nav .nav-dd a.sel svg { opacity: 1; }
 #topBar nav .nav-dd a .chk { margin-left: auto; font-size: 12px; }
+
+/* ---- ikon profil + dropdown (nama peran yang login & Keluar) ---- */
+#topBar .prof-wrap { position: relative; flex: none; }
+#topBar .prof-btn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.1); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#topBar .prof-btn svg { width: 17px; height: 17px; fill: #fff; }
+#topBar .prof-btn:hover { background: rgba(255,255,255,.18); }
+#topBar .prof-dd { position: absolute; top: calc(100% + 8px); right: 0; background: #fff; border-radius: 10px; box-shadow: 0 12px 32px rgba(16,36,61,.28); padding: 6px; min-width: 176px; display: none; z-index: 200; }
+#topBar .prof-wrap.open .prof-dd { display: block; }
+#topBar .prof-info { padding: 9px 12px 8px; border-bottom: 1px solid #EEF1F6; margin-bottom: 4px; }
+#topBar .prof-peran { font-size: 13px; font-weight: 800; color: #10243D; }
+#topBar .prof-ket { font-size: 10px; font-weight: 600; color: #8A94A6; margin-top: 1px; }
+#topBar .prof-keluar { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 7px; border: none; background: none; color: #A82F24; font-weight: 700; font-size: 12.5px; cursor: pointer; text-align: left; }
+#topBar .prof-keluar svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
+#topBar .prof-keluar:hover { background: #FBE9E7; }
 #fokusExit { display: none; position: fixed; right: 16px; top: 10px; z-index: 300; background: var(--ink); color: #fff; border: none; border-radius: 9px; padding: 8px 14px; font: 700 11.5px 'Montserrat', 'Inter', sans-serif; cursor: pointer; box-shadow: 0 4px 14px rgba(16,36,61,.35); }
 
 /* ---- toolbar ---- */

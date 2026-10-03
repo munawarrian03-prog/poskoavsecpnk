@@ -47,6 +47,7 @@
     if (btnRekap) btnRekap.style.display = (peran === 'admin') ? '' : 'none';
     const btnPantau = document.getElementById('btnPantauPosko');
     if (btnPantau) btnPantau.style.display = (peran === 'admin') ? '' : 'none';
+    if (root.AVS && typeof root.AVS.renderProfilUlang === 'function') root.AVS.renderProfilUlang();
   };
 
   function overlay(html) {

@@ -15,7 +15,9 @@
     search: 'M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z',
     wrench: 'M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6l-3 3-4.3-4.3C.6 7.1 1 10.1 3 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.4-.5.4-1.1 0-1.4z',
     book: 'M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H8V4h1v14l3-1.5 3 1.5V4h3v16z',
-    caret: 'M7 10l5 5 5-5z'
+    caret: 'M7 10l5 5 5-5z',
+    user: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
+    keluar: 'M14 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2h-2v2H5V5h7v2h2zm1 2v3h-7v2h7v3l5-4-5-4z'
   };
   AVS.IC = IC;
   AVS.svg = (p) => `<svg viewBox="0 0 24 24"><path d="${p}"/></svg>`;
@@ -65,6 +67,15 @@
     }).join('');
   }
   AVS.tanggalPendek = (d) => `${AVS.HARI[d.getDay()].slice(0, 3)}, ${d.getDate()} ${AVS.BULAN_PENDEK[d.getMonth()]} ${d.getFullYear()}`;
+  function renderProfil() {
+    if (typeof root.AVS_PERAN !== 'function') return '';
+    const peran = root.AVS_PERAN();
+    if (!peran) return '';
+    const label = peran.charAt(0).toUpperCase() + peran.slice(1);
+    return `<div class="prof-wrap"><button type="button" class="prof-btn" title="Akun">${AVS.svg(IC.user)}</button>
+<div class="prof-dd"><div class="prof-info"><div class="prof-peran">${AVS.esc(label)}</div><div class="prof-ket">Sedang login</div></div>
+<button type="button" class="prof-keluar" onclick="AVS_KELUAR()">${AVS.svg(IC.keluar)}Keluar</button></div></div>`;
+  }
   AVS.nav = function (aktif, el) {
     el = el || document.getElementById('topBar') || document.getElementById('mainNav');
     if (!el) return;
@@ -72,13 +83,29 @@
     el.innerHTML = `<div class="lg"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"></div>` +
       `<div class="ttl"><b>KAPUAS Supadio</b><span>Kanal Aplikasi Pelaporan Unit Airport Security</span></div>` +
       `<nav>${renderNav(aktif)}</nav>` +
-      `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>`;
+      `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>${renderProfil()}`;
     el.querySelectorAll('nav .nav-btn.has-dd').forEach((btn) => {
       btn.addEventListener('click', (e) => { e.preventDefault(); btn.parentElement.classList.toggle('open'); });
     });
+    pasangTombolProfil(el);
     document.addEventListener('click', (e) => {
-      el.querySelectorAll('.nav-btn-wrap.open').forEach((w) => { if (!w.contains(e.target)) w.classList.remove('open'); });
+      el.querySelectorAll('.nav-btn-wrap.open, .prof-wrap.open').forEach((w) => { if (!w.contains(e.target)) w.classList.remove('open'); });
     });
+  };
+  function pasangTombolProfil(el) {
+    const profBtn = el.querySelector('.prof-btn');
+    if (profBtn) profBtn.addEventListener('click', (e) => { e.preventDefault(); profBtn.parentElement.classList.toggle('open'); });
+  }
+  // Render ulang ikon profil setelah login berhasil (dipanggil dari akses.js) -- dibutuhkan
+  // karena topbar bisa sudah ter-render SEBELUM peran diketahui (gerbang PIN masih terbuka).
+  AVS.renderProfilUlang = function () {
+    const topBar = document.getElementById('topBar');
+    if (!topBar || !topBar.querySelector('nav')) return; // nav belum pernah dirender -- biarkan AVS.nav() yg nanti menanganinya
+    const lama = topBar.querySelector('.prof-wrap');
+    const html = renderProfil();
+    if (!html) { if (lama) lama.remove(); return; }
+    if (lama) lama.outerHTML = html; else topBar.insertAdjacentHTML('beforeend', html);
+    pasangTombolProfil(topBar);
   };
 
   // Tautan pengiriman WhatsApp Web (dipakai laporan personel dan laporan kejadian agar perilakunya sama)
