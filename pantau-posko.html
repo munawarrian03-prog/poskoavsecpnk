@@ -24,6 +24,8 @@ table.pptbl tr.hari-ini td:first-child { box-shadow: inset 3px 0 0 #C9922E; }
 .pp-badge.terisi { background: #EEF5E7; color: #3F6B2E; }
 .pp-badge.proses { background: #FCF1DF; color: #9A5F12; }
 .pp-badge.belum { background: #FBE9E7; color: #A82F24; }
+.pp-mata { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-left: 6px; border-radius: 6px; background: #EEF5E7; color: #3F6B2E; vertical-align: middle; text-decoration: none; }
+.pp-mata:hover { background: #DCEFD2; }
 .pp-tgl { font-weight: 800; color: var(--ink); }
 .pp-tgl small { display: block; font-weight: 600; color: #8A94A6; font-size: 10px; }
 .pp-shift { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 7px; background: #EEF1F6; color: #475569; }
@@ -75,10 +77,12 @@ const D = window.AVS_DATA, HARI_INI = new Date();
 let bulanAktif = { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() };
 const ISO_HARI_INI = `${HARI_INI.getFullYear()}-${String(HARI_INI.getMonth() + 1).padStart(2, '0')}-${String(HARI_INI.getDate()).padStart(2, '0')}`;
 
-function badge(st) {
+const EYE_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+function badge(st, href) {
   const peta = { terisi: ['&#10003;', 'Terisi'], proses: ['&#8987;', 'Proses'], belum: ['&#10007;', 'Belum Terisi'] };
   const [ic, lbl] = peta[st];
-  return `<span class="pp-badge ${st}">${ic} ${lbl}</span>`;
+  const mata = (st === 'terisi' && href) ? `<a href="${href}" target="_blank" rel="noopener" class="pp-mata" title="Lihat pratinjau web laporan ini">${EYE_SVG}</a>` : '';
+  return `<span class="pp-badge ${st}">${ic} ${lbl}</span>${mata}`;
 }
 const BULAN_PENDEK = AVS.BULAN_PENDEK, BULAN = AVS.BULAN;
 function tglIndo(iso) {
@@ -93,12 +97,14 @@ function render() {
 
   $('ppBody').innerHTML = daftar.length ? daftar.map((r) => {
     const t = tglIndo(r.tanggal);
+    const sk = r.shift === 'Malam' ? 'M' : 'P';
+    const hrefFor = (halaman) => `${halaman}#lihat=${encodeURIComponent(r.tanggal)}|${sk}`;
     return `<tr class="${r.tanggal === ISO_HARI_INI ? 'hari-ini' : ''}">
 <td class="pp-tgl">${t.atas}<small>${t.bawah}</small></td>
-<td><span class="pp-shift ${r.shift === 'Malam' ? 'm' : ''}">${r.shift}</span></td>
-<td>${badge(r.personel)}</td>
-<td>${badge(r.fasilitas)}</td>
-<td>${badge(r.logbook)}</td>
+<td><span class="pp-shift ${sk === 'M' ? 'm' : ''}">${r.shift}</span></td>
+<td>${badge(r.personel, hrefFor('laporan-personel.html'))}</td>
+<td>${badge(r.fasilitas, hrefFor('fasilitas.html'))}</td>
+<td>${badge(r.logbook, hrefFor('logbook.html'))}</td>
 </tr>`;
   }).join('') : '<tr><td colspan="5"><div class="empty">Belum ada shift yang dinilai pada bulan ini.</div></td></tr>';
 

@@ -943,6 +943,14 @@ window.addEventListener('DOMContentLoaded', () => {
 window.adaPerubahanBelumTersimpan = () => dirty === true;
 AVS.daftarSW();
 
+// Deep-link dari Pantau Posko: #lihat=<tanggal-ISO>|<P|M> -> buka pratinjau laporan shift tsb.
+(function () {
+  const m = /^#lihat=([^|]+)\|([PM])$/.exec(location.hash);
+  if (!m) return;
+  const tgl = decodeURIComponent(m[1]), sk = m[2];
+  const r = getReports().find((x) => x.tanggal === tgl && shiftKunci(x.shift) === sk);
+  if (r) bukaLihat(r.id);
+})();
 </script>
 </body>
 </html>
