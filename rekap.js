@@ -439,15 +439,94 @@
   /* =========================================================
      CADANGKAN / PULIHKAN (butir 4.4, gabungan 4 jenis laporan)
      ========================================================= */
-  function bukaBackup() { $('hasilImpor').textContent = ''; $('backupOverlay').style.display = 'flex'; }
+  /* ---- Folder cadangan tersimpan (File System Access API) -- Chrome/Edge saja; browser lain
+     otomatis jatuh ke cara lama (unduh ke folder Downloads). Handle folder yg dipilih user
+     disimpan di IndexedDB (bukan localStorage -- FileSystemDirectoryHandle tidak bisa di-JSON)
+     supaya backup2 berikutnya langsung tersimpan ke situ tanpa dialog pilih folder lagi. ---- */
+  const DB_FOLDER = 'avsec-config', STORE_FOLDER = 'preferensi', KEY_FOLDER = 'folderBackup';
+  function bukaDbFolder() {
+    return new Promise((resolve, reject) => {
+      const q = indexedDB.open(DB_FOLDER, 1);
+      q.onupgradeneeded = () => { const db = q.result; if (!db.objectStoreNames.contains(STORE_FOLDER)) db.createObjectStore(STORE_FOLDER); };
+      q.onsuccess = () => resolve(q.result);
+      q.onerror = () => reject(q.error);
+    });
+  }
+  async function bacaHandleFolder() {
+    try {
+      const db = await bukaDbFolder();
+      return await new Promise((resolve) => {
+        const req = db.transaction(STORE_FOLDER, 'readonly').objectStore(STORE_FOLDER).get(KEY_FOLDER);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    } catch (e) { return null; }
+  }
+  async function simpanHandleFolder(handle) {
+    try {
+      const db = await bukaDbFolder();
+      await new Promise((resolve) => {
+        const tx = db.transaction(STORE_FOLDER, 'readwrite');
+        tx.objectStore(STORE_FOLDER).put(handle, KEY_FOLDER);
+        tx.oncomplete = resolve; tx.onerror = resolve;
+      });
+    } catch (e) { /* abaikan -- folder tersimpan cuma kenyamanan, bukan fitur wajib */ }
+  }
+  async function pastikanIzinFolder(handle, minta) {
+    const opsi = { mode: 'readwrite' };
+    if ((await handle.queryPermission(opsi)) === 'granted') return true;
+    if (!minta) return false;
+    try { return (await handle.requestPermission(opsi)) === 'granted'; } catch (e) { return false; }
+  }
+  // true = tersimpan ke folder pilihan user. false = browser tdk dukung/gagal diam2 -> caller fallback ke unduh biasa.
+  // Melempar error kalau user sendiri yg membatalkan dialog pilih folder (supaya TIDAK diam2 fallback ke Downloads).
+  async function unduhKeFolderTersimpan(namaFile, blob) {
+    if (!('showDirectoryPicker' in window)) return false;
+    let handle = await bacaHandleFolder();
+    if (handle && !(await pastikanIzinFolder(handle, true))) handle = null;
+    if (!handle) {
+      handle = await window.showDirectoryPicker({ id: 'avsec-backup', mode: 'readwrite' }); // bisa throw AbortError kalau user batal
+      await simpanHandleFolder(handle);
+    }
+    const fh = await handle.getFileHandle(namaFile, { create: true });
+    const ws = await fh.createWritable();
+    await ws.write(blob);
+    await ws.close();
+    renderInfoFolder(handle);
+    return true;
+  }
+  function renderInfoFolder(handle) {
+    const el = $('folderBackupInfo'); if (!el) return;
+    el.innerHTML = handle ? `Tersimpan ke folder <b>${E(handle.name)}</b> &middot; <a href="#" onclick="Rekap.gantiFolderBackup();return false">Ganti folder</a>` : '';
+  }
+  async function gantiFolderBackup() {
+    if (!('showDirectoryPicker' in window)) { toast('Browser ini tidak mendukung pilih folder -- backup akan diunduh ke folder Downloads seperti biasa.', 'err'); return; }
+    try {
+      const handle = await window.showDirectoryPicker({ id: 'avsec-backup', mode: 'readwrite' });
+      await simpanHandleFolder(handle);
+      renderInfoFolder(handle);
+      toast(`Folder cadangan diganti ke "${handle.name}".`);
+    } catch (e) { /* user batal -- biarkan, folder lama (kalau ada) tetap dipakai */ }
+  }
+  function bukaBackup() {
+    $('hasilImpor').textContent = '';
+    $('backupOverlay').style.display = 'flex';
+    bacaHandleFolder().then((h) => { if (h) pastikanIzinFolder(h, false).then((ok) => renderInfoFolder(ok ? h : null)); });
+  }
   function tutupBackup() { $('backupOverlay').style.display = 'none'; }
-  function ekspor() {
+  async function ekspor() {
     const data = { app: 'sistem-pelaporan-avsec-supadio', versi: 1, dicetak: new Date().toISOString(), personel, fasilitas, logbook, kejadian };
     const total = personel.length + fasilitas.length + logbook.length + kejadian.length;
     if (!total) { toast('Belum ada laporan apa pun untuk dicadangkan.', 'err'); return; }
     const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup-avsec-semua-laporan-${isoHariIni(HARI_INI)}.json`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    const namaFile = `backup-avsec-semua-laporan-${isoHariIni(HARI_INI)}.json`;
+    let keFolder = false;
+    try { keFolder = await unduhKeFolderTersimpan(namaFile, blob); }
+    catch (e) { return; } // user membatalkan dialog pilih folder -- jangan diam2 unduh ke Downloads
+    if (!keFolder) {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = namaFile;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }
     toast(`Dicadangkan: ${personel.length} Personel, ${fasilitas.length} Fasilitas, ${logbook.length} Log Book, ${kejadian.length} Kejadian.`);
   }
   function timpaLS(key, arrBaru, wajib, hasilRef) {
@@ -505,7 +584,7 @@
     hitungUlang(); renderSemua();
   }
 
-  window.Rekap = { terapkanFilter, unduhPDF, bukaBackup, tutupBackup, ekspor, impor };
+  window.Rekap = { terapkanFilter, unduhPDF, bukaBackup, tutupBackup, ekspor, impor, gantiFolderBackup };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mulai); else mulai();
   window.adaPerubahanBelumTersimpan = () => false;
   AVS.daftarSW();
