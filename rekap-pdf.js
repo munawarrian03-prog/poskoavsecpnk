@@ -192,26 +192,33 @@
   }
   // Donat "Kepatuhan Grup" statis (SVG) utk PDF — logika sama persis dgn grafikDonatGrup() di
   // rekap.js: porsi DIBALIK, grup dgn shift belum lengkap PALING SEDIKIT dapat porsi PALING BESAR.
-  function donatKepatuhanGrup(daftar) {
+  function donatKepatuhanGrup(daftar, total) {
     const WARNA_GRUP = { A: '#2a78d6', B: '#eb6834', C: '#1baf7a', D: '#eda100' };
+    const WARNA_LENGKAP = '#E2E7EF', WARNA_TAK_TERPETAKAN = '#9AA3B2';
     const jumlahPerGrup = {}; REGU_URUT.forEach((g) => { jumlahPerGrup[g] = 0; });
     let takTerpetakan = 0;
     daftar.forEach((x) => { if (jumlahPerGrup[x.regu] !== undefined) jumlahPerGrup[x.regu]++; else takTerpetakan++; });
-    if (!daftar.length) return '<div style="font-size:9pt;color:#000;font-style:italic">Seluruh shift pada rentang ini sudah lengkap dilaporkan.</div>';
-    if (takTerpetakan === daftar.length) return '<div style="font-size:9pt;color:#000;font-style:italic">Regu belum bisa dipetakan — unggah Jadwal Dinas bulan ini.</div>';
-    const maxN = Math.max(...REGU_URUT.map((g) => jumlahPerGrup[g]));
-    const items = REGU_URUT.map((g) => ({ grup: g, asli: jumlahPerGrup[g], nilai: (maxN - jumlahPerGrup[g]) + 1 }));
-    const totNilai = items.reduce((a, b) => a + b.nilai, 0), totAsli = items.reduce((a, b) => a + b.asli, 0);
+    if (!total) return '<div style="font-size:9pt;color:#000;font-style:italic">Belum ada shift yang dinilai pada rentang ini.</div>';
+    const lengkap = Math.max(0, total - daftar.length);
+    const items = [{ key: 'lengkap', jumlah: lengkap, warna: WARNA_LENGKAP }]
+      .concat(REGU_URUT.map((g) => ({ key: g, jumlah: jumlahPerGrup[g], warna: WARNA_GRUP[g] })))
+      .concat(takTerpetakan > 0 ? [{ key: 'tak', jumlah: takTerpetakan, warna: WARNA_TAK_TERPETAKAN }] : []);
+    const totNilai = items.reduce((a, b) => a + b.jumlah, 0) || 1;
     const Ro = 46, ri = 30, cx = 52, cy = 52; let a0 = -Math.PI / 2, paths = '';
     items.forEach((d) => {
-      const ang = (d.nilai / totNilai) * Math.PI * 2, a1 = a0 + ang - 0.02, lg = (a1 - a0) > Math.PI ? 1 : 0;
+      if (!d.jumlah) return;
+      const ang = (d.jumlah / totNilai) * Math.PI * 2, penuh = ang >= Math.PI * 2 - 0.001;
+      if (penuh) { paths += `<circle cx="${cx}" cy="${cy}" r="${(Ro + ri) / 2}" fill="none" stroke="${d.warna}" stroke-width="${Ro - ri}"/>`; a0 += ang; return; }
+      const a1 = a0 + ang - 0.02, lg = (a1 - a0) > Math.PI ? 1 : 0;
       const p = (rad, an) => [cx + rad * Math.cos(an), cy + rad * Math.sin(an)];
       const [x0, y0] = p(Ro, a0), [x1, y1] = p(Ro, a1), [x2, y2] = p(ri, a1), [x3, y3] = p(ri, a0);
-      paths += `<path d="M${x0} ${y0} A${Ro} ${Ro} 0 ${lg} 1 ${x1} ${y1} L${x2} ${y2} A${ri} ${ri} 0 ${lg} 0 ${x3} ${y3}Z" fill="${WARNA_GRUP[d.grup]}"/>`; a0 += ang;
+      paths += `<path d="M${x0} ${y0} A${Ro} ${Ro} 0 ${lg} 1 ${x1} ${y1} L${x2} ${y2} A${ri} ${ri} 0 ${lg} 0 ${x3} ${y3}Z" fill="${d.warna}"/>`; a0 += ang;
     });
-    const svgD = `<svg width="104" height="104" viewBox="0 0 104 104">${paths}<text x="52" y="49" text-anchor="middle" font-size="18" font-weight="800" fill="#000">${totAsli}</text><text x="52" y="63" text-anchor="middle" font-size="8" font-weight="700" fill="#000">shift</text></svg>`;
-    const leg = items.map((d) => `<div style="display:flex;align-items:center;gap:5px;font-size:8pt;color:#000"><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:${WARNA_GRUP[d.grup]}"></span>Grup ${esc(d.grup)}<b style="margin-left:auto;padding-left:10px">${Math.round(d.nilai / totNilai * 100)}%</b></div>`).join('');
-    return `<div style="display:flex;align-items:center;gap:18px">${svgD}<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;flex:1">${leg}</div></div>`;
+    const pct = Math.round(lengkap / total * 100);
+    const svgD = `<svg width="104" height="104" viewBox="0 0 104 104">${paths}<text x="52" y="49" text-anchor="middle" font-size="18" font-weight="800" fill="#000">${pct}%</text><text x="52" y="63" text-anchor="middle" font-size="8" font-weight="700" fill="#000">kepatuhan</text></svg>`;
+    const leg = REGU_URUT.map((g) => `<div style="display:flex;align-items:center;gap:5px;font-size:8pt;color:#000"><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:${WARNA_GRUP[g]}"></span>Grup ${esc(g)}<b style="margin-left:auto;padding-left:10px">${jumlahPerGrup[g]}</b></div>`).join('');
+    const catatanTak = takTerpetakan > 0 ? `<div style="font-size:7.5pt;color:#000;margin-top:4px">${takTerpetakan} shift belum lengkap regu-nya tak terpetakan.</div>` : '';
+    return `<div><div style="display:flex;align-items:center;gap:18px">${svgD}<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;flex:1">${leg}</div></div>${catatanTak}</div>`;
   }
 
   function ttdDua() {
@@ -274,8 +281,8 @@ ${tabelKejadianBAST(RK.bast.daftar)}
 ${kop('Kepatuhan Pelaporan Shift', periode + ' • seluruh 3 jenis laporan', tglCetak)}
 ${kpiRow([{ l: 'Personel Belum', v: RQ.personelBelum, s: '/ ' + RQ.total }, { l: 'Fasilitas Belum', v: RQ.fasilitasBelum, s: '/ ' + RQ.total }, { l: 'Log Book Belum', v: RQ.logbookBelum, s: '/ ' + RQ.total }])}
 ${judulBlok('Kepatuhan Grup')}
-<div style="font-size:7.5pt;color:#000;font-style:italic;margin-bottom:6px">Porsi dibalik: makin sedikit belum lengkap, makin besar porsinya.</div>
-${donatKepatuhanGrup(RQ.daftar)}
+<div style="font-size:7.5pt;color:#000;font-style:italic;margin-bottom:6px">Abu-abu = lengkap, warna = belum lengkap per grup. Kepatuhan 100% kalau Daftar Shift Belum Lengkap kosong.</div>
+${donatKepatuhanGrup(RQ.daftar, RQ.total)}
 ${judulBlok('Daftar Shift Belum Lengkap')}
 ${tabelKepatuhanGrup(RQ.daftar)}
 <div style="font-size:7.5pt;color:#000;margin-top:8px">Dikelompokkan otomatis per regu berdasarkan data Jadwal Dinas yang diunggah; shift yang regu-nya tidak ditemukan tidak ikut dihitung per grup.</div>
