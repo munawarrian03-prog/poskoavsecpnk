@@ -494,7 +494,7 @@
 
   /* ---------- Mulai ---------- */
   async function mulai() {
-    A.pasangKunci(); A.nav('beranda');
+    A.pasangKunci(); A.nav('rekap');
     bangunTata();
     const awalBulan = new Date(HARI_INI.getFullYear(), HARI_INI.getMonth(), 1);
     $('fMulai').value = isoHariIni(awalBulan); $('fAkhir').value = isoHariIni(HARI_INI);

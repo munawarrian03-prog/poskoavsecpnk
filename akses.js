@@ -1,9 +1,8 @@
 /* =====================================================
    GERBANG AKSES: peran Posko/Admin + auto-logout idle 1 jam.
    Satu sesi (peran + lastActivity) dipakai di seluruh app -- Posko dan Admin
-   login lewat form PIN yang terpisah, tapi begitu Admin login, tampilan
-   admin-only (tombol "Pantau Posko", "Lihat Semua Rekap") ikut muncul di
-   mana pun AVS_terapkanTampilanPeran() dipanggil.
+   login lewat form PIN yang terpisah, menu topbar (shell.js: renderNav)
+   otomatis berbeda per peran begitu AVS.nav() dipanggil.
 
    PENTING: ganti kedua PIN contoh di bawah ini sebelum dipakai sungguhan.
    ===================================================== */
@@ -38,15 +37,10 @@
   root.AVS_PERAN = () => { const s = bacaSesi(); return s ? s.peran : null; };
   root.AVS_KELUAR = () => { localStorage.removeItem(KUNCI_SESI); location.reload(); };
 
-  // Terapkan tampilan sesuai peran: Posko tidak melihat "Lihat Semua Rekap" maupun "Pantau Posko"
-  // di Beranda. Admin melihat keduanya. Aman dipanggil di halaman manapun (elemen yang tidak ada
-  // di halaman tsb diabaikan).
+  // Terapkan tampilan sesuai peran. Menu topbar sendiri sudah dipilih per-peran di dalam
+  // shell.js (renderNav) setiap kali AVS.nav() dipanggil -- di sini tinggal gambar ulang
+  // ikon profil, karena topbar bisa sudah ter-render sebelum peran diketahui.
   root.AVS_terapkanTampilanPeran = function () {
-    const peran = root.AVS_PERAN();
-    const btnRekap = document.getElementById('btnSemuaRekap');
-    if (btnRekap) btnRekap.style.display = (peran === 'admin') ? '' : 'none';
-    const btnPantau = document.getElementById('btnPantauPosko');
-    if (btnPantau) btnPantau.style.display = (peran === 'admin') ? '' : 'none';
     if (root.AVS && typeof root.AVS.renderProfilUlang === 'function') root.AVS.renderProfilUlang();
   };
 

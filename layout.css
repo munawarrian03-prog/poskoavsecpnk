@@ -25,20 +25,6 @@
 #topBar .chip2 svg { width: 13px; height: 13px; fill: #DCE6F3; }
 body.focus #topBar { display: none; }
 
-/* ---- dropdown menu topbar (grup Laporan Kejadian + Jadwal Dinas) ---- */
-#topBar nav .nav-btn-wrap { position: relative; }
-#topBar nav .nav-btn.has-dd { gap: 5px; cursor: pointer; }
-#topBar nav .nav-btn .caret { width: 9px; height: 9px; margin-left: 1px; opacity: .75; transition: transform .15s; }
-#topBar nav .nav-btn-wrap.open .caret, #topBar nav .nav-btn-wrap:hover .caret { transform: rotate(180deg); }
-#topBar nav .nav-dd { position: absolute; top: calc(100% + 8px); left: 0; background: #fff; border-radius: 10px; box-shadow: 0 12px 32px rgba(16,36,61,.28); padding: 6px; min-width: 196px; display: none; z-index: 200; }
-#topBar nav .nav-btn-wrap:hover .nav-dd, #topBar nav .nav-btn-wrap.open .nav-dd { display: block; }
-#topBar nav .nav-dd a { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 7px; color: #10243D; font-weight: 700; font-size: 12.5px; text-decoration: none; }
-#topBar nav .nav-dd a svg { width: 14px; height: 14px; fill: currentColor; opacity: .65; flex: none; }
-#topBar nav .nav-dd a:hover { background: #F4F6FA; }
-#topBar nav .nav-dd a.sel { color: var(--secondary); background: #E4F3F4; }
-#topBar nav .nav-dd a.sel svg { opacity: 1; }
-#topBar nav .nav-dd a .chk { margin-left: auto; font-size: 12px; }
-
 /* ---- ikon profil + dropdown (nama peran yang login & Keluar) ---- */
 #topBar .prof-wrap { position: relative; flex: none; }
 #topBar .prof-btn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.1); cursor: pointer; display: flex; align-items: center; justify-content: center; }

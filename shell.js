@@ -15,6 +15,7 @@
     search: 'M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z',
     wrench: 'M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6l-3 3-4.3-4.3C.6 7.1 1 10.1 3 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.4-.5.4-1.1 0-1.4z',
     book: 'M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H8V4h1v14l3-1.5 3 1.5V4h3v16z',
+    chart: 'M4 20h3v-9H4v9zm6.5 0h3V4h-3v16zM17 20h3v-6h-3v6z',
     caret: 'M7 10l5 5 5-5z',
     user: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
     keluar: 'M14 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2h-2v2H5V5h7v2h2zm1 2v3h-7v2h7v3l5-4-5-4z'
@@ -43,28 +44,31 @@
     } catch (e) { /* browser lama tanpa document.fonts: lanjut apa adanya */ }
   };
 
-  /* ---------- Bilah atas + navigasi utama ---------- */
-  const MENU = [
+  /* ---------- Bilah atas + navigasi utama ----------
+     Menu beda per peran (flat, tanpa dropdown):
+     - Posko : Beranda, Laporan Personel, Laporan Fasilitas, Log Book, Laporan Kejadian, Jadwal Dinas
+     - Admin : Beranda, Pantau Laporan, Rekap, Laporan Kejadian, Jadwal Dinas
+       (Personel/Fasilitas/Log Book disembunyikan dari menu Admin, tapi tetap bisa diakses
+       langsung lewat URL -- tidak diblokir.) */
+  const MENU_ADMIN = [
+    ['beranda', 'Beranda', 'index.html', 'home'],
+    ['pantau', 'Pantau Laporan', 'pantau-posko.html', 'search'],
+    ['rekap', 'Rekap', 'rekap.html', 'chart'],
+    ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
+    ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
+  ];
+  const MENU_POSKO = [
     ['beranda', 'Beranda', 'index.html', 'home'],
     ['personel', 'Laporan Personel', 'laporan-personel.html', 'people'],
     ['fasilitas', 'Laporan Fasilitas', 'fasilitas.html', 'wrench'],
     ['logbook', 'Log Book', 'logbook.html', 'book'],
-    { group: ['kejadian', 'jadwal'], items: [
-        ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
-        ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
-    ] }
+    ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
+    ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
   ];
   function renderNav(aktif) {
-    return MENU.map((m) => {
-      if (Array.isArray(m)) {
-        const [k, t, href, ic] = m;
-        return `<a class="nav-btn ${k === aktif ? 'active' : ''}" href="${href}">${AVS.svg(IC[ic])}<span>${t}</span></a>`;
-      }
-      const current = m.items.find((it) => it[0] === aktif) || m.items[0];
-      const isActive = m.group.includes(aktif);
-      const opts = m.items.map(([k, t, href, ic]) => `<a href="${href}" class="${k === current[0] ? 'sel' : ''}">${AVS.svg(IC[ic])}${t}${k === current[0] ? '<span class="chk">&#10003;</span>' : ''}</a>`).join('');
-      return `<div class="nav-btn-wrap"><a class="nav-btn has-dd ${isActive ? 'active' : ''}" href="#">${AVS.svg(IC[current[3]])}<span>${current[1]}</span>${AVS.svg(IC.caret).replace('<svg', '<svg class="caret"')}</a><div class="nav-dd">${opts}</div></div>`;
-    }).join('');
+    const peran = (typeof root.AVS_PERAN === 'function') ? root.AVS_PERAN() : null;
+    const menu = peran === 'admin' ? MENU_ADMIN : MENU_POSKO;
+    return menu.map(([k, t, href, ic]) => `<a class="nav-btn ${k === aktif ? 'active' : ''}" href="${href}">${AVS.svg(IC[ic])}<span>${t}</span></a>`).join('');
   }
   AVS.tanggalPendek = (d) => `${AVS.HARI[d.getDay()].slice(0, 3)}, ${d.getDate()} ${AVS.BULAN_PENDEK[d.getMonth()]} ${d.getFullYear()}`;
   function renderProfil() {
@@ -84,12 +88,9 @@
       `<div class="ttl"><b>KAPUAS Supadio</b><span>Kanal Aplikasi Pelaporan Unit Airport Security</span></div>` +
       `<nav>${renderNav(aktif)}</nav>` +
       `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>${renderProfil()}`;
-    el.querySelectorAll('nav .nav-btn.has-dd').forEach((btn) => {
-      btn.addEventListener('click', (e) => { e.preventDefault(); btn.parentElement.classList.toggle('open'); });
-    });
     pasangTombolProfil(el);
     document.addEventListener('click', (e) => {
-      el.querySelectorAll('.nav-btn-wrap.open, .prof-wrap.open').forEach((w) => { if (!w.contains(e.target)) w.classList.remove('open'); });
+      el.querySelectorAll('.prof-wrap.open').forEach((w) => { if (!w.contains(e.target)) w.classList.remove('open'); });
     });
   };
   function pasangTombolProfil(el) {
