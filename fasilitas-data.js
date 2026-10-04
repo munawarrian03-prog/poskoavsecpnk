@@ -77,8 +77,8 @@ const POS_FASILITAS_BAWAAN = [
     ]
   },
   {
-    id: 'scp_transit', // = "SSCP + KEDATANGAN" di kategori.js (nama tampil beda, lihat catatan di bawah)
-    name: 'SSCP (Dep & Arr)',
+    id: 'scp_transit', // = "SSCP + (Dep & Arr)" di kategori.js (nama disamakan dgn Laporan Personel)
+    name: 'SSCP + (Dep & Arr)',
     items: [
       { id: 'sscp_xray', name: 'Mesin X-Ray', bentuk: 'A' },
       { id: 'sscp_wtmd', name: 'WTMD',         bentuk: 'A' },
