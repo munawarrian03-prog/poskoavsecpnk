@@ -157,42 +157,33 @@
     const leg = arr.map((d) => `<div><i style="background:${warna[d.nama]}"></i>${E(d.nama)}<b>${d.jumlah}</b><u>${Math.round(d.jumlah / tot * 100)}%</u></div>`).join('');
     return `<div class="donutwrap">${svgD}<div class="dl">${leg}</div></div>`;
   }
-  // Donat "Kepatuhan Grup" -- logika LANGSUNG (bukan lagi perbandingan relatif antar-grup):
-  // porsi abu-abu "Lengkap" = (total shift dinilai - jumlah di "Daftar Shift Belum Lengkap"),
-  // porsi berwarna A/B/C/D = jumlah ASLI shift belum lengkap pada grup itu (apa adanya, tidak
-  // dibalik). Kalau daftar-nya kosong -> donat penuh abu-abu, kepatuhan = 100%. Makin banyak
-  // baris di daftar itu, makin besar porsi berwarna, kepatuhan (dan porsi abu-abu) makin kecil.
-  // Shift yang regu-nya tak terpetakan (Jadwal Dinas belum lengkap) dapat porsi abu-gelap
-  // tersendiri supaya lingkaran tetap genap 100% dari TOTAL shift, tidak diam-diam hilang.
-  const WARNA_LENGKAP = '#E2E7EF', WARNA_TAK_TERPETAKAN = '#9AA3B2';
-  function grafikDonatGrup(lengkap, perGrup, takTerpetakan, total, warnaMap) {
-    const items = [{ key: 'lengkap', jumlah: lengkap, warna: WARNA_LENGKAP }]
-      .concat(D.REGU.map((g) => ({ key: g, jumlah: perGrup[g], warna: warnaMap[g] })))
-      .concat(takTerpetakan > 0 ? [{ key: 'tak', jumlah: takTerpetakan, warna: WARNA_TAK_TERPETAKAN }] : []);
-    const totNilai = items.reduce((a, b) => a + b.jumlah, 0) || 1;
-    const Ro = 56, ri = 37, cx = 62, cy = 62; let a0 = -Math.PI / 2, paths = '';
-    items.forEach((d) => {
-      if (!d.jumlah) return;
-      const ang = (d.jumlah / totNilai) * Math.PI * 2, penuh = ang >= Math.PI * 2 - 0.001;
-      if (penuh) { paths += `<circle cx="${cx}" cy="${cy}" r="${(Ro + ri) / 2}" fill="none" stroke="${d.warna}" stroke-width="${Ro - ri}"/>`; a0 += ang; return; }
-      const a1 = a0 + ang - 0.025, lg = (a1 - a0) > Math.PI ? 1 : 0;
-      const p = (rad, an) => [cx + rad * Math.cos(an), cy + rad * Math.sin(an)];
-      const [x0, y0] = p(Ro, a0), [x1, y1] = p(Ro, a1), [x2, y2] = p(ri, a1), [x3, y3] = p(ri, a0);
-      paths += `<path d="M${x0} ${y0} A${Ro} ${Ro} 0 ${lg} 1 ${x1} ${y1} L${x2} ${y2} A${ri} ${ri} 0 ${lg} 0 ${x3} ${y3}Z" fill="${d.warna}"/>`; a0 += ang;
-    });
-    // viewBox tetap 124x124 (lingkaran), tapi width/height "auto-fit" mengikuti ruang yang
-    // tersedia (wadah flex di bawah) -- bukan ukuran tetap -- supaya donat membesar/mengecil
-    // persis mengikuti tinggi kartu "Daftar Shift Belum Lengkap" di sampingnya.
-    const pct = total > 0 ? Math.round(lengkap / total * 100) : 100;
-    const svgD = `<svg viewBox="0 0 124 124" style="width:auto;height:100%;max-width:100%;display:block">${paths}<text x="62" y="60" text-anchor="middle" font-size="26" font-weight="800" fill="#10243D">${pct}%</text><text x="62" y="76" text-anchor="middle" font-size="10" font-weight="700" fill="#5C6675">kepatuhan</text></svg>`;
-    // Legenda 2 kolom x 2 baris (A|B di atas, C|D di bawah) -- angka di kanan sekarang jumlah ASLI
-    // shift belum lengkap pada grup itu (bukan % porsi lagi, krn porsi donat kini bukan perbandingan
-    // antar-grup -- lihat judul fungsi).
-    const leg = D.REGU.map((g) => `<div style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:#1A2233;white-space:nowrap"><i style="width:9px;height:9px;border-radius:3px;background:${warnaMap[g]};flex:none"></i>Grup ${E(g)}<b style="margin-left:auto;padding-left:8px;color:#10243D">${perGrup[g]}</b></div>`).join('');
+  // "Kepatuhan Grup" -- SETIAP grup dihitung SENDIRI-SENDIRI (bukan lagi satu donat gabungan):
+  // kepatuhan Grup X = (jumlah shift grup X yang dinilai - jumlah shift grup X yang belum
+  // lengkap) / jumlah shift grup X yang dinilai. Kalau shift belum lengkap pada grup itu kosong
+  // -> cincinnya 100%. Grup yang di rentang ini tidak kebagian shift sama sekali (data Jadwal
+  // Dinas) ditandai "-" (abu-abu), bukan 0%, supaya tidak disalahartikan sbg "sama sekali tidak
+  // patuh" padahal datanya memang belum ada.
+  function cincinKepatuhan(grup, pct, warna, adaData) {
+    const R = 30, lebar = 8, cx = 36, cy = 36, keliling = 2 * Math.PI * R;
+    const dash = adaData ? Math.max(0, Math.min(1, pct / 100)) * keliling : 0;
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+<svg viewBox="0 0 72 72" style="width:100%;max-width:88px;display:block">
+<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#E9EDF4" stroke-width="${lebar}"/>
+<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${warna}" stroke-width="${lebar}" stroke-linecap="round" stroke-dasharray="${dash} ${keliling}" transform="rotate(-90 ${cx} ${cy})"/>
+<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="15" font-weight="800" fill="#10243D">${adaData ? pct + '%' : '-'}</text>
+</svg>
+<div style="font-size:11px;font-weight:700;color:#1A2233;display:flex;align-items:center;gap:5px;white-space:nowrap"><i style="width:8px;height:8px;border-radius:2px;background:${warna};flex:none"></i>Grup ${E(grup)}</div>
+</div>`;
+  }
+  function grafikKepatuhanPerGrup(totalPerGrup, belumPerGrup, takTerpetakan, warnaMap) {
+    const cincin = D.REGU.map((g) => {
+      const total = totalPerGrup[g], blm = belumPerGrup[g], adaData = total > 0;
+      const pct = adaData ? Math.round((total - blm) / total * 100) : 0;
+      return cincinKepatuhan(g, pct, warnaMap[g], adaData);
+    }).join('');
     const catatanTak = takTerpetakan > 0 ? `<div style="font-size:10px;color:#8A94A6;font-weight:600;text-align:center;flex:none">${takTerpetakan} shift belum lengkap regu-nya tak terpetakan</div>` : '';
-    return `<div style="display:flex;flex-direction:column;flex:1;min-height:0;gap:8px">
-<div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center">${svgD}</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;flex:none">${leg}</div>
+    return `<div style="display:flex;flex-direction:column;flex:1;min-height:0;justify-content:center;gap:8px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 8px;place-items:center">${cincin}</div>
 ${catatanTak}
 </div>`;
   }
@@ -361,19 +352,20 @@ ${catatanTak}
 <div class="kpi" style="--acc:#157A82;--acc-bg:#E4F3F4;height:96px"><div class="lbl">Personel Belum Diisi</div><div class="val">${r.personelBelum}<small>/ ${r.total} shift</small></div><div class="ico">${svg(IC.people)}</div></div>
 <div class="kpi" style="--acc:#9A5F12;--acc-bg:#FCF1DF;height:96px"><div class="lbl">Fasilitas Belum Diisi</div><div class="val">${r.fasilitasBelum}<small>/ ${r.total} shift</small></div><div class="ico"><svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6l-3 3-4.3-4.3C.6 7.1 1 10.1 3 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.4-.5.4-1.1 0-1.4z"/></svg></div></div>
 <div class="kpi" style="--acc:#A82F24;--acc-bg:#FBE9E7;height:96px"><div class="lbl">Log Book Belum Diisi</div><div class="val">${r.logbookBelum}<small>/ ${r.total} shift</small></div><div class="ico">${svg(IC.doc)}</div></div>`;
-    // Donat "Kepatuhan Grup" -- lihat catatan logika baru di grafikDonatGrup(). Regu tiap baris
-    // sudah dipetakan dari Jadwal Dinas di hitungUlang() (reguBertugasJadwal); baris yang regu-nya
-    // tidak ketemu (jadwal belum diunggah utk bulan itu) dapat porsi "tak terpetakan" tersendiri.
+    // "Kepatuhan Grup" -- lihat catatan logika baru di grafikKepatuhanPerGrup(): tiap grup
+    // dihitung sendiri-sendiri. Regu tiap baris sudah dipetakan dari Jadwal Dinas di
+    // hitungUlang() (reguBertugasJadwal); baris yang regu-nya tidak ketemu (jadwal belum
+    // diunggah utk bulan itu) dihitung terpisah sbg "tak terpetakan", tidak masuk ke grup manapun.
     const WARNA_GRUP = { A: '#2a78d6', B: '#eb6834', C: '#1baf7a', D: '#eda100' };
-    const jumlahPerGrup = { A: 0, B: 0, C: 0, D: 0 };
+    const belumPerGrup = { A: 0, B: 0, C: 0, D: 0 }, totalPerGrup = { A: 0, B: 0, C: 0, D: 0 };
     let takTerpetakan = 0;
-    r.daftar.forEach((x) => { if (jumlahPerGrup[x.regu] !== undefined) jumlahPerGrup[x.regu]++; else takTerpetakan++; });
-    const lengkap = Math.max(0, r.total - r.daftar.length);
+    r.daftar.forEach((x) => { if (belumPerGrup[x.regu] !== undefined) belumPerGrup[x.regu]++; else takTerpetakan++; });
+    r.semuaShift.forEach((x) => { if (totalPerGrup[x.regu] !== undefined) totalPerGrup[x.regu]++; });
     const isiDonatGrup = r.total > 0
-      ? grafikDonatGrup(lengkap, jumlahPerGrup, takTerpetakan, r.total, WARNA_GRUP)
+      ? grafikKepatuhanPerGrup(totalPerGrup, belumPerGrup, takTerpetakan, WARNA_GRUP)
       : '<div class="empty">Belum ada shift yang dinilai<br>pada rentang ini.</div>';
     $('rowKepatuhan1').innerHTML = `
-<div class="dcard c4 rauto"><div class="h"><div><h3>Kepatuhan Grup</h3><div class="sub">Abu-abu = lengkap &bull; warna = belum lengkap per grup</div></div></div>${isiDonatGrup}</div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Kepatuhan Grup</h3><div class="sub">Kepatuhan tiap grup dihitung sendiri-sendiri</div></div></div>${isiDonatGrup}</div>
 <div class="dcard c8 rauto"><div class="h"><div><h3>Daftar Shift Belum Lengkap</h3><div class="sub">Dikelompokkan per grup &amp; jenis laporan</div></div></div>${tabelKepatuhanGrup(r.daftar, WARNA_GRUP)}</div>`;
   }
 
@@ -394,7 +386,8 @@ ${catatanTak}
     RK = D.statKejadianRentang(kejadian, mulai, akhir);
     RQ = D.kepatuhanRentang(personel, fasilitas, logbook, mulai, akhir, HARI_INI);
     RQ.daftar.forEach((x) => { x.regu = reguBertugasJadwal(x.tanggal, x.shift); });
-    if (regu !== 'all') RQ.daftar = RQ.daftar.filter((x) => x.regu === regu);
+    RQ.semuaShift.forEach((x) => { x.regu = reguBertugasJadwal(x.tanggal, x.shift); });
+    if (regu !== 'all') { RQ.daftar = RQ.daftar.filter((x) => x.regu === regu); RQ.semuaShift = RQ.semuaShift.filter((x) => x.regu === regu); }
   }
   function renderSemua() { renderPersonel(); renderFasilitas(); renderKejadian(); renderKepatuhan(); gambarGrafikTren(); }
 

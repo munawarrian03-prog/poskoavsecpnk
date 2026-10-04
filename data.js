@@ -347,7 +347,7 @@
     const s = pecah(startISO), e = pecah(endISO);
     const bikinSet = (list) => { const set = new Set(); (list || []).forEach((r) => { if (dalamRentang(r && r.tanggal, startISO, endISO)) set.add(r.tanggal + '|' + shiftKey(r.shift)); }); return set; };
     const adaP = bikinSet(personelList), adaF = bikinSet(fasilitasList), adaL = bikinSet(logbookList);
-    const now = hariIni.getTime(), daftar = [], cur = new Date(s.y, s.m, s.d), akhir = new Date(e.y, e.m, e.d);
+    const now = hariIni.getTime(), daftar = [], semuaShift = [], cur = new Date(s.y, s.m, s.d), akhir = new Date(e.y, e.m, e.d);
     let cP = 0, cF = 0, cL = 0, totalDinilai = 0;
     while (cur <= akhir) {
       const y = cur.getFullYear(), m = cur.getMonth(), d = cur.getDate();
@@ -356,6 +356,7 @@
         if (now - akhirShift < 12 * 3600000) return;   // belum jatuh tempo (jeda 12 jam std) -> tidak dinilai sama sekali
         totalDinilai++;
         const tgl = fmtISO(y, m, d), key = tgl + '|' + k, kurang = [];
+        semuaShift.push({ tanggal: tgl, shift: label }); // SEMUA shift yg dinilai (lengkap maupun belum) -- dipakai utk kepatuhan PER REGU
         if (!adaP.has(key)) { kurang.push('Personel'); cP++; }
         if (!adaF.has(key)) { kurang.push('Fasilitas'); cF++; }
         if (!adaL.has(key)) { kurang.push('Log Book'); cL++; }
@@ -364,7 +365,7 @@
       cur.setDate(cur.getDate() + 1);
     }
     daftar.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
-    return { total: totalDinilai, personelBelum: cP, fasilitasBelum: cF, logbookBelum: cL, daftar };
+    return { total: totalDinilai, personelBelum: cP, fasilitasBelum: cF, logbookBelum: cL, daftar, semuaShift };
   }
 
   function statKejadian(list, y, m, hariIni) {
