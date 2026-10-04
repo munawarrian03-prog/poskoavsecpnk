@@ -185,38 +185,6 @@
   }
 
   /* =========================================================
-     TANGGAL MEKAR (klik baris -> tampilkan tanggal di bawahnya)
-     ========================================================= */
-  function badgeTanggal(list) {
-    return list.map((x) => {
-      const alasan = x.alasan || null, warna = alasan ? (WARNA_ALASAN[alasan] || '#B9C4D6') : '#8A94A6';
-      return `<span class="tgi"><i style="background:${warna}"></i>${E(tglPendek(x.tgl || x))}${alasan ? ' &middot; ' + E(alasan) : ''}</span>`;
-    }).join('');
-  }
-  function toggleMekar(rowEl, isiHtml) {
-    const next = rowEl.nextElementSibling;
-    if (next && next.classList.contains('mekar')) { next.remove(); return; }
-    document.querySelectorAll('tr.mekar').forEach((r) => r.remove());
-    const tr = document.createElement('tr'); tr.className = 'mekar';
-    const kolom = rowEl.children.length;
-    tr.innerHTML = `<td colspan="${kolom}">${isiHtml}</td>`;
-    rowEl.parentElement.insertBefore(tr, rowEl.nextSibling);
-  }
-
-  // Tabel yang barisnya bisa diklik: aksi klik HANYA dipasang ke baris tabel ini sendiri
-  // (id unik), supaya data tabel lain (mis. Personel) tidak ikut menempel ke baris tabel ini.
-  let nomorTabel = 0;
-  function tabelKlik(rows, thead, trs) {
-    const id = 'rtbl' + (++nomorTabel);
-    setTimeout(() => {
-      document.querySelectorAll(`#${id} tr.klik`).forEach((tr) => {
-        tr.onclick = () => { const i = +tr.dataset.i; if (rows[i]) toggleMekar(tr, badgeTanggal(rows[i].tanggal)); };
-      });
-    }, 0);
-    return `<table class="rtbl" id="${id}"><thead><tr>${thead}</tr></thead><tbody>${trs}</tbody></table>`;
-  }
-
-  /* =========================================================
      BLOK PERSONEL
      ========================================================= */
   // Hitung jumlah hari per alasan dari tanggal[] milik satu personel: { "Sakit": 3, "Cuti Tahunan": 2 }
@@ -276,8 +244,8 @@
     const rows = daftar;
     if (!rows.length) return '<div class="empty">Belum ada masalah fasilitas<br>dilaporkan pada rentang ini.</div>';
     const warna = (j) => j === 'Rusak' ? '#A82F24' : '#9A5F12', bg = (j) => j === 'Rusak' ? '#FBE9E7' : '#FCF1DF';
-    const trs = rows.map((x, i) => `<tr class="klik" data-i="${i}"><td>${i + 1}</td><td class="nm">${E(x.item)}</td><td>${E(x.pos)}</td><td><b>${x.jumlah}</b></td><td><span class="tag" style="background:${bg(x.jenis)};color:${warna(x.jenis)}">${E(x.jenis)}</span></td><td class="col-tgl"><span class="tgi"><i style="background:#8A94A6"></i>${E(ringkasTanggalList(x.tanggal))}</span></td></tr>`).join('');
-    return tabelKlik(rows, '<th>#</th><th>Item</th><th>Pos</th><th>Kali</th><th>Jenis</th><th>Tanggal</th>', trs);
+    const trs = rows.map((x, i) => `<tr><td>${i + 1}</td><td class="nm">${E(x.item)}</td><td>${E(x.pos)}</td><td><b>${x.jumlah}</b></td><td><span class="tag" style="background:${bg(x.jenis)};color:${warna(x.jenis)}">${E(x.jenis)}</span></td><td class="col-tgl"><span class="tgi"><i style="background:#8A94A6"></i>${E(ringkasTanggalList(x.tanggal))}</span></td></tr>`).join('');
+    return `<table class="rtbl"><thead><tr><th>#</th><th>Item</th><th>Pos</th><th>Kali</th><th>Jenis</th><th>Tanggal</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
   function renderFasilitas() {
     const r = RF;
@@ -289,7 +257,7 @@
     $('rowFasilitasTren').innerHTML = `
 <div class="dcard c6 r250"><div class="h"><div><h3>Tren Masalah Fasilitas per ${UNIT[r.granularitas]}</h3><div class="sub">Rentang terpilih</div></div></div>${wadahGrafikTren('grafikTrenFasilitas', r.tren, '#D9A24B')}</div>
 <div class="dcard c6 r250"><div class="h"><div><h3>Masalah per Pos</h3><div class="sub">Komposisi rentang terpilih</div></div></div>${grafikDonatPos(r.daftar) || '<div class="empty">Belum ada masalah fasilitas<br>pada rentang ini.</div>'}</div>`;
-    $('rowFasilitas1').innerHTML = `<div class="dcard c12 rauto"><div class="h"><div><h3>Alat Bermasalah</h3><div class="sub">${r.daftar.length} item &bull; klik baris untuk lihat tanggal</div></div></div>${tabelFasilitas(r.daftar)}</div>`;
+    $('rowFasilitas1').innerHTML = `<div class="dcard c12 rauto"><div class="h"><div><h3>Alat Bermasalah</h3><div class="sub">${r.daftar.length} item &bull; diurutkan dari yang terbanyak</div></div></div>${tabelFasilitas(r.daftar)}</div>`;
   }
 
   /* =========================================================
