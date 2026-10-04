@@ -163,16 +163,23 @@
   // -> cincinnya 100%. Grup yang di rentang ini tidak kebagian shift sama sekali (data Jadwal
   // Dinas) ditandai "-" (abu-abu), bukan 0%, supaya tidak disalahartikan sbg "sama sekali tidak
   // patuh" padahal datanya memang belum ada.
+  // Ukuran cincin "auto-fit" mengikuti ruang yang tersedia (height:100%;width:auto, viewBox
+  // bujur sangkar jadi lebar ikut proporsional) -- BUKAN ukuran tetap lagi -- supaya donat
+  // membesar memenuhi luas kartu, tapi kartunya sendiri (c4 rauto) sudah dibatasi CSS Grid
+  // stretch supaya tingginya tidak pernah melebihi kartu "Daftar Shift Belum Lengkap" di
+  // sampingnya (rauto jg, baris grid yg sama) -- jadi otomatis tidak akan melebihi itu.
   function cincinKepatuhan(grup, pct, warna, adaData) {
     const R = 30, lebar = 8, cx = 36, cy = 36, keliling = 2 * Math.PI * R;
     const dash = adaData ? Math.max(0, Math.min(1, pct / 100)) * keliling : 0;
-    return `<div style="display:flex;flex-direction:column;align-items:center;gap:5px">
-<svg viewBox="0 0 72 72" style="width:100%;max-width:88px;display:block">
+    return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:0;height:100%;width:100%">
+<div style="flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center">
+<svg viewBox="0 0 72 72" style="width:auto;height:auto;max-width:100%;max-height:100%;display:block">
 <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#E9EDF4" stroke-width="${lebar}"/>
 <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${warna}" stroke-width="${lebar}" stroke-linecap="round" stroke-dasharray="${dash} ${keliling}" transform="rotate(-90 ${cx} ${cy})"/>
 <text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="15" font-weight="800" fill="#10243D">${adaData ? pct + '%' : '-'}</text>
 </svg>
-<div style="font-size:11px;font-weight:700;color:#1A2233;display:flex;align-items:center;gap:5px;white-space:nowrap"><i style="width:8px;height:8px;border-radius:2px;background:${warna};flex:none"></i>Grup ${E(grup)}</div>
+</div>
+<div style="font-size:11px;font-weight:700;color:#1A2233;display:flex;align-items:center;gap:5px;white-space:nowrap;flex:none"><i style="width:8px;height:8px;border-radius:2px;background:${warna};flex:none"></i>Grup ${E(grup)}</div>
 </div>`;
   }
   function grafikKepatuhanPerGrup(totalPerGrup, belumPerGrup, takTerpetakan, warnaMap) {
@@ -182,8 +189,8 @@
       return cincinKepatuhan(g, pct, warnaMap[g], adaData);
     }).join('');
     const catatanTak = takTerpetakan > 0 ? `<div style="font-size:10px;color:#8A94A6;font-weight:600;text-align:center;flex:none">${takTerpetakan} shift belum lengkap regu-nya tak terpetakan</div>` : '';
-    return `<div style="display:flex;flex-direction:column;flex:1;min-height:0;justify-content:center;gap:8px">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 8px;place-items:center">${cincin}</div>
+    return `<div style="display:flex;flex-direction:column;flex:1;min-height:0;gap:8px">
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px 8px">${cincin}</div>
 ${catatanTak}
 </div>`;
   }
