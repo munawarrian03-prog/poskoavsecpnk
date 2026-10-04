@@ -201,8 +201,9 @@ input[type=range] { padding: 0; border: none; height: 18px; accent-color: var(--
 .seg-btn { display: flex; align-items: center; position: relative; }
 .seg-btn > .lbl { background: transparent; color: var(--text-muted); border: none; padding: 8px 10px 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; border-radius: 8px 0 0 8px; transition: background .15s ease, color .15s ease; }
 .seg-btn > .lbl:hover { color: var(--ink); }
-.seg-btn > .caret { background: transparent; color: var(--ink); border: none; width: 22px; padding: 8px 6px; font-size: 9px; cursor: pointer; border-radius: 0 8px 8px 0; opacity: 0; transition: opacity .15s ease, background .15s ease; }
-.seg-btn:hover > .caret, .seg-btn.ddopen > .caret { opacity: 1; background: #EEF1F6; }
+.seg-btn > .caret { display: flex; align-items: center; justify-content: center; background: transparent; color: var(--ink); border: none; width: 26px; padding: 8px 4px; cursor: pointer; border-radius: 0 8px 8px 0; transition: background .15s ease; }
+.seg-btn > .caret svg { width: 18px; height: 18px; flex: none; fill: currentColor; }
+.seg-btn:hover > .caret, .seg-btn.ddopen > .caret { background: #EEF1F6; }
 .seg-btn.on > .lbl { background: #fff; color: var(--ink); }
 .dd-jenis { display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 250px; background: #fff; border: 1px solid var(--border-color); border-radius: 10px; box-shadow: 0 12px 32px rgba(16,36,61,.22); z-index: 90; overflow: hidden; }
 .dd-jenis.open { display: block; }
