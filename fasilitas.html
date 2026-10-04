@@ -433,15 +433,18 @@ function generateWAText() {
   out += `Hari/Tgl: ${formatTanggalIndo(t)}\nShift : ${s || '-'}\nRegu : ${r || '-'}\n\n`;
   posFasilitas.forEach((p) => {
     const baris = [];
-    // kelompokkan Bentuk A dgn kondisi+status+keterangan sama
+    // kelompokkan Bentuk A HANYA kalau item-nya "sama" (varian bernomor dari item yang sama,
+    // mis. "Mesin X-Ray Line 1/2/3") dan kondisi+status+keterangan juga sama. Item berbeda
+    // (mis. Locker vs Panic Button) selalu dapat bullet sendiri meski kondisinya sama-sama Baik.
+    const namaDasar = (n) => String(n || '').replace(/\s*\d+$/, '').trim();
     const grupA = new Map();
     p.items.filter((i) => i.bentuk === 'A').forEach((it) => {
-      const key = it.kondisi + '|' + it.status + '|' + rapikan(it.keterangan);
+      const key = namaDasar(it.name) + '|' + it.kondisi + '|' + it.status + '|' + rapikan(it.keterangan);
       if (!grupA.has(key)) grupA.set(key, []);
       grupA.get(key).push(it.name);
     });
     grupA.forEach((nama, key) => {
-      const [kondisi, status, ket] = key.split('|');
+      const [, kondisi, status, ket] = key.split('|');
       let ketTxt = status === 'Digunakan' && kondisi === 'Baik' ? '' : `, ${status.toLowerCase()}`;
       baris.push(`- ${nama.join(', ')}: ${kondisi}${ketTxt}${ket ? ' (' + ket + ')' : ''}.`);
     });

@@ -26,8 +26,8 @@ const POS_FASILITAS_BAWAAN = [
     name: 'POSKO',
     items: [
       { id: 'posko_pc',   name: 'Komputer/PC',  bentuk: 'A' },
-      { id: 'posko_pabx', name: 'PABX/Telepon', bentuk: 'A' }
-      // Tanpa item Kelengkapan (C) — POSKO tidak punya dokumen yang dicek di sini.
+      { id: 'posko_pabx', name: 'PABX/Telepon', bentuk: 'A' },
+      { id: 'posko_dok',  name: 'Dokumen',      bentuk: 'C' }
     ]
   },
   {
@@ -100,8 +100,8 @@ const POS_FASILITAS_BAWAAN = [
       { id: 'cctv_mon',    name: 'Monitor',      bentuk: 'B', jumlahBawaan: 8 },
       { id: 'cctv_ups',    name: 'UPS',          bentuk: 'B', jumlahBawaan: 2 },
       { id: 'cctv_charger',name: 'Charger HT',   bentuk: 'B', jumlahBawaan: 2 },
-      { id: 'cctv_ht',     name: 'Handy Talky',  bentuk: 'B', jumlahBawaan: 10 }
-      // Tanpa item Kelengkapan (C) — belum disepakati CCTV punya dokumen yang dicek.
+      { id: 'cctv_ht',     name: 'Handy Talky',  bentuk: 'B', jumlahBawaan: 10 },
+      { id: 'cctv_dok',    name: 'Dokumen',      bentuk: 'C' }
     ]
   },
   {
@@ -114,16 +114,16 @@ const POS_FASILITAS_BAWAAN = [
       { id: 'ascp_lock',    name: 'Locker',              bentuk: 'A' },
       { id: 'ascp_mirror',  name: 'Mirror Detector',     bentuk: 'A' },
       { id: 'ascp_charger', name: 'Charger HT',          bentuk: 'A' },
-      { id: 'ascp_ht',      name: 'Handy Talky', bentuk: 'B', jumlahBawaan: 4 }
-      // Tanpa item Kelengkapan (C).
+      { id: 'ascp_ht',      name: 'Handy Talky', bentuk: 'B', jumlahBawaan: 4 },
+      { id: 'ascp_dok',     name: 'Dokumen',     bentuk: 'C' }
     ]
   },
   {
     id: 'ph_protection', // = "PUBLIC HALL" di kategori.js
     name: 'Public Hall',
     items: [
-      { id: 'ph_patroli', name: 'Mobil Patroli-03', bentuk: 'A' }
-      // Tanpa item Kelengkapan (C).
+      { id: 'ph_patroli', name: 'Mobil Patroli-03', bentuk: 'A' },
+      { id: 'ph_dok',     name: 'Dokumen',          bentuk: 'C' }
     ]
   }
 
