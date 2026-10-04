@@ -223,10 +223,14 @@
     return `<div><div style="display:flex;align-items:center;justify-content:space-between;width:100%">${cincin}</div>${catatanTak}</div>`;
   }
 
+  // Nama penanda tangan Rekap SELALU tetap (bukan diambil dari laporan shift mana pun) --
+  // beda dari Fasilitas/Personel/Log Book yang nama penyusunnya ambil dari Laporan Personel.
+  const TTD_COORDINATOR = 'MIHARTI';
+  const TTD_DEPT_HEAD = 'ARIES DARTA';
   function ttdDua() {
     return `<div class="ttd-block" style="page-break-inside:avoid;break-inside:avoid;display:flex;justify-content:space-around;margin-top:24mm;text-align:center">
-<div><div style="font-size:9pt;color:#000">Dibuat oleh,</div><div style="font-size:9pt;font-weight:800;margin-top:2px;color:#000">Airport Security Coordinator</div><div style="height:16mm">&nbsp;</div><div style="font-size:9pt;font-weight:400;color:#000">( .................................. )</div></div>
-<div><div style="font-size:9pt;color:#000">Mengetahui,</div><div style="font-size:9pt;font-weight:800;margin-top:2px;color:#000">Airport Security Department Head</div><div style="height:16mm">&nbsp;</div><div style="font-size:9pt;font-weight:400;color:#000">( .................................. )</div></div>
+<div><div style="font-size:9pt;color:#000">Dibuat oleh,</div><div style="font-size:9pt;font-weight:800;margin-top:2px;color:#000">Airport Security Coordinator</div><div style="height:16mm">&nbsp;</div><div style="font-size:9pt;font-weight:400;color:#000">( ${esc(TTD_COORDINATOR)} )</div></div>
+<div><div style="font-size:9pt;color:#000">Mengetahui,</div><div style="font-size:9pt;font-weight:800;margin-top:2px;color:#000">Airport Security Department Head</div><div style="height:16mm">&nbsp;</div><div style="font-size:9pt;font-weight:400;color:#000">( ${esc(TTD_DEPT_HEAD)} )</div></div>
 </div>`;
   }
 
