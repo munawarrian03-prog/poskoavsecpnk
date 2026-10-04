@@ -218,7 +218,9 @@
       return cincinKepatuhanPdf(g, pct, WARNA_GRUP[g], adaData);
     }).join('');
     const catatanTak = takTerpetakan > 0 ? `<div style="font-size:7.5pt;color:#000;margin-top:6px">${takTerpetakan} shift belum lengkap regu-nya tak terpetakan.</div>` : '';
-    return `<div><div style="display:flex;align-items:center;gap:22px">${cincin}</div>${catatanTak}</div>`;
+    // rata kiri-kanan, jarak antar cincin seimbang (bukan ngumpul rata kiri) -- cincin pertama
+    // mepet sisi kiri, cincin terakhir mepet sisi kanan, sisanya tersebar merata di antaranya.
+    return `<div><div style="display:flex;align-items:center;justify-content:space-between;width:100%">${cincin}</div>${catatanTak}</div>`;
   }
 
   function ttdDua() {
