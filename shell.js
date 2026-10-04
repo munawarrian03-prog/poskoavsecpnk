@@ -45,31 +45,69 @@
   };
 
   /* ---------- Bilah atas + navigasi utama ----------
-     Menu beda per peran (flat, tanpa dropdown):
-     - Posko : Beranda, Laporan Personel, Laporan Fasilitas, Log Book, Laporan Kejadian, Jadwal Dinas
-     - Admin : Beranda, Pantau Laporan, Rekap, Laporan Kejadian, Jadwal Dinas
-       (Personel/Fasilitas/Log Book disembunyikan dari menu Admin, tapi tetap bisa diakses
-       langsung lewat URL -- tidak diblokir.) */
+     Beranda + 3 menu pertama per peran bersifat TETAP (statis, tidak pernah disembunyikan
+     atau bergeser). Tepat setelah itu ada SATU slot dinamis (default: Laporan Kejadian),
+     lalu ikon carousel di ujung kanan yang membuka daftar menu tersembunyi (Jadwal Dinas,
+     dkk). Klik salah satu item di daftar itu -> ia maju mengisi slot dinamis, dan
+     penghuni slot dinamis sebelumnya otomatis masuk lagi ke daftar tersembunyi (lihat
+     Logika Penukaran Menu). Isi slot dinamis disimpan per peran di localStorage supaya
+     konsisten dipindah antar halaman (tiap halaman = full page load baru). */
+  const JUMLAH_TETAP = 3; // selain Beranda
   const MENU_ADMIN = [
-    ['beranda', 'Beranda', 'index.html', 'home'],
     ['pantau', 'Pantau Laporan', 'pantau-posko.html', 'search'],
     ['rekap', 'Rekap', 'rekap.html', 'chart'],
     ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
     ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
   ];
   const MENU_POSKO = [
-    ['beranda', 'Beranda', 'index.html', 'home'],
     ['personel', 'Laporan Personel', 'laporan-personel.html', 'people'],
     ['fasilitas', 'Laporan Fasilitas', 'fasilitas.html', 'wrench'],
     ['logbook', 'Log Book', 'logbook.html', 'book'],
     ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
     ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
   ];
+  const kunciDinamis = (peran) => 'avsNavDinamis_' + peran;
+  function menuPeran(peran) { return peran === 'admin' ? MENU_ADMIN : MENU_POSKO; }
+  function bacaDinamis(peran, urutanKey) {
+    const bawaan = urutanKey[JUMLAH_TETAP] || urutanKey[urutanKey.length - 1]; // default: item ke-4 (mis. Kejadian)
+    const simpan = localStorage.getItem(kunciDinamis(peran));
+    return (simpan && urutanKey.includes(simpan)) ? simpan : bawaan;
+  }
+  function simpanDinamis(peran, key) { localStorage.setItem(kunciDinamis(peran), key); }
   function renderNav(aktif) {
     const peran = (typeof root.AVS_PERAN === 'function') ? root.AVS_PERAN() : null;
-    const menu = peran === 'admin' ? MENU_ADMIN : MENU_POSKO;
-    return menu.map(([k, t, href, ic]) => `<a class="nav-btn ${k === aktif ? 'active' : ''}" href="${href}">${AVS.svg(IC[ic])}<span>${t}</span></a>`).join('');
+    const peranKey = peran || 'posko';
+    const menu = menuPeran(peranKey);
+    const byKey = {};
+    menu.forEach(([k, t, href, ic]) => { byKey[k] = { t, href, ic }; });
+    const urutanKey = menu.map((it) => it[0]);
+    const tetap = urutanKey.slice(0, JUMLAH_TETAP);
+    let dinamis = bacaDinamis(peranKey, urutanKey);
+    // Kalau halaman yang sedang aktif ada di daftar tersembunyi (mis. dibuka langsung lewat
+    // URL/bookmark, bukan lewat klik carousel), majukan ia ke slot dinamis supaya tetap
+    // kelihatan -- menu aktif tidak boleh tersembunyi di balik ikon carousel.
+    if (aktif !== 'beranda' && urutanKey.includes(aktif) && !tetap.includes(aktif) && aktif !== dinamis) {
+      dinamis = aktif;
+      simpanDinamis(peranKey, dinamis);
+    }
+    const tersembunyi = urutanKey.filter((k) => !tetap.includes(k) && k !== dinamis);
+    const tombolBeranda = `<a class="nav-btn ${aktif === 'beranda' ? 'active' : ''}" href="index.html" title="Beranda">${AVS.svg(IC.home)}<span>Beranda</span></a>`;
+    const tombolMenu = (k) => { const it = byKey[k]; return `<a class="nav-btn ${k === aktif ? 'active' : ''}" href="${it.href}" title="${AVS.esc(it.t)}">${AVS.svg(IC[it.ic])}<span>${AVS.esc(it.t)}</span></a>`; };
+    const ddItem = (k) => { const it = byKey[k]; return `<a href="${it.href}" data-k="${k}" data-peran="${peranKey}">${AVS.svg(IC[it.ic])}${AVS.esc(it.t)}</a>`; };
+    // Ikon tombol carousel mengikuti menu PALING DEPAN di daftar tersembunyi (bukan ikon
+    // titik-tiga generik) -- jadi pratinjau menu berikutnya, bukan sekadar "ada lagi nih".
+    let ikonCarousel = '';
+    if (tersembunyi.length) {
+      const itDekat = byKey[tersembunyi[0]];
+      ikonCarousel = `<div class="nav-ov"><button type="button" class="nav-btn nav-ov-btn" title="${AVS.esc(itDekat.t)}">${AVS.svg(IC[itDekat.ic])}</button><div class="nav-ov-dd">${tersembunyi.map(ddItem).join('')}</div></div>`;
+    }
+    return tombolBeranda + tetap.map(tombolMenu).join('') + tombolMenu(dinamis) + ikonCarousel;
   }
+  // Dipanggil saat salah satu item di daftar tersembunyi diklik: pindahkan ia ke slot dinamis
+  // SEBELUM link-nya dibiarkan navigasi normal ke halaman tujuan (localStorage sinkron,
+  // jadi aman tanpa preventDefault). Penghuni slot dinamis sebelumnya otomatis kembali ke
+  // daftar tersembunyi dgn sendirinya di render berikutnya (dihitung dari "tetap"+dinamis baru).
+  function pilihDariOverflow(peran, key) { simpanDinamis(peran, key); }
   AVS.tanggalPendek = (d) => `${AVS.HARI[d.getDay()].slice(0, 3)}, ${d.getDate()} ${AVS.BULAN_PENDEK[d.getMonth()]} ${d.getFullYear()}`;
   function renderProfil() {
     if (typeof root.AVS_PERAN !== 'function') return '';
@@ -89,10 +127,24 @@
       `<nav>${renderNav(aktif)}</nav>` +
       `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>${renderProfil()}`;
     pasangTombolProfil(el);
+    pasangCarousel(el);
     document.addEventListener('click', (e) => {
-      el.querySelectorAll('.prof-wrap.open').forEach((w) => { if (!w.contains(e.target)) w.classList.remove('open'); });
+      el.querySelectorAll('.prof-wrap.open, .nav-ov.open').forEach((w) => { if (!w.contains(e.target)) w.classList.remove('open'); });
     });
   };
+  function pasangCarousel(el) {
+    el.querySelectorAll('.nav-ov-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const wrap = btn.parentElement, sudahBuka = wrap.classList.contains('open');
+        el.querySelectorAll('.nav-ov.open').forEach((w) => w.classList.remove('open'));
+        wrap.classList.toggle('open', !sudahBuka);
+      });
+    });
+    el.querySelectorAll('.nav-ov-dd a[data-k]').forEach((a) => {
+      a.addEventListener('click', () => { pilihDariOverflow(a.dataset.peran, a.dataset.k); }); // navigasi href dibiarkan jalan normal
+    });
+  }
   function pasangTombolProfil(el) {
     const profBtn = el.querySelector('.prof-btn');
     if (profBtn) profBtn.addEventListener('click', (e) => { e.preventDefault(); profBtn.parentElement.classList.toggle('open'); });

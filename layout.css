@@ -16,14 +16,29 @@
 #topBar .ttl b { display: block; font-size: 15px; font-weight: 800; letter-spacing: 4px; }
 #topBar .ttl span { font-size: 8.5px; color: #A9BBD4; font-weight: 600; letter-spacing: -.2px; }
 #topBar nav { display: flex; gap: 4px; margin-left: 18px; }
-#topBar nav a.nav-btn { display: flex; gap: 7px; align-items: center; color: #C9D6E8; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 8px; text-decoration: none; background: transparent; box-shadow: none; white-space: nowrap; }
-#topBar nav a.nav-btn svg { width: 15px; height: 15px; fill: currentColor; }
-#topBar nav a.nav-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+#topBar nav .nav-btn { display: flex; gap: 7px; align-items: center; color: #C9D6E8; font-size: 12px; font-weight: 700; padding: 7px 14px; border: none; border-radius: 8px; text-decoration: none; background: transparent; box-shadow: none; white-space: nowrap; cursor: pointer; font-family: inherit; }
+#topBar nav .nav-btn svg { width: 15px; height: 15px; fill: currentColor; }
+#topBar nav .nav-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
 #topBar nav a.nav-btn.active { background: #fff; color: var(--ink); }
 #topBar .tsp { flex: 1; }
 #topBar .chip2 { font-size: 10.5px; font-weight: 700; color: #DCE6F3; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 8px; padding: 5px 10px; display: flex; gap: 6px; align-items: center; white-space: nowrap; }
 #topBar .chip2 svg { width: 13px; height: 13px; fill: #DCE6F3; }
 body.focus #topBar { display: none; }
+
+/* ---- ikon carousel (daftar menu tersembunyi), selalu di ujung paling kanan ----
+   Warna sengaja dibedakan dari menu aktif (putih solid) maupun menu biasa (transparan) --
+   pakai gaya "chip" translusen yang sama dengan chip tanggal/ikon profil di topbar, supaya
+   terbaca sebagai kontrol (pembuka daftar), bukan tujuan navigasi. ---- */
+#topBar nav .nav-ov { position: relative; }
+#topBar nav .nav-ov-btn { padding: 7px 10px !important; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); color: #C9D6E8; }
+#topBar nav .nav-ov-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
+#topBar nav .nav-ov.open .nav-ov-btn { background: rgba(255,255,255,.24); border-color: rgba(255,255,255,.3); color: #fff; }
+#topBar nav .nav-ov-dd { position: absolute; top: calc(100% + 8px); right: 0; background: #fff; border-radius: 10px; box-shadow: 0 12px 32px rgba(16,36,61,.28); padding: 6px; min-width: 196px; display: none; z-index: 200; }
+#topBar nav .nav-ov.open .nav-ov-dd { display: block; }
+#topBar nav .nav-ov-dd a { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 7px; color: #10243D; font-weight: 700; font-size: 12.5px; text-decoration: none; }
+#topBar nav .nav-ov-dd a svg { width: 14px; height: 14px; fill: currentColor; opacity: .65; flex: none; }
+#topBar nav .nav-ov-dd a:hover { background: #F4F6FA; }
+
 
 /* ---- ikon profil + dropdown (nama peran yang login & Keluar) ---- */
 #topBar .prof-wrap { position: relative; flex: none; }
@@ -160,3 +175,20 @@ body.locked #pitaUpdate { display: none; }
 .lihat-total { font-size: 11.5px; font-weight: 800; color: var(--ink); text-align: center; letter-spacing: .3px; margin: 2px 0 10px; }
 .lihat-total b { color: var(--secondary-hover); }
 .lihat-footer { font-size: 11px; font-weight: 700; color: var(--text-muted); text-align: right; padding-top: 4px; }
+
+/* ---- jaga-jaga di lebar minimum app (AVS.MIN_LEBAR = 1024px): padatkan topbar supaya
+   tidak overflow -- 4 menu tetap + 1 slot dinamis selalu tampil teks penuh (sesuai
+   ketentuan, tidak boleh disembunyikan/jadi ikon), jadi ruang dihemat dari krom di
+   sekitarnya (judul brand, chip tanggal, logo, padding/jarak), bukan dari label menu.
+   Diletakkan di akhir file & selektornya disamakan spesifisitasnya dengan aturan dasar
+   supaya override-nya benar2 berlaku (bukan kalah oleh aturan dasar yang lebih spesifik
+   atau lebih belakangan di file). ---- */
+@media (max-width: 1150px) {
+  #topBar .ttl span { display: none; }
+  #topBar .ttl b { letter-spacing: .5px; }
+  #topBar.topbar { gap: 8px; padding: 0 10px 0 8px; }
+  #topBar .lg, #topBar .prof-btn { width: 28px; height: 28px; }
+  #topBar nav { margin-left: 6px; gap: 1px; }
+  #topBar nav .nav-btn { padding: 7px 6px; gap: 4px; font-size: 11.5px; }
+  #topBar .chip2 { padding: 5px 7px; font-size: 10px; gap: 4px; }
+}
