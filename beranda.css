@@ -87,6 +87,23 @@ a.pill:hover { background: #CDE9EB; }
 .note { font-size: 10.5px; color: var(--text-muted); font-weight: 500; padding: 0 4px 4px; flex-shrink: 0; }
 svg .col { cursor: default; }
 
+/* ---------- Mockup: section "Bulanan" (pengganti "Bulan Ini") ---------- */
+.bulanan-head { align-items: center; }
+.mata-btn { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; background: #EEF5E7; color: #3F6B2E; flex: none; border: none; cursor: pointer; text-decoration: none; }
+.mata-btn:hover { background: #DCEFD2; }
+.mata-btn svg { width: 15px; height: 15px; fill: currentColor; }
+.ev.bast .dt { background: #E4F3F4; }
+.ev.bast .dt b { color: var(--secondary); }
+.ev.bast .dt span { color: #0F5F65; }
+.kepat-grid { display: flex; flex-direction: column; gap: 9px; flex: 1; justify-content: center; }
+.kepat-row { display: flex; align-items: center; gap: 10px; }
+.kepat-row .kr-lbl { font-size: 11.5px; font-weight: 700; color: var(--text-main); width: 92px; flex: none; }
+.kepat-row .kr-track { flex: 1; height: 9px; border-radius: 5px; background: #EAEFF5; overflow: hidden; }
+.kepat-row .kr-track i { display: block; height: 100%; border-radius: 5px; }
+.kepat-row .kr-val { font-size: 12.5px; font-weight: 800; color: var(--ink); width: 54px; text-align: right; flex: none; }
+.kepat-total { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: 2px; text-align: center; }
+.kepat-total b { color: var(--ink); font-weight: 800; }
+
 #isi { display: flex; flex-direction: column; gap: 12px; }
 
 /* ---- kartu KPI yang bisa diklik (shift belum dilaporkan) ---- */

@@ -286,7 +286,7 @@
   function statFasilitasRentang(list, startISO, endISO, regu) {
     regu = regu || 'all';
     const bermasalah = new Map(); let laporanTersimpan = 0, totalMasalah = 0, tidakDigunakan = 0, dokTotal = 0, dokLengkap = 0;
-    const shiftAda = new Set();
+    const shiftAda = new Set(); const tanggalMasalah = []; // satu entri per kejadian masalah -> dipakai utk tren
     (list || []).forEach((r) => {
       const tgl = r && r.tanggal; if (!dalamRentang(tgl, startISO, endISO)) return;
       if (regu !== 'all' && reguKey(r.regu) !== regu) return;
@@ -305,6 +305,7 @@
         }
         if (!jenisList.length) return;
         totalMasalah += jenisList.length;
+        jenisList.forEach(() => tanggalMasalah.push(tgl));
         const key = (p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
         if (!e) { e = { item: rapikan(it.name), pos: rapikan(p.name), jumlah: 0, jenis: {}, tanggal: [] }; bermasalah.set(key, e); }
         e.jumlah += jenisList.length; e.tanggal.push(tgl);
@@ -313,7 +314,8 @@
     });
     const dominan = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0][0];
     const daftar = Array.from(bermasalah.values()).map((e) => ({ item: e.item, pos: e.pos, jumlah: e.jumlah, jenis: dominan(e.jenis), tanggal: e.tanggal.sort().reverse() })).sort((a, b) => b.jumlah - a.jumlah || a.item.localeCompare(b.item, 'id'));
-    return { totalMasalah, tidakDigunakan, dokTotal, dokLengkap, dokPct: dokTotal > 0 ? Math.round(dokLengkap / dokTotal * 100) : null, laporanTersimpan, shiftAda: shiftAda.size, daftar };
+    const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, tanggalMasalah);
+    return { totalMasalah, tidakDigunakan, dokTotal, dokLengkap, dokPct: dokTotal > 0 ? Math.round(dokLengkap / dokTotal * 100) : null, laporanTersimpan, shiftAda: shiftAda.size, daftar, tren, granularitas: bk.granularitas };
   }
 
   // Kejadian, GABUNGAN seluruh rentang (tidak dibedakan regu — Kejadian tidak mencatat regu).

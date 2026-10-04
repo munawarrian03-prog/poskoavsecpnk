@@ -18,7 +18,7 @@
 <div id="topBar"></div>
 
 <div class="rl-head">
-<div><h2>Rekap Laporan</h2><p>Panduan serah-terima untuk shift berikutnya</p></div>
+<div><h2>Dashboard</h2><p>Panduan serah-terima untuk shift berikutnya</p></div>
 <div class="rl-sp"></div>
 <div class="bell-wrap">
 <button type="button" class="bell-btn" id="btnBell" onclick="Beranda.bukaShiftKosong()" title="Laporan belum lengkap bulan ini">
@@ -39,18 +39,16 @@
 <div class="dcard c4 rauto"><div class="h"><div><h3>📓 Catatan Serah Terima</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
 </div>
 
-<div class="sec-lbl"><h4>Bulan Ini</h4><span id="bulanIniLabel"></span></div>
-<div class="grid12" id="rowBulanIni1">
-<div class="dcard c6 r250"><div class="h"><div><h3>Ketidakhadiran Terbanyak</h3><div class="sub">5 teratas bulan ini • dihitung per orang per hari</div></div></div><div class="empty">Memuat data…</div></div>
-<div class="dcard c6 r250"><div class="h"><div><h3>Alasan Ketidakhadiran</h3><div class="sub">Komposisi bulan ini</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="sec-lbl bulanan-head"><h4>Bulan</h4><div id="pilihBulanBulanan"></div></div>
+<div class="grid12" id="rowBulanan1">
+<div class="dcard c4 rauto"><div class="h"><div><h3>Ketidakhadiran Terbanyak</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Alasan Ketidakhadiran</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Fasilitas Sering Bermasalah</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
 </div>
-<div class="grid12" id="rowFasilitas">
-<div class="dcard c12 rauto"><div class="h"><div><h3>Fasilitas Sering Bermasalah</h3><div class="sub">5 teratas bulan ini</div></div></div><div class="empty">Memuat data…</div></div>
-</div>
-<div class="grid12" id="rowKejadian">
-<div class="dcard c4 r274"><div class="h"><div><h3>Jumlah Kejadian</h3><div class="sub">Bulan ini</div></div></div><div class="empty">Memuat data…</div></div>
-<div class="dcard c4 r274"><div class="h"><div><h3>Kejadian per Minggu</h3><div class="sub">Berdasarkan tanggal laporan kejadian</div></div></div><div class="empty">Memuat data…</div></div>
-<div class="dcard c4 r274"><div class="h"><div><h3>Kejadian Terbaru</h3><div class="sub">Klik untuk membuka laporan</div></div><a class="pill" href="kejadian.html#tersimpan">LIHAT SEMUA</a></div><div class="empty">Memuat data…</div></div>
+<div class="grid12" id="rowBulanan2">
+<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar Kejadian Terbaru</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar BAST Terbaru</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Shift Belum Lengkap</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
 </div>
 
 <div class="note" id="noteBawah"></div>
@@ -63,6 +61,15 @@
 <div class="modal-header"><span class="modal-title">LAPORAN BELUM LENGKAP</span><button type="button" class="modal-close" onclick="Beranda.tutupShiftKosong()">✕</button></div>
 <div class="modal-body" id="kosongBody"></div>
 <div class="modal-footer"><button type="button" class="btn-info" onclick="Beranda.salinPengingatKosong()">Salin Pengingat WA</button><button type="button" class="btn-cancel" onclick="Beranda.tutupShiftKosong()">Tutup</button></div>
+</div>
+</div>
+
+<!-- MODAL: DAFTAR SHIFT BELUM LENGKAP (rentang bulan terpilih) -->
+<div class="modal-overlay" id="kepatuhanOverlay">
+<div class="modal-container" style="max-width:640px">
+<div class="modal-header"><span class="modal-title">DAFTAR SHIFT BELUM LENGKAP</span><button type="button" class="modal-close" onclick="Beranda.tutupKepatuhan()">✕</button></div>
+<div class="modal-body" id="kepatuhanBody"></div>
+<div class="modal-footer"><button type="button" class="btn-cancel" onclick="Beranda.tutupKepatuhan()">Tutup</button></div>
 </div>
 </div>
 
