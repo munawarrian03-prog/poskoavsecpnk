@@ -121,6 +121,7 @@
   AVS.nav = function (aktif, el) {
     el = el || document.getElementById('topBar') || document.getElementById('mainNav');
     if (!el) return;
+    el.dataset.aktifHalaman = aktif; // diingat supaya bisa di-render ulang stlh gerbang PIN selesai (lihat AVS.renderNavUlang)
     el.className = 'topbar';
     el.innerHTML = `<div class="lg"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"></div>` +
       `<div class="ttl"><b>KAPUAS Supadio</b><span>Kanal Aplikasi Pelaporan Unit Airport Security</span></div>` +
@@ -159,6 +160,18 @@
     if (!html) { if (lama) lama.remove(); return; }
     if (lama) lama.outerHTML = html; else topBar.insertAdjacentHTML('beforeend', html);
     pasangTombolProfil(topBar);
+  };
+  // Render ulang SELURUH topbar (menu + profil) setelah gerbang PIN selesai -- dipanggil dari
+  // akses.js. Dibutuhkan krn tiap halaman biasanya memanggil AVS.nav(aktif) sendiri lewat
+  // DOMContentLoaded, TIDAK MENUNGGU gerbang PIN selesai -- kalau belum ada sesi saat itu,
+  // menunya kepalang dirender pakai peran bawaan (lihat renderNav: "peran || 'posko'") dan
+  // tidak pernah diperbarui lagi walau user lalu berhasil login sbg peran lain (termasuk
+  // peran yg SAMA setelah logout+login ulang) -- menu jadi salah/basi sampai halaman di-reload
+  // manual. Aman dipanggil kapan saja: no-op kalau topbar belum pernah dirender sama sekali.
+  AVS.renderNavUlang = function () {
+    const topBar = document.getElementById('topBar');
+    if (!topBar || topBar.dataset.aktifHalaman === undefined) return;
+    AVS.nav(topBar.dataset.aktifHalaman, topBar);
   };
 
   // Tautan pengiriman WhatsApp Web (dipakai laporan personel dan laporan kejadian agar perilakunya sama)

@@ -38,10 +38,12 @@
   root.AVS_KELUAR = () => { localStorage.removeItem(KUNCI_SESI); location.reload(); };
 
   // Terapkan tampilan sesuai peran. Menu topbar sendiri sudah dipilih per-peran di dalam
-  // shell.js (renderNav) setiap kali AVS.nav() dipanggil -- di sini tinggal gambar ulang
-  // ikon profil, karena topbar bisa sudah ter-render sebelum peran diketahui.
+  // shell.js (renderNav), tapi topbar bisa SUDAH ter-render SEBELUM peran diketahui (tiap
+  // halaman memanggil AVS.nav() sendiri lewat DOMContentLoaded, tidak menunggu gerbang PIN
+  // selesai) -- jadi di sini render ulang SELURUH topbar (bukan cuma ikon profil), supaya
+  // menu ikut benar begitu peran diketahui/berubah (lihat AVS.renderNavUlang).
   root.AVS_terapkanTampilanPeran = function () {
-    if (root.AVS && typeof root.AVS.renderProfilUlang === 'function') root.AVS.renderProfilUlang();
+    if (root.AVS && typeof root.AVS.renderNavUlang === 'function') root.AVS.renderNavUlang();
   };
 
   function overlay(html) {
