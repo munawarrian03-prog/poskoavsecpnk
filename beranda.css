@@ -104,6 +104,14 @@ svg .col { cursor: default; }
 .kepat-total { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: 2px; text-align: center; }
 .kepat-total b { color: var(--ink); font-weight: 800; }
 
+/* Modal "Daftar Shift Belum Lengkap" (#kepatuhanBody) pakai latar gelap (--console-bg) --
+   table.tp aslinya didesain utk kartu putih, jadi warna isi Tanggal & Shift perlu
+   ditimpa supaya kontras terhadap latar gelap (bukan warisi warna teks gelap default). */
+#kepatuhanBody table.tp th { color: #8DA0C2; border-bottom-color: var(--console-border); }
+#kepatuhanBody table.tp td { color: #F2F5FA; border-bottom-color: var(--console-border); }
+#kepatuhanBody table.tp .nm { color: #ffffff; }
+#kepatuhanBody table.tp tr:hover td { background: rgba(255,255,255,.04); }
+
 #isi { display: flex; flex-direction: column; gap: 12px; }
 
 /* ---- kartu KPI yang bisa diklik (shift belum dilaporkan) ---- */
