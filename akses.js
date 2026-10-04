@@ -57,7 +57,7 @@
     const tampilkanGanti = opsiTampil && opsiTampil.gantiPeran;
     const ov = overlay(`
 <div style="background:#fff;border-radius:16px;padding:32px 36px;width:320px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)">
-<img src="Logo/AVS-512.png" style="width:56px;height:56px;margin-bottom:10px">
+<img src="Logo/AVS-512.png" style="width:200px;height:200px;margin-bottom:10px">
 <div style="font-size:15px;font-weight:800;color:#10243D;margin-bottom:2px">${judul}</div>
 <div style="font-size:11px;color:#8A94A6;font-weight:600;margin-bottom:18px">Masukkan PIN untuk melanjutkan</div>
 <input id="gerbangPin" type="password" inputmode="numeric" placeholder="PIN" style="width:100%;height:42px;border:1px solid #D7DEE8;border-radius:8px;text-align:center;font-size:18px;letter-spacing:6px;font-weight:800;color:#10243D">
@@ -82,7 +82,7 @@ ${tampilkanGanti ? '<button id="gerbangBtnGanti" style="width:100%;height:30px;m
   function tampilkanPilihPeran(onBerhasil) {
     const ov = overlay(`
 <div style="background:#fff;border-radius:16px;padding:28px 32px;width:320px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)">
-<img src="Logo/AVS-512.png" style="width:56px;height:56px;margin-bottom:10px">
+<img src="Logo/AVS-512.png" style="width:200px;height:200px;margin-bottom:10px">
 <div style="font-size:15px;font-weight:800;color:#10243D;margin-bottom:4px">KAPUAS Supadio</div>
 <div style="font-size:11px;color:#8A94A6;font-weight:600;margin-bottom:18px">Pilih peran untuk masuk</div>
 <button id="pilihPosko" style="width:100%;height:46px;margin-bottom:10px;border:1px solid #D7DEE8;border-radius:10px;background:#F6F8FB;color:#10243D;font-weight:800;font-size:13px;cursor:pointer">Posko</button>

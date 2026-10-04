@@ -228,7 +228,7 @@
     const reguLabel = REGU_NAMA[filter.regu] || filter.regu;
 
     const sampul = `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;text-align:center;min-height:250mm;display:flex;flex-direction:column;align-items:center;justify-content:center">
-<img src="Logo/AVS-kop.png" style="height:100px;margin-bottom:18px">
+<img src="Logo/AVS-kop.png" style="height:200px;margin-bottom:18px">
 <div style="font-size:19pt;font-weight:800;color:#000">REKAP LAPORAN AVSEC</div>
 <div style="font-size:12pt;font-weight:700;color:#000;margin-top:4px">Bandara Supadio Pontianak</div>
 <div style="margin-top:28px;font-size:11pt;font-weight:400;color:#000">${periode}</div>
