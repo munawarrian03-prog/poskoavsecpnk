@@ -314,7 +314,7 @@ function generateWAText() {
   out += `*CATATAN KEGIATAN*\n`;
   out += catatanKegiatan.length ? catatanKegiatan.map((c) => `${c.jam || '--:--'} - ${rapikan(c.uraian) || '(kosong)'}`).join('\n') : '- Tidak ada catatan';
   out += `\n\n*CATATAN SERAH TERIMA*\n${rapikan($('serahTerima').value) || '(kosong)'}\n\n`;
-  out += info.ada && info.nama ? `Dibuat oleh,\n${info.jabatanLabel},\n( ${info.nama.toUpperCase()} )` : `Dibuat oleh,\n(menunggu Laporan Personel shift ini)`;
+  out += info.ada && info.nama ? `Dibuat oleh,\n${info.jabatanWA},\n\n\n( ${info.nama.toUpperCase()} )` : `Dibuat oleh,\n(menunggu Laporan Personel shift ini)`;
   return out;
 }
 function togglePratinjau(force) { const d = $('drawer'), buka = force === undefined ? !d.classList.contains('open') : !!force; d.classList.toggle('open', buka); if (buka) { refreshPratinjauLive(); tutupRiwayat(); tutupLihat(); } }

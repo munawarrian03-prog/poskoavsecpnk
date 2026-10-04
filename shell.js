@@ -354,15 +354,20 @@
   // Sama seperti getPembuatLaporanInfo() di laporan-personel.html: ambil personel
   // pertama yang namanya terisi di POSKO. Dipakai Fasilitas & Log Book untuk
   // menampilkan "Disusun oleh" tanpa isian manual (lihat RENCANA-PENGEMBANGAN.md).
+  // jabatanLabel = satu baris (dipakai label "DISUSUN OLEH:" di layar).
+  // jabatanWA = "a.n. CHIEF" & peran-nya di baris terpisah, sama seperti blok
+  // tanda tangan teks WA Laporan Personel (laporan-personel.html, getLabelJabatanPembuatLaporan).
   AVS.infoPembuatDariPersonel = function (tanggal, shift, regu) {
     const rec = AVS.cariLaporanPersonel(tanggal, shift, regu);
-    if (!rec) return { ada: false, nama: '', jabatanLabel: '' };
+    if (!rec) return { ada: false, nama: '', jabatanLabel: '', jabatanWA: '' };
     const posko = (rec.posPenempatan || []).find((p) => p.id === 'posko') || (rec.posPenempatan || [])[0];
     const pertama = posko && (posko.personel || []).find((p) => p && rapikanD(p.nama));
-    if (!pertama) return { ada: true, nama: '', jabatanLabel: '', posPersonelKosong: true };
+    if (!pertama) return { ada: true, nama: '', jabatanLabel: '', jabatanWA: '', posPersonelKosong: true };
     const peran = pertama.peran;
-    const jabatanLabel = (!peran || peran === '(Chief)') ? 'CHIEF' : `a.n. CHIEF, ${peran.replace(/^\(|\)$/g, '').toUpperCase()}`;
-    return { ada: true, nama: rapikanD(pertama.nama), jabatanLabel };
+    const peranTeks = peran ? peran.replace(/^\(|\)$/g, '').toUpperCase() : '';
+    const jabatanLabel = (!peran || peran === '(Chief)') ? 'CHIEF' : `a.n. CHIEF, ${peranTeks}`;
+    const jabatanWA = (!peran || peran === '(Chief)') ? 'CHIEF' : `a.n. CHIEF\n${peranTeks}`;
+    return { ada: true, nama: rapikanD(pertama.nama), jabatanLabel, jabatanWA };
   };
 
   /* ---------- Rujukan ke Laporan Kejadian (IndexedDB, dipakai Log Book) ----------
