@@ -258,7 +258,7 @@ function wajibKeterangan(it) {
 const ketKosong = (it) => wajibKeterangan(it) && !rapikan(it.keterangan);
 function daftarKetKosong() {
   const out = [];
-  posFasilitas.forEach((p) => p.items.forEach((it) => { if (ketKosong(it)) out.push(`${p.name} › ${it.name}`); }));
+  posFasilitas.forEach((p) => p.items.forEach((it) => { if (ketKosong(it)) out.push(`${AVS.namaPosFasilitasTerbaru(p.id, p.name)} › ${it.name}`); }));
   return out;
 }
 
@@ -268,7 +268,7 @@ function renderRail() {
   $('railTxt').textContent = `${total} dari ${total} pos terisi`;
   $('railBar').style.width = total ? '100%' : '0%';
   $('railNav').innerHTML = posFasilitas.map((p, i) =>
-    `<a href="#pos_${p.id}" class="done" data-pos="${p.id}" onclick="sorotPos('${p.id}')"><i>✓</i>${esc(p.name)}</a>`
+    `<a href="#pos_${p.id}" class="done" data-pos="${p.id}" onclick="sorotPos('${p.id}')"><i>✓</i>${esc(AVS.namaPosFasilitasTerbaru(p.id, p.name))}</a>`
   ).join('');
 }
 function sorotPos(id) {
@@ -306,7 +306,7 @@ function baris_C(pid, it) {
 }
 function renderPosSection(p) {
   const a = p.items.filter((i) => i.bentuk === 'A'), b = p.items.filter((i) => i.bentuk === 'B'), c = p.items.filter((i) => i.bentuk === 'C');
-  let html = `<section class="pn acc-navy sec" id="pos_${p.id}"><div class="hd"><h3>${esc(p.name)}</h3><span class="sp"></span><button type="button" class="mn" onclick="bukaTambahItem('${p.id}')">+ Tambah Item</button></div><div class="sc">`;
+  let html = `<section class="pn acc-navy sec" id="pos_${p.id}"><div class="hd"><h3>${esc(AVS.namaPosFasilitasTerbaru(p.id, p.name))}</h3><span class="sp"></span><button type="button" class="mn" onclick="bukaTambahItem('${p.id}')">+ Tambah Item</button></div><div class="sc">`;
   if (a.length) {
     html += `<div class="fa-sub">Item Tunggal / Jalur <span class="bentuk">Kondisi + Status + Keterangan</span></div>`;
     html += `<div class="fa-hdr"><span>ITEM</span><span>KONDISI</span><span>STATUS</span><span>KETERANGAN</span></div>`;
@@ -455,7 +455,7 @@ function generateWAText() {
     p.items.filter((i) => i.bentuk === 'C').forEach((it) => {
       baris.push(`- Dokumen: ${it.lengkap ? 'Lengkap' : 'Tidak Lengkap' + (it.keterangan ? ' (' + it.keterangan + ')' : '')}.`);
     });
-    if (baris.length) out += `${p.name}:\n${baris.join('\n')}\n\n`;
+    if (baris.length) out += `${AVS.namaPosFasilitasTerbaru(p.id, p.name)}:\n${baris.join('\n')}\n\n`;
   });
   out += info.ada && info.nama ? `Dibuat oleh,\n${info.jabatanWA},\n\n\n( ${info.nama.toUpperCase()} )` : `Dibuat oleh,\n(menunggu Laporan Personel shift ini)`;
   return out;
@@ -643,7 +643,7 @@ function renderLihatHTML(pos) {
       const masalah = it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan';
       return `<div class="lb-auto-item"><span>${esc(it.name)}${it.keterangan ? ` <small style="color:#8A94A6;font-weight:600">(${esc(it.keterangan)})</small>` : ''}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${esc(it.kondisi)} &bull; ${esc(it.status)}</span></div>`;
     }).join('') || '<div class="lihat-empty">Belum ada item.</div>';
-    return `<div class="lb-auto"><div class="t"><i></i>${esc(p.name)}</div>${isi}</div>`;
+    return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosFasilitasTerbaru(p.id, p.name))}</div>${isi}</div>`;
   }).join('') || '<div class="lihat-empty">Belum ada pos.</div>';
 }
 function bukaLihat(id) {

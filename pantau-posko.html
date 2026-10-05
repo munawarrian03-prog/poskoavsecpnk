@@ -76,6 +76,7 @@ table.pptbl tr.hari-ini td:first-child { box-shadow: inset 3px 0 0 #C9922E; }
 
 <script src="akses.js"></script>
 <script src="shell.js"></script>
+<script src="fasilitas-data.js"></script>
 <script src="data.js"></script>
 <script>
 function $(id) { return document.getElementById(id); }
@@ -119,7 +120,7 @@ function renderLihatFasilitas(pos) {
       const masalah = it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan';
       return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${esc(it.kondisi)} &bull; ${esc(it.status)}</span></div>`;
     }).join('') || '<div class="lihat-empty">Belum ada item.</div>';
-    return `<div class="lb-auto"><div class="t"><i></i>${esc(p.name)}</div>${isi}</div>`;
+    return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosFasilitasTerbaru(p.id, p.name))}</div>${isi}</div>`;
   }).join('') || '<div class="lihat-empty">Belum ada pos.</div>';
 }
 function renderLihatLogbook(catatan, catatanSerahTerima) {

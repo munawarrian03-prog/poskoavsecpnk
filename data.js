@@ -18,6 +18,10 @@
   const cmpBulan = (y, m, h) => (y * 12 + m) - (h.getFullYear() * 12 + h.getMonth());   // <0 lampau, 0 berjalan, >0 depan
   const hariBerjalan = (y, m, h) => { const c = cmpBulan(y, m, h); return c < 0 ? hariBulan(y, m) : c === 0 ? h.getDate() : 0; };
   const shiftKey = (s) => (/malam/i.test(String(s || '')) ? 'M' : 'P');
+  // Nama pos TERKINI (bukan nama beku di laporan) -- dipakai statFasilitas/statFasilitasRentang
+  // supaya Rekap/Beranda ikut pindah nama otomatis kalau pos di-rename. Jatuh ke nama beku kalau
+  // AVS/daftar pos belum dimuat di halaman ybs (lihat shell.js: AVS.namaPosFasilitasTerbaru).
+  const namaPosTerkini = (p) => (root.AVS && typeof root.AVS.namaPosFasilitasTerbaru === 'function') ? root.AVS.namaPosFasilitasTerbaru(p.id, p.name) : p.name;
 
   // mode: 'kejadian' (bawaan, satu baris personel tidak hadir = satu hitungan, seperti sebelumnya)
   //    atau 'orang-hari' (satu orang yang tidak hadir di lebih dari satu shift pada HARI YANG SAMA
@@ -142,8 +146,8 @@
           jenisList.push('Rusak');
         }
         if (!jenisList.length) return;
-        const key = (p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
-        if (!e) { e = { item: rapikan(it.name), pos: rapikan(p.name), jumlah: 0, jenis: {} }; bermasalah.set(key, e); }
+        const key = (p.id || p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
+        if (!e) { e = { item: rapikan(it.name), pos: rapikan(namaPosTerkini(p)), jumlah: 0, jenis: {} }; bermasalah.set(key, e); }
         e.jumlah += jenisList.length; jenisList.forEach((jenis) => { e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; });
       }));
     });
@@ -306,8 +310,8 @@
         if (!jenisList.length) return;
         totalMasalah += jenisList.length;
         jenisList.forEach(() => tanggalMasalah.push(tgl));
-        const key = (p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
-        if (!e) { e = { item: rapikan(it.name), pos: rapikan(p.name), jumlah: 0, jenis: {}, tanggal: [] }; bermasalah.set(key, e); }
+        const key = (p.id || p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
+        if (!e) { e = { item: rapikan(it.name), pos: rapikan(namaPosTerkini(p)), jumlah: 0, jenis: {}, tanggal: [] }; bermasalah.set(key, e); }
         e.jumlah += jenisList.length; e.tanggal.push(tgl);
         jenisList.forEach((jenis) => { e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; if (jenis === 'Tidak Digunakan') tidakDigunakan++; });
       }));

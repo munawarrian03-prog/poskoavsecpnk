@@ -273,6 +273,30 @@
     return hasil;
   };
 
+  /* ---------- Nama pos terkini (dipakai di mana pun nama pos dari laporan TERSIMPAN
+     ditampilkan, agar laporan lama otomatis ikut nama terbaru jika pos di-rename) ----------
+     Mencari berdasarkan id ke daftar POS_BAWAAN/POS_FASILITAS_BAWAAN yang sedang berlaku;
+     jika global-nya tidak dimuat di halaman ybs, atau id custom (pos tambahan milik satu
+     laporan, bukan dari daftar bawaan), jatuh ke nama yang sudah tersimpan di laporan itu. */
+  AVS.namaPosPersonelTerbaru = function (id, namaTersimpan) {
+    try {
+      if (typeof POS_BAWAAN !== 'undefined' && Array.isArray(POS_BAWAAN)) {
+        const p = POS_BAWAAN.find((x) => x && x.id === id);
+        if (p) return p.name;
+      }
+    } catch (e) {}
+    return namaTersimpan;
+  };
+  AVS.namaPosFasilitasTerbaru = function (id, namaTersimpan) {
+    try {
+      if (typeof POS_FASILITAS_BAWAAN !== 'undefined' && Array.isArray(POS_FASILITAS_BAWAAN)) {
+        const p = POS_FASILITAS_BAWAAN.find((x) => x && x.id === id);
+        if (p) return p.name;
+      }
+    } catch (e) {}
+    return namaTersimpan;
+  };
+
   /* ---------- Diff khusus Laporan Personel ---------- */
   AVS.diffPersonel = function (lama, baru) {
     lama = lama || {}; baru = baru || {};
@@ -296,11 +320,11 @@
     const pL = Array.isArray(lama.posPenempatan) ? lama.posPenempatan : [], pB = Array.isArray(baru.posPenempatan) ? baru.posPenempatan : [];
     const posDaftar = [];
     pB.forEach((pb) => {
-      const pl = pL.find((x) => x && x.id === pb.id), nama = rapikanD(pb.name) || '(pos)';
+      const pl = pL.find((x) => x && x.id === pb.id), nama = AVS.namaPosPersonelTerbaru(pb.id, rapikanD(pb.name)) || '(pos)';
       const d = diffDaftar('x', pl ? pl.personel : [], pb.personel, (p) => rapikanD(p && p.nama) + (rapikanD(p && p.peran) ? ' (' + rapikanD(p.peran) + ')' : ''));
       if (d) d.perubahan.forEach((x) => posDaftar.push(Object.assign({}, x, { teks: x.teks != null ? `${nama} — ${x.teks}` : undefined, lama: x.lama != null ? `${nama} — ${x.lama}` : undefined, baru: x.baru != null ? `${nama} — ${x.baru}` : undefined })));
     });
-    pL.forEach((pl) => { if (!pB.find((x) => x && x.id === pl.id)) (pl.personel || []).forEach((p) => posDaftar.push({ aksi: 'hapus', teks: `${rapikanD(pl.name)} — ${rapikanD(p.nama)}` })); });
+    pL.forEach((pl) => { if (!pB.find((x) => x && x.id === pl.id)) (pl.personel || []).forEach((p) => posDaftar.push({ aksi: 'hapus', teks: `${AVS.namaPosPersonelTerbaru(pl.id, rapikanD(pl.name))} — ${rapikanD(p.nama)}` })); });
     if (posDaftar.length) hasil.push({ label: 'Penempatan personel', jenis: 'daftar', perubahan: posDaftar });
     return hasil;
   };
@@ -320,12 +344,12 @@
     const pL = Array.isArray(lama.posFasilitas) ? lama.posFasilitas : [], pB = Array.isArray(baru.posFasilitas) ? baru.posFasilitas : [];
     const itemDaftar = [];
     pB.forEach((pb) => {
-      const pl = pL.find((x) => x && x.id === pb.id), namaPos = rapikanD(pb.name) || '(pos)';
+      const pl = pL.find((x) => x && x.id === pb.id), namaPos = AVS.namaPosFasilitasTerbaru(pb.id, rapikanD(pb.name)) || '(pos)';
       const d = diffDaftar('x', pl ? pl.items : [], pb.items, teksItem);
       if (d) d.perubahan.forEach((x) => itemDaftar.push(Object.assign({}, x, { teks: x.teks != null ? `${namaPos} — ${x.teks}` : undefined, lama: x.lama != null ? `${namaPos} — ${x.lama}` : undefined, baru: x.baru != null ? `${namaPos} — ${x.baru}` : undefined })));
     });
-    pL.forEach((pl) => { if (!pB.find((x) => x && x.id === pl.id)) (pl.items || []).forEach((it) => itemDaftar.push({ aksi: 'hapus', teks: `${rapikanD(pl.name)} — ${rapikanD(it.name)}` })); });
-    pB.forEach((pb) => { if (!pL.find((x) => x && x.id === pb.id)) (pb.items || []).forEach((it) => itemDaftar.push({ aksi: 'tambah', teks: `${rapikanD(pb.name)} — ${teksItem(it)}` })); });
+    pL.forEach((pl) => { if (!pB.find((x) => x && x.id === pl.id)) (pl.items || []).forEach((it) => itemDaftar.push({ aksi: 'hapus', teks: `${AVS.namaPosFasilitasTerbaru(pl.id, rapikanD(pl.name))} — ${rapikanD(it.name)}` })); });
+    pB.forEach((pb) => { if (!pL.find((x) => x && x.id === pb.id)) (pb.items || []).forEach((it) => itemDaftar.push({ aksi: 'tambah', teks: `${AVS.namaPosFasilitasTerbaru(pb.id, rapikanD(pb.name))} — ${teksItem(it)}` })); });
     if (itemDaftar.length) hasil.push({ label: 'Item fasilitas', jenis: 'daftar', perubahan: itemDaftar });
     return hasil;
   };

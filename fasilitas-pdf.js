@@ -86,7 +86,7 @@ ${box(`dari ${posDokCount} Pos Dokumen Lengkap`, dokLengkap, '#EEF1F6', '#475569
   function posBlok(p, no) {
     const a = p.items.filter((i) => i.bentuk === 'A'), b = p.items.filter((i) => i.bentuk === 'B');
     return `<div class="fa-pdf-pos" style="page-break-inside:avoid;break-inside:avoid;margin-bottom:8px">
-<div style="color:#10243D;font-size:10pt;font-weight:800;padding-bottom:3px;margin:8px 0 6px;border-bottom:1.5px solid #E1E6EF">${no}. ${esc(p.name)}</div>
+<div style="color:#10243D;font-size:10pt;font-weight:800;padding-bottom:3px;margin:8px 0 6px;border-bottom:1.5px solid #E1E6EF">${no}. ${esc(root.AVS.namaPosFasilitasTerbaru(p.id, p.name))}</div>
 ${a.length ? tabelA(a) : ''}${b.length ? tabelB(b) : ''}${dokline(p.items)}
 </div>`;
   }

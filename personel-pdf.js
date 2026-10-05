@@ -68,7 +68,7 @@
       const valid = (p.personel || []).filter(adaNama);
       total += valid.length;
       const list = valid.length ? valid.map((x, i) => `${i + 1}. ${esc(rapikan(x.nama))}${x.peran ? ' ' + esc(x.peran) : ''}`).join('<br>') : '- Nihil';
-      return `<tr><td style="${TD};font-weight:800;color:#10243D;width:32%;vertical-align:top">${esc(p.name)}</td><td style="${TD};vertical-align:top">${list}</td></tr>`;
+      return `<tr><td style="${TD};font-weight:800;color:#10243D;width:32%;vertical-align:top">${esc(root.AVS.namaPosPersonelTerbaru(p.id, p.name))}</td><td style="${TD};vertical-align:top">${list}</td></tr>`;
     }).join('');
     return { html: `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:6px"><tr><th style="${TH}">Pos Penempatan</th><th style="${TH}">Personel</th></tr>${rows}<tr style="font-weight:800;background:#F6F8FB"><td style="${TD};text-align:right">Total Penempatan</td><td style="${TD}">${total} Personel</td></tr></table>`, total };
   }

@@ -616,7 +616,7 @@ function generateReportTextFromData(tanggal, shift, regu, kat, pos) {
   });
   t += `*TOTAL HADIR: ${info.totalHadir} PERSONEL*\n\n------------------------------------\n\n*PENEMPATAN PERSONEL:*\n\n`;
   info.posRows.forEach((r) => {
-    t += `*${r.p.name}*\n`;
+    t += `*${AVS.namaPosPersonelTerbaru(r.p.id, r.p.name)}*\n`;
     if (!r.valid.length) t += `- Nihil\n\n`;
     else { r.valid.forEach((p, i) => { t += `${i + 1}. ${rapikan(p.nama)}${p.peran ? ' ' + p.peran : ''}\n`; }); t += `\n`; }
   });
@@ -723,7 +723,7 @@ function renderLihatHTML(kat, pos) {
     const isi = row.valid.length
       ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}${p.peran ? ` <small style="color:#8A94A6;font-weight:600">${esc(p.peran)}</small>` : ''}</span></div>`).join('')
       : '<div class="lihat-empty">Nihil.</div>';
-    return `<div class="lb-auto"><div class="t"><i></i>${esc(row.p.name)} &mdash; ${row.valid.length} orang</div>${isi}</div>`;
+    return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosPersonelTerbaru(row.p.id, row.p.name))} &mdash; ${row.valid.length} orang</div>${isi}</div>`;
   }).join('') || '<div class="lihat-empty">Belum ada pos penempatan.</div>';
   html += `<div class="lihat-total">TOTAL PENEMPATAN: <b>${info.totalPenempatan}</b> PERSONEL</div>`;
   html += `<div class="lihat-footer">Dibuat oleh, ${esc(pb.jabatanLabel.replace(/\n/g, ' '))} &mdash; ${esc(pb.nama)}</div>`;

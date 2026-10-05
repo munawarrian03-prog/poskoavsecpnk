@@ -45,8 +45,8 @@
   function ringkasBermasalahFasilitas(rec) {
     const out = [];
     (rec.posFasilitas || []).forEach((p) => (p.items || []).forEach((it) => {
-      if (it.bentuk === 'A' && (it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan')) out.push({ nama: `${it.name} — ${it.keterangan || (it.kondisi === 'Rusak' ? 'Rusak' : 'Tidak Digunakan')}`, jenis: it.kondisi === 'Rusak' ? 'Rusak' : 'Tidak Digunakan', pos: p.name });
-      if (it.bentuk === 'B' && (it.rusak || 0) > 0) out.push({ nama: `${it.name} (${it.rusak} unit)`, jenis: 'Rusak', pos: p.name });
+      if (it.bentuk === 'A' && (it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan')) out.push({ nama: `${it.name} — ${it.keterangan || (it.kondisi === 'Rusak' ? 'Rusak' : 'Tidak Digunakan')}`, jenis: it.kondisi === 'Rusak' ? 'Rusak' : 'Tidak Digunakan', pos: A.namaPosFasilitasTerbaru(p.id, p.name) });
+      if (it.bentuk === 'B' && (it.rusak || 0) > 0) out.push({ nama: `${it.name} (${it.rusak} unit)`, jenis: 'Rusak', pos: A.namaPosFasilitasTerbaru(p.id, p.name) });
     }));
     return out;
   }
