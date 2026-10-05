@@ -248,6 +248,21 @@
     }
   }
 
+  // Muat ulang Personel/Fasilitas/Log Book dari localStorage LOKAL, lalu -- kalau sinkronisasi
+  // lintas perangkat aktif (lihat sync.js) -- gabung dgn salinan dari seluruh posko di server,
+  // supaya Beranda yg dibuka Admin ikut menghitung laporan yg disimpan Posko di komputer lain.
+  // Pola & alasan sama persis dgn rekap.js (muatData()): sekali saat halaman dibuka, bukan tiap
+  // ganti bulan -- pemilih bulan cuma menyaring data yg sudah termuat.
+  async function muatData() {
+    personel = D.bacaPersonel(); fasilitas = D.bacaFasilitas(); logbook = D.bacaLogbook();
+    if (typeof AVS_SYNC !== 'undefined' && AVS_SYNC.aktif()) {
+      const [rp, rf, rl] = await Promise.all([AVS_SYNC.ambilSemua('personel'), AVS_SYNC.ambilSemua('fasilitas'), AVS_SYNC.ambilSemua('logbook')]);
+      personel = AVS_SYNC.gabung(personel, rp);
+      fasilitas = AVS_SYNC.gabung(fasilitas, rf);
+      logbook = AVS_SYNC.gabung(logbook, rl);
+    }
+  }
+
   /* ---------- Mulai ---------- */
   async function mulai() {
     A.pasangKunci(); A.nav('beranda');
@@ -258,6 +273,8 @@
     renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni();
     kejadian = await D.bacaKejadian();           // lengkapi dengan data kejadian (IndexedDB, async)
     renderBulanan();
+    await muatData(); // tarik salinan Personel/Fasilitas/Log Book dari posko lain (kalau sinkronisasi aktif)
+    renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni();
   }
 
   window.Beranda = { bukaShiftKosong, tutupShiftKosong, salinPengingatKosong, salinTeks, bukaKepatuhan, tutupKepatuhan };
