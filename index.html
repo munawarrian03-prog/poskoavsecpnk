@@ -17,10 +17,8 @@
 <div class="main-wrapper">
 <div id="topBar"></div>
 
-<div class="d-wrap" id="dash">
-
 <div class="rl-head">
-<div><h2>Rekap Laporan</h2><p>Panduan serah-terima untuk shift berikutnya</p></div>
+<div><h2>Dashboard</h2><p>Panduan serah-terima untuk shift berikutnya</p></div>
 <div class="rl-sp"></div>
 <div class="bell-wrap">
 <button type="button" class="bell-btn" id="btnBell" onclick="Beranda.bukaShiftKosong()" title="Laporan belum lengkap bulan ini">
@@ -28,8 +26,9 @@
 <span class="bell-badge" id="bellBadge" style="display:none">0</span>
 </button>
 </div>
-<a class="btn-semua-rekap" id="btnSemuaRekap" href="rekap.html" title="Lihat rekap lengkap semua laporan">Lihat Semua Rekap ›</a>
 </div>
+
+<div class="d-wrap" id="dash">
 
 <div class="sec-lbl"><h4>Shift Sebelumnya</h4><span id="shiftSbLabel">memuat…</span></div>
 <div class="grid12" id="rowShiftSb">
@@ -38,18 +37,16 @@
 <div class="dcard c4 rauto"><div class="h"><div><h3>📓 Catatan Serah Terima</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
 </div>
 
-<div class="sec-lbl"><h4>Bulan Ini</h4><span id="bulanIniLabel"></span></div>
-<div class="grid12" id="rowBulanIni1">
-<div class="dcard c6 r250"><div class="h"><div><h3>Ketidakhadiran Terbanyak</h3><div class="sub">5 teratas bulan ini • dihitung per orang per hari</div></div></div><div class="empty">Memuat data…</div></div>
-<div class="dcard c6 r250"><div class="h"><div><h3>Alasan Ketidakhadiran</h3><div class="sub">Komposisi bulan ini</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="sec-lbl bulanan-head"><h4>Bulan</h4><div id="pilihBulanBulanan"></div></div>
+<div class="grid12" id="rowBulanan1">
+<div class="dcard c4 rauto"><div class="h"><div><h3>Ketidakhadiran Terbanyak</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Alasan Ketidakhadiran</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Fasilitas Sering Bermasalah</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
 </div>
-<div class="grid12" id="rowFasilitas">
-<div class="dcard c12 rauto"><div class="h"><div><h3>Fasilitas Sering Bermasalah</h3><div class="sub">5 teratas bulan ini</div></div></div><div class="empty">Memuat data…</div></div>
-</div>
-<div class="grid12" id="rowKejadian">
-<div class="dcard c4 r274"><div class="h"><div><h3>Jumlah Kejadian</h3><div class="sub">Bulan ini</div></div></div><div class="empty">Memuat data…</div></div>
-<div class="dcard c4 r274"><div class="h"><div><h3>Kejadian per Minggu</h3><div class="sub">Berdasarkan tanggal laporan kejadian</div></div></div><div class="empty">Memuat data…</div></div>
-<div class="dcard c4 r274"><div class="h"><div><h3>Kejadian Terbaru</h3><div class="sub">Klik untuk membuka laporan</div></div><a class="pill" href="kejadian.html#tersimpan">LIHAT SEMUA</a></div><div class="empty">Memuat data…</div></div>
+<div class="grid12" id="rowBulanan2">
+<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar Kejadian Terbaru</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar BAST Terbaru</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Shift Belum Lengkap</h3><div class="sub">memuat…</div></div></div><div class="empty">Memuat data…</div></div>
 </div>
 
 <div class="note" id="noteBawah"></div>
@@ -65,9 +62,22 @@
 </div>
 </div>
 
+<!-- MODAL: DAFTAR SHIFT BELUM LENGKAP (rentang bulan terpilih) -->
+<div class="modal-overlay" id="kepatuhanOverlay">
+<div class="modal-container" style="max-width:640px">
+<div class="modal-header"><span class="modal-title">DAFTAR SHIFT BELUM LENGKAP</span><button type="button" class="modal-close" onclick="Beranda.tutupKepatuhan()">✕</button></div>
+<div class="modal-body" id="kepatuhanBody"></div>
+<div class="modal-footer"><button type="button" class="btn-cancel" onclick="Beranda.tutupKepatuhan()">Tutup</button></div>
+</div>
+</div>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
+<script src="akses.js"></script>
 <script src="shell.js"></script>
+<script src="sync.js"></script>
+<script>AVS_gerbangUtama();</script>
+<script src="fasilitas-data.js"></script>
 <script src="data.js"></script>
 <script src="beranda.js"></script>
 </body>

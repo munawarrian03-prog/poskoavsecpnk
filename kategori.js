@@ -27,7 +27,7 @@ const POS_BAWAAN = [
   { id: 'pscp',           name: 'PSCP' },
   { id: 'scp_int',        name: 'PSCP LAGs' },
   { id: 'hbscp',          name: 'HBSCP' },
-  { id: 'scp_transit',    name: 'SSCP + KEDATANGAN' },
+  { id: 'scp_transit',    name: 'SSCP + (Dep & Arr)' },
   { id: 'acp_brc',        name: 'ASCP (BRC)' },
   { id: 'cctv',           name: 'CCTV' },
   { id: 'scp_vip',        name: 'SCP VIP' },

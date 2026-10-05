@@ -16,7 +16,7 @@
 <body class="locked">
 
 <!-- LAYAR KUNCI: hanya logo -->
-<div id="lockScreen"><img src="Logo/AVS.png" alt="Logo AVSEC PNK"></div>
+<div id="lockScreen"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"><p>Desktop Only</p></div>
 
 <datalist id="listPersonel"></datalist>
 <datalist id="listJabatan"></datalist>
@@ -26,21 +26,37 @@
 <div id="topBar"></div>
 
 <!-- TOOLBAR -->
-<div class="toolbar" id="toolbar">
+<div class="toolbar tb-2row" id="toolbar">
+<div class="tb-row">
 <div class="seg">
-<button type="button" id="btnFormTab" class="on" onclick="switchPage('form')">Buat Laporan</button>
+<div class="seg-btn on" id="segBtnJenis">
+<button type="button" class="lbl" id="btnFormTab" onclick="switchPage('form')">Buat Laporan <span id="jenisLabelNow">— LK</span></button>
+<button type="button" class="caret" onclick="toggleJenisDD(event)" title="Pilih jenis laporan"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></button>
+<div class="dd-jenis" id="ddJenisLaporan">
+<div class="opt sel" onclick="pilihJenisLaporan('LK')"><span class="chk">✓</span> Laporan Kejadian (LK)</div>
+<div class="opt" onclick="pilihJenisLaporan('BAST')"><span class="chk"></span> Berita Acara Serah Terima (BAST)</div>
+</div>
+</div>
 <button type="button" id="btnSavedTab" onclick="switchPage('saved')">Laporan Tersimpan <span class="badge" id="cntSaved">0</span></button>
 </div>
 <span class="tdiv" id="hdrDiv"></span>
 <div class="fld" id="hdrTgl"><label for="tglLap">TANGGAL</label><input type="date" id="tglLap" data-f="tanggal" oninput="fieldChanged(this)"></div>
-<div class="fld" id="hdrNomor"><label for="fileNumber">NOMOR</label>
-<div class="nomor-wrap" id="nomorWrap"><input type="text" id="fileNumber" data-f="fileNumber" oninput="fieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="autoTag">AUTO</span></div>
-<button type="button" class="hbtn" id="btnNomorMode" onclick="ubahModeNomor()" title="Ubah nomor secara manual">✎</button>
-<button type="button" class="hbtn" onclick="bukaUrutan()" title="Atur urutan nomor bulan ini">⚙</button>
+<div class="fld" id="hdrShift"><label for="shiftLap">SHIFT</label>
+<select id="shiftLap" data-f="shift" onchange="fieldChanged(this)">
+<option value="">-</option>
+<option value="Pagi (08:00 - 20:00) WIB">Pagi (08:00 - 20:00) WIB</option>
+<option value="Malam (20:00 - 08:00) WIB">Malam (20:00 - 08:00) WIB</option>
+</select></div>
+<div class="fld" id="hdrLokasi"><label for="lokasiKejadianSel">LOKASI KEJADIAN</label>
+<div class="lokasi-combo" id="lokasiCombo">
+<input type="text" id="lokasiKejadianSel" oninput="lokasiKejadianInput(this.value)" onfocus="lokasiDropdownBuka()" placeholder="Pilih atau ketik lokasi" autocomplete="off">
+<div class="lokasi-dd" id="lokasiDropdown"></div>
+</div>
 </div>
 <span class="tsp"></span>
 <button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Sembunyikan bilah atas agar area isian lebih luas">⛶ Mode fokus</button>
-<button type="button" class="tbtn" onclick="newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
+<button type="button" class="tbtn" onclick="jenisAktif === 'BAST' ? bastNewReport() : newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
+</div>
 </div>
 <div class="strip" id="editBadge" style="display:none"></div>
 
@@ -64,7 +80,14 @@
 <div class="privacy-note">Laporan memuat data pribadi pihak terkait. Draf dan laporan tersimpan hanya di browser komputer ini. Hapus laporan yang sudah tidak diperlukan sesuai ketentuan kantor.</div>
 
 <section class="pn sec acc-red" id="sec1"><div class="hd"><h3>1 · Identitas &amp; pejabat</h3><span class="sp"></span><span class="ct">Nama dipilih dari daftar personel</span></div>
-<div class="sc"><div class="g4">
+<div class="sc">
+<div class="g4">
+<div class="pc" style="grid-column:1 / -1"><div class="pt">NOMOR <small>File Number</small></div>
+<div style="display:flex;align-items:center;gap:8px">
+<div class="nomor-wrap" id="nomorWrap"><input type="text" id="fileNumber" data-f="fileNumber" oninput="fieldChanged(this)" placeholder="Menghitung nomor…" autocomplete="off" spellcheck="false"><span class="autotag" id="autoTag">AUTO</span></div>
+<button type="button" class="hbtn" id="btnNomorMode" onclick="ubahModeNomor()" title="Ubah nomor secara manual">✎</button>
+<button type="button" class="hbtn" onclick="bukaUrutan()" title="Atur urutan nomor bulan ini">⚙</button>
+</div></div>
 <div class="pc"><div class="pt">DISUSUN OLEH <small>Prepared By</small></div>
 <label>Nama</label><input type="text" list="listPersonel" data-f="preparedBy.nama" oninput="fieldChanged(this)" onchange="namaChanged('preparedBy')">
 <label>Jabatan</label><input type="text" list="listJabatan" data-f="preparedBy.jabatan" oninput="fieldChanged(this)"></div>
@@ -142,12 +165,30 @@
 </div>
 </div>
 
-<!-- HALAMAN TERSIMPAN -->
-<div class="panel-box" id="pageSaved" style="display:none;">
-<div class="panel-title">DAFTAR LAPORAN KEJADIAN TERSIMPAN</div>
-<div class="saved-toolbar">
-<span class="hint">Ekspor/Impor data laporan kini ada di halaman <a href="rekap.html" style="color:var(--secondary-hover);font-weight:800">Lihat Semua Rekap</a> (mencakup semua jenis laporan sekaligus).</span>
+<!-- FORM BAST: form kiri + live preview A4 kanan (split permanen, bukan drawer) -->
+<div class="bast-split" id="pageFormBast" style="display:none">
+<div class="bast-form-col" id="bastFormCol"></div>
+<div class="bast-prev-col">
+<div class="prev-label"><span class="dot"></span> LIVE PREVIEW A4</div>
+<div class="a4" id="bastPreviewA4"></div>
 </div>
+</div>
+
+<!-- HALAMAN TERSIMPAN (gabungan LK + BAST) -->
+<div class="panel-box" id="pageSaved" style="display:none;">
+<div class="panel-title">DAFTAR LAPORAN TERSIMPAN</div>
+<div class="saved-filter">
+<div class="f2"><label>Dari Tanggal</label><input type="date" id="filterMulaiTersimpan" onchange="renderTersimpan()"></div>
+<div class="f2"><label>Sampai Tanggal</label><input type="date" id="filterSampaiTersimpan" onchange="renderTersimpan()"></div>
+<div class="f2"><label>Jenis Laporan</label>
+<select id="filterJenisTersimpan" onchange="renderTersimpan()">
+<option value="all">Semua Laporan</option>
+<option value="LK">Laporan Kejadian (LK)</option>
+<option value="BAST">Berita Acara Serah Terima (BAST)</option>
+</select></div>
+<button type="button" class="hbtn" style="align-self:flex-end;width:auto;padding:0 12px;font-size:11.5px;font-weight:700" onclick="resetFilterTersimpan()" title="Hapus filter tanggal">✕ Reset Tanggal</button>
+</div>
+<div class="sumline" id="sumLine"></div>
 <div id="savedList" style="flex:1; overflow-y:auto;"></div>
 </div>
 
@@ -155,9 +196,14 @@
 <div class="stat" id="statBar">
 <span class="hint" id="actionHint"></span>
 <span class="sp"></span>
-<button type="button" class="sbtn ghost" onclick="togglePratinjauWA()" title="Lihat teks laporan WhatsApp dan kirim (laporan awal)">Pratinjau WA &amp; Kirim</button>
-<button type="button" class="sbtn ghost" onclick="pratinjauPdf()">Pratinjau PDF</button>
+<span id="statLK">
+<button type="button" class="sbtn ghost" onclick="togglePratinjauWebLaci()">Pratinjau Web</button>
 <button type="button" class="sbtn red" onclick="simpan()">Simpan Laporan</button>
+</span>
+<span id="statBAST" style="display:none">
+<button type="button" class="sbtn ghost" onclick="togglePratinjauWebLaci()">Pratinjau Web</button>
+<button type="button" class="sbtn red" onclick="bastSimpan()">Simpan BAST</button>
+</span>
 </div>
 </div>
 
@@ -178,6 +224,10 @@
 <button type="button" class="sbtn ghost" onclick="salinTeksWA()">Salin Teks</button>
 <button type="button" class="sbtn grn" onclick="kirimAwalWA()" title="Buka WhatsApp Web dengan teks di atas dan lampirkan kolase foto">Kirim ke WA</button>
 </div>
+</aside>
+<aside class="drawer" id="drawerWeb">
+<div class="dh"><span>PRATINJAU WEB (PDF)</span><button type="button" onclick="togglePratinjauWebLaci(false)" title="Tutup">✕</button></div>
+<iframe id="pdfFrameWeb" style="flex:1;width:100%;border:0;border-radius:8px;background:#525659"></iframe>
 </aside>
 <aside class="drawer" id="drawerRw">
 <div class="dh"><span>RIWAYAT PERUBAHAN</span><button type="button" onclick="tutupRiwayat()" title="Tutup">✕</button></div>
@@ -231,29 +281,37 @@
 <!-- JENDELA ATUR URUTAN NOMOR -->
 <div class="ov" id="urutModal" style="display:none">
 <div class="modal2" style="width:520px">
-<div class="mh"><div><h3>Atur Urutan Nomor</h3><p id="urutSub"></p></div><div class="cx" onclick="tutupUrutan()">✕</div></div>
+<div class="mh"><div><h3>Atur Urutan Nomor</h3><p id="urutSub"></p></div><div class="cx" onclick="modeUrutanAktif === 'BAST' ? bastTutupUrutan() : tutupUrutan()">✕</div></div>
 <div style="padding:18px 20px 8px">
 <label for="urutInput" style="font-weight:700;">Nomor terakhir yang sudah dipakai bulan ini</label>
-<input type="number" id="urutInput" min="0" step="1" oninput="ubahInputUrutan()" style="margin-top:6px;">
+<input type="number" id="urutInput" min="0" step="1" oninput="modeUrutanAktif === 'BAST' ? bastUbahInputUrutan() : ubahInputUrutan()" style="margin-top:6px;">
 <div class="cap" id="urutInfo"></div>
 <div class="urut-next"><span>Nomor berikutnya</span><b id="urutNext">-</b></div>
 <div class="cap" id="urutRiwayat"></div>
 <div class="info-note">Gunakan ini bila ada nomor yang sudah terpakai di komputer lain atau pada surat tertulis, agar tidak terjadi nomor ganda. Nomor tidak akan turun sendiri walaupun laporan dihapus.</div>
 </div>
-<div class="mf"><div class="lock">Urutan dihitung per bulan</div><div class="btns"><button type="button" class="b1" onclick="tutupUrutan()">Batal</button><button type="button" class="b2" onclick="simpanUrutan()">Simpan Urutan</button></div></div>
+<div class="mf"><div class="lock">Urutan dihitung per bulan</div><div class="btns"><button type="button" class="b1" onclick="modeUrutanAktif === 'BAST' ? bastTutupUrutan() : tutupUrutan()">Batal</button><button type="button" class="b2" onclick="modeUrutanAktif === 'BAST' ? bastSimpanUrutan() : simpanUrutan()">Simpan Urutan</button></div></div>
 </div>
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
+<script src="akses.js"></script>
 <script src="shell.js"></script>
+<script>AVS_gerbangUtama();</script>
 <script src="lib/pdfmake.min.js"></script>
 <script src="lib/fonts-carlito.js"></script>
+<script src="lib/fonts-montserrat.js"></script>
 <script src="personel.js"></script>
+<script src="kategori.js"></script>
 <script src="kejadian-data.js"></script>
 <script src="kejadian-nomor.js"></script>
 <script src="kejadian-wa.js"></script>
 <script src="kejadian-pdf.js"></script>
+<script src="kejadian-bast-data.js"></script>
+<script src="kejadian-bast-nomor.js"></script>
+<script src="kejadian-bast-pdf.js"></script>
+<script src="kejadian-bast.js"></script>
 <script>
 'use strict';
 
@@ -291,6 +349,8 @@ let laporan = null;
 let editingId = null;
 let dirty = false;
 let draftTimer = null;
+let jenisAktif = 'LK';   // 'LK' | 'BAST' - jenis laporan yang sedang dibuka di tab "Buat Laporan"
+let modeUrutanAktif = 'LK';   // 'LK' | 'BAST' - menentukan modal #urutModal (dipakai bersama) memanggil implementasi yang mana
 
 /* ---------- Utilitas ---------- */
 let toastTimer;
@@ -357,7 +417,7 @@ const ttdDel = (key) => tx('readwrite', (s) => s.delete(key), STORE_TTD);
 /* ---------- Model ---------- */
 function modelBaru() {
   return {
-    id: null, tanggal: hariIni(), fileNumber: '', nomorOtomatis: true, nomorDikunci: false, waStatus: 'awal', tempat: TEMPAT_DEF,
+    id: null, jenis: 'LK', tanggal: hariIni(), shift: '', lokasiKejadian: '', fileNumber: '', nomorOtomatis: true, nomorDikunci: false, waStatus: 'awal', tempat: TEMPAT_DEF,
     preparedBy: { nama: '', jabatan: JABATAN_DEF.preparedBy || '' },
     signedBy: { nama: '', jabatan: JABATAN_DEF.signedBy || '' },
     distribution: { nama: '', jabatan: JABATAN_DEF.distribution || '' },
@@ -396,6 +456,7 @@ async function simpanDraft() {
    NOMOR LAPORAN OTOMATIS  (OOSC/LK/<urut>/<bulan romawi>/<tahun>)
    ===================================================== */
 if (typeof KejadianNomor !== 'undefined') KejadianNomor.atur({ prefix: typeof NOMOR_AWALAN !== 'undefined' ? NOMOR_AWALAN : undefined, pad: typeof NOMOR_PAD !== 'undefined' ? NOMOR_PAD : undefined });
+if (typeof BastNomor !== 'undefined') BastNomor.atur({ prefix: typeof NOMOR_AWALAN_BAST !== 'undefined' ? NOMOR_AWALAN_BAST : undefined, pad: typeof NOMOR_PAD_BAST !== 'undefined' ? NOMOR_PAD_BAST : undefined });
 const NOMOR_KEY = 'nomorKejadian';   // pencatat nomor terbesar per bulan; tidak pernah turun, agar nomor tidak dipakai ulang
 function bacaCounter() { try { return JSON.parse(localStorage.getItem(NOMOR_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function tulisCounter(o) { try { localStorage.setItem(NOMOR_KEY, JSON.stringify(o)); } catch (e) { /* penyimpanan diblokir */ } }
@@ -440,6 +501,7 @@ function catatNomor(rec) { const p = KejadianNomor.parse(rec.fileNumber); if (p)
 
 let UR = null;
 async function bukaUrutan() {
+  modeUrutanAktif = 'LK';
   const t = pecahTgl(laporan.tanggal) || { y: new Date().getFullYear(), m: new Date().getMonth() }, recs = await rekamTersimpan();
   const minim = KejadianNomor.urutTertinggiTersimpan(recs, t.y, t.m), efektif = KejadianNomor.urutTerakhir(recs, bacaCounter(), t.y, t.m);
   UR = { t, minim };
@@ -477,6 +539,7 @@ function isiForm() {
     const v = getPath(laporan, el.dataset.f);
     if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v;
   });
+  syncLokasiKejadianUI();
   renderSemua();
   updateBadge();
   updateKirimState();
@@ -484,6 +547,35 @@ function isiForm() {
   renderRail(); renderWA();
 }
 function renderSemua() { renderDasar(); renderTL(); renderDR(); renderTerlampir(); renderFoto(); renderTTD(); }
+
+/* ---------- Lokasi kejadian: combobox custom (ketik bebas + pilih dari daftar pos jaga).
+   Dibuat sendiri (bukan <datalist> bawaan browser) supaya ikon panah &
+   perilaku dropdown sepenuhnya terkendali dan konsisten di semua browser -
+   <input list=> pernah menampilkan indikator native browser + ikon custom
+   sekaligus (dobel), tidak bisa disembunyikan dengan andal lintas browser. */
+function daftarPosJaga() { return (typeof POS_BAWAAN !== 'undefined' ? POS_BAWAAN : []).map((p) => p.name); }
+function renderLokasiKejadianOptions() {
+  const dd = $('lokasiDropdown'); if (!dd) return;
+  dd.innerHTML = daftarPosJaga().map((n, i) => `<div class="opt" onmousedown="lokasiPilih(${i})">${esc(n)}</div>`).join('');
+}
+function syncLokasiKejadianUI() {
+  renderLokasiKejadianOptions();
+  const inp = $('lokasiKejadianSel'); if (!inp) return;
+  inp.value = laporan.lokasiKejadian || '';
+}
+function lokasiKejadianInput(v) { laporan.lokasiKejadian = v; ubah(); }
+function lokasiDropdownBuka() { const dd = $('lokasiDropdown'); if (dd) dd.classList.add('open'); }
+function lokasiDropdownTutup() { const dd = $('lokasiDropdown'); if (dd) dd.classList.remove('open'); }
+function lokasiPilih(i) {
+  const v = daftarPosJaga()[i]; if (v === undefined) return;
+  const inp = $('lokasiKejadianSel'); if (inp) inp.value = v;
+  laporan.lokasiKejadian = v; ubah();
+  lokasiDropdownTutup();
+}
+document.addEventListener('click', (e) => {
+  const combo = $('lokasiCombo');
+  if (combo && !combo.contains(e.target)) lokasiDropdownTutup();
+});
 
 function isiSaran() {
   const sumber = (typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : [];
@@ -862,8 +954,10 @@ async function pakaiTTD() {
    ===================================================== */
 function siapPdf() {
   if (typeof pdfMake === 'undefined' || typeof buildKejadianDoc === 'undefined') throw new Error('Pustaka PDF (lib/pdfmake.min.js) tidak termuat.');
-  pdfMake.vfs = Object.assign({}, window.KEJADIAN_VFS || {});
-  pdfMake.fonts = window.KEJADIAN_FONTS;
+  // Gabung (bukan timpa) supaya Carlito tetap tersedia bila suatu saat dibutuhkan;
+  // font PDF yang benar-benar dipakai diatur lewat defaultStyle.font di kejadian-pdf.js.
+  pdfMake.vfs = Object.assign({}, window.KEJADIAN_VFS || {}, window.MONTSERRAT_VFS || {});
+  pdfMake.fonts = Object.assign({}, window.KEJADIAN_FONTS || {}, window.MONTSERRAT_FONTS || {});
 }
 function namaFilePdf(r) {
   let kasus = rapikan(r.caseInfo).replace(/[\\/:*?"<>|\r\n]+/g, ' ').replace(/\s+/g, ' ');
@@ -909,7 +1003,21 @@ async function cetakPdf(r, mode) {
   } catch (e) { if (win) win.close(); toast('Gagal membuat PDF: ' + e.message, 'err'); }
 }
 const unduhPdf = () => cetakPdf(laporan, 'unduh');
-const pratinjauPdf = () => cetakPdf(laporan, 'pratinjau');
+async function cetakPdfKeIframe(r) {
+  if (!konfirmasiCatatan(r, 'melihat pratinjau')) return false;
+  try {
+    siapPdf();
+    const pdf = pdfMake.createPdf(await siapkanDoc(r));
+    return new Promise((resolve) => pdf.getBlob((blob) => { $('pdfFrameWeb').src = URL.createObjectURL(blob); resolve(true); }));
+  } catch (e) { toast('Gagal membuat PDF: ' + e.message, 'err'); return false; }
+}
+async function togglePratinjauWebLaci(force) {
+  const d = $('drawerWeb'), buka = force === undefined ? !d.classList.contains('open') : !!force;
+  if (!buka) { d.classList.remove('open'); return; }
+  const r = jenisAktif === 'BAST' ? bastLaporan : laporan;
+  const ok = await (jenisAktif === 'BAST' ? bastCetakPdfKeIframe(r) : cetakPdfKeIframe(r));
+  if (ok) d.classList.add('open');
+}
 
 /* =====================================================
    KIRIM KE WHATSAPP: langsung membuka WhatsApp Web + mengunduh PDF
@@ -949,8 +1057,8 @@ async function salinTeksWA() {
     toast(oke ? 'Teks laporan disalin. Tempel di WhatsApp dengan Ctrl+V.' : 'Gagal menyalin teks.', oke ? 'ok' : 'err');
   }
 }
-function catatanWA() {
-  const c = [], L = laporan;
+function catatanWA(L) {
+  const c = []; L = L || laporan;
   if (!rapikan(L.tanggal)) c.push('tanggal belum diisi');
   if (!rapikan(L.caseInfo)) c.push('informasi kasus masih kosong');
   if (!rapikan(L.kronologis) && !L.tindakLanjut.some((x) => rapikan(x.uraian))) c.push('kronologis dan tindak lanjut masih kosong');
@@ -965,6 +1073,7 @@ function potongTeks(ctx, lebar, s) { let t = s; while (t.length > 1 && ctx.measu
 async function buatKolase(L) {
   const fotos = (L.fotos || []).filter((f) => f && f.dataUrl), pakai = fotos.slice(0, KOLASE_MAKS), lebih = fotos.length - pakai.length, n = pakai.length;
   if (!n) return null;
+  await AVS.tungguFontSiap();   // supaya teks di kolase memakai Montserrat, bukan font bawaan
   const imgs = await Promise.all(pakai.map((f) => muatGambar(f.dataUrl)));
   // Kolase berbentuk potret 4:5 (untuk WhatsApp); foto UTUH (tak dipotong), ruang kosong diisi
   // versi kabur dari foto itu sendiri; keterangan pada strip tersendiri di bawah foto (tak menimpa foto).
@@ -976,7 +1085,7 @@ async function buatKolase(L) {
   const ctx = cv.getContext('2d'); if (!ctx) throw new Error('canvas tidak tersedia');
   ctx.fillStyle = '#EEF1F5'; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = '#10243D'; ctx.fillRect(0, 0, W, HEAD); ctx.fillStyle = '#C93B2E'; ctx.fillRect(0, 0, W, 5);
-  ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'middle'; ctx.font = '800 30px Inter, Arial, sans-serif';
+  ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'middle'; ctx.font = "800 30px 'Montserrat', Inter, Arial, sans-serif";
   const judul = 'LAPORAN KEJADIAN' + (rapikan(L.fileNumber) ? ' • ' + rapikan(L.fileNumber) : '') + ' • ' + KejadianWA.hariTgl(L.tanggal) + ` • ${fotos.length} foto`;
   ctx.fillText(potongTeks(ctx, W - 60, judul), 30, HEAD / 2 + 3); ctx.textBaseline = 'alphabetic';
   const bungkusTeks = (t, lebar, maks) => {
@@ -1008,7 +1117,7 @@ async function buatKolase(L) {
       ctx.restore();
       // strip keterangan tersendiri di bawah foto (tak menimpa gambar)
       ctx.fillStyle = '#10243D'; ctx.fillRect(x, y + fh, cw, CAPH);
-      ctx.fillStyle = '#FFFFFF'; ctx.font = '600 21px Inter, Arial, sans-serif';
+      ctx.fillStyle = '#FFFFFF'; ctx.font = "600 21px 'Montserrat', Inter, Arial, sans-serif";
       const cap = rapikan(pakai[i].caption) || `Foto ${i + 1}`;
       const teksCap = (lebih > 0 && i === n - 1) ? `${cap} (+${lebih} foto lagi di PDF)` : cap;
       const barisCap = bungkusTeks((i + 1) + '. ' + teksCap, cw - 24, 2), lh = 26, mulai = y + fh + (CAPH - barisCap.length * lh) / 2 + 20;
@@ -1050,13 +1159,38 @@ async function updateBadge() {
   if (!r || !editingId) { b.style.display = 'none'; b.innerHTML = ''; return; }
   const k = AVS.ketJejak(r);
   b.innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
-    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>`;
+    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>` +
+    `<button type="button" class="batal" onclick="newReport()">Batal</button>`;
   b.style.display = 'flex';
+}
+/* ---------- Kirim WA dari Daftar Tersimpan (sama seperti kirimAwalWA, untuk laporan yang sudah tersimpan) ---------- */
+async function kirimWAId(id) {
+  const rMentah = await dbGet(id); if (!rMentah) return;
+  const r = lengkapiModel(rMentah);
+  const c = catatanWA(r);
+  if (c.length && !confirm('Laporan ini belum lengkap:\n- ' + c.join('\n- ') + '\n\nTetap kirim ke WhatsApp?')) return;
+  const teks = KejadianWA.buildWAKejadian(r), adaFoto = (r.fotos || []).some((f) => f && f.dataUrl);
+  if (!adaFoto) {
+    window.open(AVS.urlWA(teks), '_blank', 'noopener');
+    toast('WhatsApp Web dibuka dengan teks laporan. Pilih grup/kontak lalu kirim.', 'ok', 7000); return;
+  }
+  let k = null, galat = '';
+  try { k = await buatKolase(r); } catch (e) { galat = e && e.message ? e.message : String(e); }
+  let disalin = false;
+  if (k) {
+    try { if (navigator.clipboard && window.ClipboardItem) { await navigator.clipboard.write([new ClipboardItem({ 'image/png': k.png })]); disalin = true; } } catch (e) { /* diabaikan: berkas tetap diunduh */ }
+    unduhBlob(k.jpg, 'Kolase Foto ' + (rapikan(r.fileNumber) || 'Laporan Kejadian').replace(/[\\/:*?"<>|]/g, '-') + '.jpg');
+  }
+  window.open(AVS.urlWA(teks), '_blank', 'noopener');
+  if (!k) toast('WhatsApp Web dibuka dengan teks, tetapi kolase foto gagal dibuat (' + galat + ').', 'err', 9000);
+  else toast(disalin
+    ? 'WhatsApp Web dibuka dengan teks laporan. Kolase foto sudah disalin: klik kolom pesan lalu tekan Ctrl+V untuk melampirkannya (juga diunduh sebagai berkas cadangan).'
+    : 'WhatsApp Web dibuka dengan teks laporan. Kolase foto diunduh: di WhatsApp pilih ikon klip (+) → Foto & Video → pilih berkas kolase yang baru diunduh.', 'ok', 14000);
 }
 async function bukaRiwayat(id) {
   const rid = id || editingId; if (!rid) return;
   let r = null; try { r = await dbGet(rid); } catch (e) { /* abaikan */ } if (!r) return;
-  const judul = `${rapikan(r.fileNumber) || '(tanpa nomor)'} • Laporan Kejadian`;
+  const judul = r.jenis === 'BAST' ? `${rapikan(r.nomorBast) || '(tanpa nomor)'} • Berita Acara Serah Terima` : `${rapikan(r.fileNumber) || '(tanpa nomor)'} • Laporan Kejadian`;
   const out = AVS.renderRiwayat(r, judul);
   $('rwSub').textContent = out.sub; $('rwList').innerHTML = out.html;
   togglePratinjauWA(false); $('drawerRw').classList.add('open');
@@ -1079,6 +1213,7 @@ async function simpan() {
     clearTimeout(draftTimer);
     editingId = laporan.id = rec.id; dirty = false; updateBadge(); updateKirimState(); updateCount();
     toast((lama ? 'Laporan diperbarui (' + AVS.waktu(rec.diperbaruiPada) + ')' : 'Laporan berhasil disimpan') + (rec.fileNumber ? ' dengan nomor ' + rec.fileNumber : '') + '.', 'ok', 5500);
+    switchPage('saved');
   } catch (e) { toast('Gagal menyimpan: penyimpanan browser penuh atau diblokir.', 'err'); }
 }
 async function updateCount() {
@@ -1089,33 +1224,54 @@ function jejakHTML(r) {
   if (k.j.pernahDiubah) return `<span class="upd">✎ Diperbarui</span><span>${esc(k.dibuat)}</span><span>•</span><span><b>${esc(k.ubah)}</b></span>`;
   return `<span>${esc(k.dibuat)}</span>${k.j.tercatat ? '<span>•</span><span>Belum pernah diubah</span>' : ''}`;
 }
-async function renderTersimpan() {
-  const box = $('savedList');
-  let list = [];
-  try { list = (await dbAll()).filter((r) => r.id !== KEY_DRAFT); } catch (e) { box.innerHTML = '<div style="text-align:center;color:#C93B2E;padding:40px 0;">Penyimpanan browser tidak tersedia.</div>'; return; }
-  list.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
-  if (!list.length) { box.innerHTML = '<div style="text-align:center;color:#64748b;padding:40px 0;">Belum ada laporan kejadian tersimpan.</div>'; return; }
-  box.innerHTML = list.map((r) => `
+function kartuLK(r) {
+  return `
 <div class="saved-card">
 <div style="min-width:0;">
-<div style="font-weight:bold;color:var(--primary);font-size:14px;">${esc(tglIndo(r.tanggal))}${r.fileNumber ? ' • No. ' + esc(r.fileNumber) : ''}</div>
+<div style="font-weight:bold;color:var(--primary);font-size:14px;"><span class="jenis-tag lk">LK</span>${esc(tglIndo(r.tanggal))}${r.fileNumber ? ' • No. ' + esc(r.fileNumber) : ''}</div>
 <div class="saved-cases">${esc(rapikan(r.caseInfo) || '(tanpa informasi kasus)')}</div>
 <div class="jejak">${jejakHTML(r)}</div>
+<div class="saved-meta">Shift: ${esc(r.shift || '-')} • Lokasi: ${esc(r.lokasiKejadian || '-')}</div>
 <div class="saved-meta">Disusun: ${esc((r.preparedBy && r.preparedBy.nama) || '-')} • ${(r.tindakLanjut || []).length} baris tindak lanjut • ${(r.fotos || []).length} foto</div>
 </div>
 <div class="saved-actions">
 <button type="button" class="btn-info" onclick="pratinjauId('${esc(r.id)}')">Pratinjau</button>
 <button type="button" class="btn-warning" onclick="editReport('${esc(r.id)}')">Ubah</button>
+<button type="button" class="btn-success btn-wa" onclick="kirimWAId('${esc(r.id)}')">Kirim WA</button>
 <button type="button" class="btn-success" onclick="unduhId('${esc(r.id)}')">Unduh PDF</button>
 <button type="button" class="btn-info" style="background:#EEF1F6;color:#475569" onclick="bukaRiwayat('${esc(r.id)}')">Riwayat</button>
 <button type="button" class="btn-danger" onclick="hapusLaporan('${esc(r.id)}')">Hapus</button>
-</div></div>`).join('');
+</div></div>`;
+}
+async function renderTersimpan() {
+  const box = $('savedList');
+  let semua = [];
+  try { semua = (await dbAll()).filter((r) => r.id !== KEY_DRAFT); } catch (e) { box.innerHTML = '<div style="text-align:center;color:#C93B2E;padding:40px 0;">Penyimpanan browser tidak tersedia.</div>'; return; }
+  const filter = $('filterJenisTersimpan') ? $('filterJenisTersimpan').value : 'all';
+  const mulai = $('filterMulaiTersimpan') ? $('filterMulaiTersimpan').value : '';
+  const sampai = $('filterSampaiTersimpan') ? $('filterSampaiTersimpan').value : '';
+  let list = semua;
+  if (filter !== 'all') list = list.filter((r) => (r.jenis || 'LK') === filter);
+  if (mulai) list = list.filter((r) => (r.tanggal || '') >= mulai);
+  if (sampai) list = list.filter((r) => (r.tanggal || '') <= sampai);
+  list.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
+  const rentangTeks = (mulai || sampai) ? `${mulai ? mulai.split('-').reverse().join('/') : '…'} – ${sampai ? sampai.split('-').reverse().join('/') : '…'}` : 'Semua tanggal';
+  if ($('sumLine')) $('sumLine').innerHTML = `Menampilkan <b>${list.length}</b> dari <b>${semua.length}</b> laporan • ${rentangTeks}`;
+  if (!list.length) { box.innerHTML = '<div style="text-align:center;color:#64748b;padding:40px 0;">Belum ada laporan tersimpan.</div>'; return; }
+  box.innerHTML = list.map((r) => (r.jenis === 'BAST' ? bastRenderKartu(r) : kartuLK(r))).join('');
+}
+function resetFilterTersimpan() {
+  if ($('filterMulaiTersimpan')) $('filterMulaiTersimpan').value = '';
+  if ($('filterSampaiTersimpan')) $('filterSampaiTersimpan').value = '';
+  renderTersimpan();
 }
 async function unduhId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapiModel(r), 'unduh'); }
 async function pratinjauId(id) { const r = await dbGet(id); if (r) cetakPdf(lengkapiModel(r), 'pratinjau'); }
 async function editReport(id) {
   const r = await dbGet(id); if (!r) return;
-  if (dirty && !confirm('Isian yang sedang dibuka belum disimpan dan akan diganti. Lanjutkan?')) return;
+  if (jenisAktif === 'BAST' && bastDirty && !confirm('Isian BAST yang sedang dibuka belum disimpan dan akan diganti. Lanjutkan?')) return;
+  if (jenisAktif === 'LK' && dirty && !confirm('Isian yang sedang dibuka belum disimpan dan akan diganti. Lanjutkan?')) return;
+  pilihJenisLaporan('LK');
   laporan = lengkapiModel(clone(r)); editingId = r.id; laporan.id = r.id; dirty = false;
   isiForm(); switchPage('form');
 }
@@ -1133,15 +1289,38 @@ async function newReport() {
   isiForm(); switchPage('form');
 }
 function switchPage(page) {
-  const form = page === 'form';
-  $('pageForm').style.display = form ? 'flex' : 'none';
+  const form = page === 'form', isLK = jenisAktif === 'LK';
+  togglePratinjauWA(false);
+  $('pageForm').style.display = (form && isLK) ? 'flex' : 'none';
+  $('pageFormBast').style.display = (form && !isLK) ? 'flex' : 'none';
   $('pageSaved').style.display = form ? 'none' : 'flex';
   $('statBar').style.display = form ? 'flex' : 'none';
-  ['hdrDiv', 'hdrTgl', 'hdrNomor'].forEach((id) => { $(id).style.display = form ? '' : 'none'; });
-  $('btnFormTab').classList.toggle('on', form);
+  $('statLK').style.display = isLK ? '' : 'none';
+  $('statBAST').style.display = isLK ? 'none' : '';
+  ['hdrDiv', 'hdrTgl', 'hdrShift', 'hdrLokasi'].forEach((id) => { $(id).style.display = (form && isLK) ? '' : 'none'; });
+  $('segBtnJenis').classList.toggle('on', form);
   $('btnSavedTab').classList.toggle('on', !form);
-  if (form) updateBadge(); else $('editBadge').style.display = 'none';   // strip "mengubah laporan" hanya di tab isian
+  $('hdlWA').style.display = (form && isLK) ? '' : 'none';
+  if (form) { if (isLK) updateBadge(); else bastUpdateBadge(); } else $('editBadge').style.display = 'none';   // strip "mengubah laporan" hanya di tab isian
   if (!form) renderTersimpan();
+}
+function toggleJenisDD(e) {
+  e.stopPropagation();
+  $('ddJenisLaporan').classList.toggle('open');
+}
+document.addEventListener('click', () => { const dd = $('ddJenisLaporan'); if (dd) dd.classList.remove('open'); });
+function pilihJenisLaporan(j) {
+  if (j === jenisAktif) { $('ddJenisLaporan').classList.remove('open'); switchPage('form'); return; }
+  if (jenisAktif === 'LK' && dirty && !confirm('Isian Laporan Kejadian yang sedang dibuka belum disimpan. Ganti jenis laporan dan kosongkan isian?')) return;
+  if (jenisAktif === 'BAST' && bastDirty && !confirm('Isian BAST yang sedang dibuka belum disimpan. Ganti jenis laporan dan kosongkan isian?')) return;
+  jenisAktif = j;
+  $('jenisLabelNow').textContent = j === 'LK' ? '— LK' : '— BAST';
+  document.querySelectorAll('#ddJenisLaporan .opt').forEach((o) => { o.classList.remove('sel'); o.querySelector('.chk').textContent = ''; });
+  const opt = document.querySelector(`#ddJenisLaporan .opt[onclick*="'${j}'"]`);
+  if (opt) { opt.classList.add('sel'); opt.querySelector('.chk').textContent = '✓'; }
+  $('ddJenisLaporan').classList.remove('open');
+  if (j === 'BAST' && !bastLaporan) { bastLaporan = bastModelBaru(); bastRenderForm(); bastRenderPreview(); bastRenderNomor(); bastPerbaruiNomor(); }
+  switchPage('form');
 }
 
 /* ---------- Daftar bagian (rail) ---------- */
@@ -1222,7 +1401,7 @@ async function mulai() {
     const d = await dbGet(KEY_DRAFT);
     if (d) {
       editingId = d.editingId || null; delete d.editingId; d.id = editingId;
-      laporan = lengkapiModel(d); dirty = true;
+      laporan = lengkapiModel(d);
       toast('Draf terakhir yang belum disimpan dipulihkan.');
     }
   } catch (e) { /* tanpa draf */ }

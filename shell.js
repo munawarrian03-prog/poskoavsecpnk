@@ -14,7 +14,11 @@
     cal: 'M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10z',
     search: 'M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z',
     wrench: 'M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6l-3 3-4.3-4.3C.6 7.1 1 10.1 3 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.4-.5.4-1.1 0-1.4z',
-    book: 'M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H8V4h1v14l3-1.5 3 1.5V4h3v16z'
+    book: 'M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H8V4h1v14l3-1.5 3 1.5V4h3v16z',
+    chart: 'M4 20h3v-9H4v9zm6.5 0h3V4h-3v16zM17 20h3v-6h-3v6z',
+    caret: 'M7 10l5 5 5-5z',
+    user: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
+    keluar: 'M14 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2h-2v2H5V5h7v2h2zm1 2v3h-7v2h7v3l5-4-5-4z'
   };
   AVS.IC = IC;
   AVS.svg = (p) => `<svg viewBox="0 0 24 24"><path d="${p}"/></svg>`;
@@ -24,23 +28,150 @@
   AVS.HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   AVS.tanggalLengkap = (d) => `${AVS.HARI[d.getDay()]}, ${d.getDate()} ${AVS.BULAN[d.getMonth()]} ${d.getFullYear()}`;
 
-  /* ---------- Bilah atas + navigasi utama ---------- */
-  const MENU = [
-    ['beranda', 'Beranda', 'index.html', 'home'],
+  // Pastikan font Montserrat (dan Inter cadangannya) sudah benar-benar termuat
+  // sebelum html2canvas "memotret" HTML jadi gambar untuk PDF — kalau dipotret
+  // sebelum font siap, hasilnya terlanjur pakai font bawaan sistem dan tidak
+  // berubah lagi meski font baru selesai dimuat sesaat kemudian.
+  AVS.tungguFontSiap = async function () {
+    try {
+      if (!document.fonts) return;
+      const berat = [400, 500, 600, 700, 800];
+      await Promise.all(berat.flatMap((w) => [
+        document.fonts.load(`${w} 12px Montserrat`),
+        document.fonts.load(`${w} 12px Inter`)
+      ]));
+      await Promise.race([document.fonts.ready, new Promise((res) => setTimeout(res, 1500))]);
+    } catch (e) { /* browser lama tanpa document.fonts: lanjut apa adanya */ }
+  };
+
+  /* ---------- Bilah atas + navigasi utama ----------
+     Beranda + 3 menu pertama per peran bersifat TETAP (statis, tidak pernah disembunyikan
+     atau bergeser). Tepat setelah itu ada SATU slot dinamis (default: Laporan Kejadian),
+     lalu ikon carousel di ujung kanan yang membuka daftar menu tersembunyi (Jadwal Dinas,
+     dkk). Klik salah satu item di daftar itu -> ia maju mengisi slot dinamis, dan
+     penghuni slot dinamis sebelumnya otomatis masuk lagi ke daftar tersembunyi (lihat
+     Logika Penukaran Menu). Isi slot dinamis disimpan per peran di localStorage supaya
+     konsisten dipindah antar halaman (tiap halaman = full page load baru). */
+  const JUMLAH_TETAP = 3; // selain Beranda
+  const MENU_ADMIN = [
+    ['pantau', 'Pantau Laporan', 'pantau-posko.html', 'search'],
+    ['rekap', 'Rekap', 'rekap.html', 'chart'],
+    ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
+    ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
+  ];
+  const MENU_POSKO = [
     ['personel', 'Laporan Personel', 'laporan-personel.html', 'people'],
     ['fasilitas', 'Laporan Fasilitas', 'fasilitas.html', 'wrench'],
     ['logbook', 'Log Book', 'logbook.html', 'book'],
-    ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc']
+    ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
+    ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
   ];
+  const kunciDinamis = (peran) => 'avsNavDinamis_' + peran;
+  function menuPeran(peran) { return peran === 'admin' ? MENU_ADMIN : MENU_POSKO; }
+  function bacaDinamis(peran, urutanKey) {
+    const bawaan = urutanKey[JUMLAH_TETAP] || urutanKey[urutanKey.length - 1]; // default: item ke-4 (mis. Kejadian)
+    const simpan = localStorage.getItem(kunciDinamis(peran));
+    return (simpan && urutanKey.includes(simpan)) ? simpan : bawaan;
+  }
+  function simpanDinamis(peran, key) { localStorage.setItem(kunciDinamis(peran), key); }
+  function renderNav(aktif) {
+    const peran = (typeof root.AVS_PERAN === 'function') ? root.AVS_PERAN() : null;
+    const peranKey = peran || 'posko';
+    const menu = menuPeran(peranKey);
+    const byKey = {};
+    menu.forEach(([k, t, href, ic]) => { byKey[k] = { t, href, ic }; });
+    const urutanKey = menu.map((it) => it[0]);
+    const tetap = urutanKey.slice(0, JUMLAH_TETAP);
+    let dinamis = bacaDinamis(peranKey, urutanKey);
+    // Kalau halaman yang sedang aktif ada di daftar tersembunyi (mis. dibuka langsung lewat
+    // URL/bookmark, bukan lewat klik carousel), majukan ia ke slot dinamis supaya tetap
+    // kelihatan -- menu aktif tidak boleh tersembunyi di balik ikon carousel.
+    if (aktif !== 'beranda' && urutanKey.includes(aktif) && !tetap.includes(aktif) && aktif !== dinamis) {
+      dinamis = aktif;
+      simpanDinamis(peranKey, dinamis);
+    }
+    const tersembunyi = urutanKey.filter((k) => !tetap.includes(k) && k !== dinamis);
+    const tombolBeranda = `<a class="nav-btn ${aktif === 'beranda' ? 'active' : ''}" href="index.html" title="Beranda">${AVS.svg(IC.home)}<span>Beranda</span></a>`;
+    const tombolMenu = (k) => { const it = byKey[k]; return `<a class="nav-btn ${k === aktif ? 'active' : ''}" href="${it.href}" title="${AVS.esc(it.t)}">${AVS.svg(IC[it.ic])}<span>${AVS.esc(it.t)}</span></a>`; };
+    const ddItem = (k) => { const it = byKey[k]; return `<a href="${it.href}" data-k="${k}" data-peran="${peranKey}">${AVS.svg(IC[it.ic])}${AVS.esc(it.t)}</a>`; };
+    // Ikon tombol carousel mengikuti menu PALING DEPAN di daftar tersembunyi (bukan ikon
+    // titik-tiga generik) -- jadi pratinjau menu berikutnya, bukan sekadar "ada lagi nih".
+    let ikonCarousel = '';
+    if (tersembunyi.length) {
+      const itDekat = byKey[tersembunyi[0]];
+      ikonCarousel = `<div class="nav-ov"><button type="button" class="nav-btn nav-ov-btn" title="${AVS.esc(itDekat.t)}">${AVS.svg(IC[itDekat.ic])}</button><div class="nav-ov-dd">${tersembunyi.map(ddItem).join('')}</div></div>`;
+    }
+    return tombolBeranda + tetap.map(tombolMenu).join('') + tombolMenu(dinamis) + ikonCarousel;
+  }
+  // Dipanggil saat salah satu item di daftar tersembunyi diklik: pindahkan ia ke slot dinamis
+  // SEBELUM link-nya dibiarkan navigasi normal ke halaman tujuan (localStorage sinkron,
+  // jadi aman tanpa preventDefault). Penghuni slot dinamis sebelumnya otomatis kembali ke
+  // daftar tersembunyi dgn sendirinya di render berikutnya (dihitung dari "tetap"+dinamis baru).
+  function pilihDariOverflow(peran, key) { simpanDinamis(peran, key); }
   AVS.tanggalPendek = (d) => `${AVS.HARI[d.getDay()].slice(0, 3)}, ${d.getDate()} ${AVS.BULAN_PENDEK[d.getMonth()]} ${d.getFullYear()}`;
+  function renderProfil() {
+    if (typeof root.AVS_PERAN !== 'function') return '';
+    const peran = root.AVS_PERAN();
+    if (!peran) return '';
+    const label = peran.charAt(0).toUpperCase() + peran.slice(1);
+    return `<div class="prof-wrap"><button type="button" class="prof-btn" title="Akun">${AVS.svg(IC.user)}</button>
+<div class="prof-dd"><div class="prof-info"><div class="prof-peran">${AVS.esc(label)}</div><div class="prof-ket">Sedang login</div></div>
+<button type="button" class="prof-keluar" onclick="AVS_KELUAR()">${AVS.svg(IC.keluar)}Keluar</button></div></div>`;
+  }
   AVS.nav = function (aktif, el) {
     el = el || document.getElementById('topBar') || document.getElementById('mainNav');
     if (!el) return;
+    el.dataset.aktifHalaman = aktif; // diingat supaya bisa di-render ulang stlh gerbang PIN selesai (lihat AVS.renderNavUlang)
     el.className = 'topbar';
-    el.innerHTML = `<div class="lg"><img src="Logo/AVS.png" alt="Logo AVSEC PNK"></div>` +
-      `<div class="ttl"><b>SISTEM PELAPORAN AVSEC</b><span>Bandara Supadio</span></div>` +
-      `<nav>${MENU.map(([k, t, href, ic]) => `<a class="nav-btn ${k === aktif ? 'active' : ''}" href="${href}">${AVS.svg(IC[ic])}<span>${t}</span></a>`).join('')}</nav>` +
-      `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>`;
+    el.innerHTML = `<div class="lg"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"></div>` +
+      `<div class="ttl"><b>KAPUAS Supadio</b><span>Kanal Aplikasi Pelaporan Unit Airport Security</span></div>` +
+      `<nav>${renderNav(aktif)}</nav>` +
+      `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>${renderProfil()}`;
+    pasangTombolProfil(el);
+    pasangCarousel(el);
+    document.addEventListener('click', (e) => {
+      el.querySelectorAll('.prof-wrap.open, .nav-ov.open').forEach((w) => { if (!w.contains(e.target)) w.classList.remove('open'); });
+    });
+  };
+  function pasangCarousel(el) {
+    el.querySelectorAll('.nav-ov-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const wrap = btn.parentElement, sudahBuka = wrap.classList.contains('open');
+        el.querySelectorAll('.nav-ov.open').forEach((w) => w.classList.remove('open'));
+        wrap.classList.toggle('open', !sudahBuka);
+      });
+    });
+    el.querySelectorAll('.nav-ov-dd a[data-k]').forEach((a) => {
+      a.addEventListener('click', () => { pilihDariOverflow(a.dataset.peran, a.dataset.k); }); // navigasi href dibiarkan jalan normal
+    });
+  }
+  function pasangTombolProfil(el) {
+    const profBtn = el.querySelector('.prof-btn');
+    if (profBtn) profBtn.addEventListener('click', (e) => { e.preventDefault(); profBtn.parentElement.classList.toggle('open'); });
+  }
+  // Render ulang ikon profil setelah login berhasil (dipanggil dari akses.js) -- dibutuhkan
+  // karena topbar bisa sudah ter-render SEBELUM peran diketahui (gerbang PIN masih terbuka).
+  AVS.renderProfilUlang = function () {
+    const topBar = document.getElementById('topBar');
+    if (!topBar || !topBar.querySelector('nav')) return; // nav belum pernah dirender -- biarkan AVS.nav() yg nanti menanganinya
+    const lama = topBar.querySelector('.prof-wrap');
+    const html = renderProfil();
+    if (!html) { if (lama) lama.remove(); return; }
+    if (lama) lama.outerHTML = html; else topBar.insertAdjacentHTML('beforeend', html);
+    pasangTombolProfil(topBar);
+  };
+  // Render ulang SELURUH topbar (menu + profil) setelah gerbang PIN selesai -- dipanggil dari
+  // akses.js. Dibutuhkan krn tiap halaman biasanya memanggil AVS.nav(aktif) sendiri lewat
+  // DOMContentLoaded, TIDAK MENUNGGU gerbang PIN selesai -- kalau belum ada sesi saat itu,
+  // menunya kepalang dirender pakai peran bawaan (lihat renderNav: "peran || 'posko'") dan
+  // tidak pernah diperbarui lagi walau user lalu berhasil login sbg peran lain (termasuk
+  // peran yg SAMA setelah logout+login ulang) -- menu jadi salah/basi sampai halaman di-reload
+  // manual. Aman dipanggil kapan saja: no-op kalau topbar belum pernah dirender sama sekali.
+  AVS.renderNavUlang = function () {
+    const topBar = document.getElementById('topBar');
+    if (!topBar || topBar.dataset.aktifHalaman === undefined) return;
+    AVS.nav(topBar.dataset.aktifHalaman, topBar);
   };
 
   // Tautan pengiriman WhatsApp Web (dipakai laporan personel dan laporan kejadian agar perilakunya sama)
@@ -142,6 +273,30 @@
     return hasil;
   };
 
+  /* ---------- Nama pos terkini (dipakai di mana pun nama pos dari laporan TERSIMPAN
+     ditampilkan, agar laporan lama otomatis ikut nama terbaru jika pos di-rename) ----------
+     Mencari berdasarkan id ke daftar POS_BAWAAN/POS_FASILITAS_BAWAAN yang sedang berlaku;
+     jika global-nya tidak dimuat di halaman ybs, atau id custom (pos tambahan milik satu
+     laporan, bukan dari daftar bawaan), jatuh ke nama yang sudah tersimpan di laporan itu. */
+  AVS.namaPosPersonelTerbaru = function (id, namaTersimpan) {
+    try {
+      if (typeof POS_BAWAAN !== 'undefined' && Array.isArray(POS_BAWAAN)) {
+        const p = POS_BAWAAN.find((x) => x && x.id === id);
+        if (p) return p.name;
+      }
+    } catch (e) {}
+    return namaTersimpan;
+  };
+  AVS.namaPosFasilitasTerbaru = function (id, namaTersimpan) {
+    try {
+      if (typeof POS_FASILITAS_BAWAAN !== 'undefined' && Array.isArray(POS_FASILITAS_BAWAAN)) {
+        const p = POS_FASILITAS_BAWAAN.find((x) => x && x.id === id);
+        if (p) return p.name;
+      }
+    } catch (e) {}
+    return namaTersimpan;
+  };
+
   /* ---------- Diff khusus Laporan Personel ---------- */
   AVS.diffPersonel = function (lama, baru) {
     lama = lama || {}; baru = baru || {};
@@ -165,11 +320,11 @@
     const pL = Array.isArray(lama.posPenempatan) ? lama.posPenempatan : [], pB = Array.isArray(baru.posPenempatan) ? baru.posPenempatan : [];
     const posDaftar = [];
     pB.forEach((pb) => {
-      const pl = pL.find((x) => x && x.id === pb.id), nama = rapikanD(pb.name) || '(pos)';
+      const pl = pL.find((x) => x && x.id === pb.id), nama = AVS.namaPosPersonelTerbaru(pb.id, rapikanD(pb.name)) || '(pos)';
       const d = diffDaftar('x', pl ? pl.personel : [], pb.personel, (p) => rapikanD(p && p.nama) + (rapikanD(p && p.peran) ? ' (' + rapikanD(p.peran) + ')' : ''));
       if (d) d.perubahan.forEach((x) => posDaftar.push(Object.assign({}, x, { teks: x.teks != null ? `${nama} — ${x.teks}` : undefined, lama: x.lama != null ? `${nama} — ${x.lama}` : undefined, baru: x.baru != null ? `${nama} — ${x.baru}` : undefined })));
     });
-    pL.forEach((pl) => { if (!pB.find((x) => x && x.id === pl.id)) (pl.personel || []).forEach((p) => posDaftar.push({ aksi: 'hapus', teks: `${rapikanD(pl.name)} — ${rapikanD(p.nama)}` })); });
+    pL.forEach((pl) => { if (!pB.find((x) => x && x.id === pl.id)) (pl.personel || []).forEach((p) => posDaftar.push({ aksi: 'hapus', teks: `${AVS.namaPosPersonelTerbaru(pl.id, rapikanD(pl.name))} — ${rapikanD(p.nama)}` })); });
     if (posDaftar.length) hasil.push({ label: 'Penempatan personel', jenis: 'daftar', perubahan: posDaftar });
     return hasil;
   };
@@ -182,19 +337,19 @@
     [diffTeks('Tanggal', lama.tanggal, baru.tanggal), diffTeks('Shift', lama.shift, baru.shift), diffTeks('Regu', lama.regu, baru.regu)].forEach((r) => r && hasil.push(r));
     const teksItem = (it) => {
       if (!it) return '';
-      if (it.bentuk === 'B') return `${rapikanD(it.name)} — Jumlah:${it.jumlah || 0} Rusak:${it.rusak || 0}`;
+      if (it.bentuk === 'B') return `${rapikanD(it.name)} — Jumlah:${it.jumlah || 0} Rusak:${it.rusak || 0}${rapikanD(it.keterangan) ? ': ' + rapikanD(it.keterangan) : ''}`;
       if (it.bentuk === 'C') return `${rapikanD(it.name)} — ${it.lengkap ? 'Lengkap' : 'Tidak Lengkap'}${rapikanD(it.keterangan) ? ': ' + rapikanD(it.keterangan) : ''}`;
       return `${rapikanD(it.name)} — ${it.kondisi || 'Baik'}/${it.status || 'Digunakan'}${rapikanD(it.keterangan) ? ': ' + rapikanD(it.keterangan) : ''}`;
     };
     const pL = Array.isArray(lama.posFasilitas) ? lama.posFasilitas : [], pB = Array.isArray(baru.posFasilitas) ? baru.posFasilitas : [];
     const itemDaftar = [];
     pB.forEach((pb) => {
-      const pl = pL.find((x) => x && x.id === pb.id), namaPos = rapikanD(pb.name) || '(pos)';
+      const pl = pL.find((x) => x && x.id === pb.id), namaPos = AVS.namaPosFasilitasTerbaru(pb.id, rapikanD(pb.name)) || '(pos)';
       const d = diffDaftar('x', pl ? pl.items : [], pb.items, teksItem);
       if (d) d.perubahan.forEach((x) => itemDaftar.push(Object.assign({}, x, { teks: x.teks != null ? `${namaPos} — ${x.teks}` : undefined, lama: x.lama != null ? `${namaPos} — ${x.lama}` : undefined, baru: x.baru != null ? `${namaPos} — ${x.baru}` : undefined })));
     });
-    pL.forEach((pl) => { if (!pB.find((x) => x && x.id === pl.id)) (pl.items || []).forEach((it) => itemDaftar.push({ aksi: 'hapus', teks: `${rapikanD(pl.name)} — ${rapikanD(it.name)}` })); });
-    pB.forEach((pb) => { if (!pL.find((x) => x && x.id === pb.id)) (pb.items || []).forEach((it) => itemDaftar.push({ aksi: 'tambah', teks: `${rapikanD(pb.name)} — ${teksItem(it)}` })); });
+    pL.forEach((pl) => { if (!pB.find((x) => x && x.id === pl.id)) (pl.items || []).forEach((it) => itemDaftar.push({ aksi: 'hapus', teks: `${AVS.namaPosFasilitasTerbaru(pl.id, rapikanD(pl.name))} — ${rapikanD(it.name)}` })); });
+    pB.forEach((pb) => { if (!pL.find((x) => x && x.id === pb.id)) (pb.items || []).forEach((it) => itemDaftar.push({ aksi: 'tambah', teks: `${AVS.namaPosFasilitasTerbaru(pb.id, rapikanD(pb.name))} — ${teksItem(it)}` })); });
     if (itemDaftar.length) hasil.push({ label: 'Item fasilitas', jenis: 'daftar', perubahan: itemDaftar });
     return hasil;
   };
@@ -223,15 +378,20 @@
   // Sama seperti getPembuatLaporanInfo() di laporan-personel.html: ambil personel
   // pertama yang namanya terisi di POSKO. Dipakai Fasilitas & Log Book untuk
   // menampilkan "Disusun oleh" tanpa isian manual (lihat RENCANA-PENGEMBANGAN.md).
+  // jabatanLabel = satu baris (dipakai label "DISUSUN OLEH:" di layar).
+  // jabatanWA = "a.n. CHIEF" & peran-nya di baris terpisah, sama seperti blok
+  // tanda tangan teks WA Laporan Personel (laporan-personel.html, getLabelJabatanPembuatLaporan).
   AVS.infoPembuatDariPersonel = function (tanggal, shift, regu) {
     const rec = AVS.cariLaporanPersonel(tanggal, shift, regu);
-    if (!rec) return { ada: false, nama: '', jabatanLabel: '' };
+    if (!rec) return { ada: false, nama: '', jabatanLabel: '', jabatanWA: '' };
     const posko = (rec.posPenempatan || []).find((p) => p.id === 'posko') || (rec.posPenempatan || [])[0];
     const pertama = posko && (posko.personel || []).find((p) => p && rapikanD(p.nama));
-    if (!pertama) return { ada: true, nama: '', jabatanLabel: '', posPersonelKosong: true };
+    if (!pertama) return { ada: true, nama: '', jabatanLabel: '', jabatanWA: '', posPersonelKosong: true };
     const peran = pertama.peran;
-    const jabatanLabel = (!peran || peran === '(Chief)') ? 'CHIEF' : `a.n. CHIEF, ${peran.replace(/^\(|\)$/g, '').toUpperCase()}`;
-    return { ada: true, nama: rapikanD(pertama.nama), jabatanLabel };
+    const peranTeks = peran ? peran.replace(/^\(|\)$/g, '').toUpperCase() : '';
+    const jabatanLabel = (!peran || peran === '(Chief)') ? 'CHIEF' : `a.n. CHIEF, ${peranTeks}`;
+    const jabatanWA = (!peran || peran === '(Chief)') ? 'CHIEF' : `a.n. CHIEF\n${peranTeks}`;
+    return { ada: true, nama: rapikanD(pertama.nama), jabatanLabel, jabatanWA };
   };
 
   /* ---------- Rujukan ke Laporan Kejadian (IndexedDB, dipakai Log Book) ----------
@@ -382,7 +542,7 @@
   AVS.pasangKunci = function () {
     if (!document.getElementById('lockScreen')) {
       const d = document.createElement('div'); d.id = 'lockScreen';
-      d.innerHTML = '<img src="Logo/AVS.png" alt="Logo AVSEC PNK">';
+      d.innerHTML = '<img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"><p>Desktop Only</p>';
       document.body.insertBefore(d, document.body.firstChild);
     }
     AVS.cekPerangkat();

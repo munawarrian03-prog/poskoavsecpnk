@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pantau Posko - Sistem Pelaporan AVSEC Bandara Supadio</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10243D">
+<link rel="icon" type="image/png" href="Logo/AVS-192.png">
+<link rel="apple-touch-icon" href="Logo/AVS-192.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="layout.css">
+<link rel="stylesheet" href="beranda.css">
+<style>
+body { background: #EEF1F6; }
+.pp-toolbar { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 0 14px; min-height: 46px; box-shadow: 0 1px 3px rgba(16,36,61,.05); flex-wrap: wrap; }
+.pp-tbl-wrap { overflow: auto; border: 1px solid var(--border-color); border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(16,36,61,.05); max-height: 62vh; }
+table.pptbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.pptbl th { text-align: left; font-size: 10px; font-weight: 800; color: #8A94A6; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid #EEF1F6; background: #F7F9FC; position: sticky; top: 0; }
+table.pptbl td { padding: 9px 12px; border-bottom: 1px solid #F1F4F8; vertical-align: middle; }
+table.pptbl tr.hari-ini { background: #FCF8E8; }
+table.pptbl tr.hari-ini td:first-child { box-shadow: inset 3px 0 0 #C9922E; }
+.pp-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+.pp-badge.terisi { background: #EEF5E7; color: #3F6B2E; }
+.pp-badge.proses { background: #FCF1DF; color: #9A5F12; }
+.pp-badge.belum { background: #FBE9E7; color: #A82F24; }
+.pp-mata { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-left: 6px; border-radius: 6px; background: #EEF5E7; color: #3F6B2E; vertical-align: middle; text-decoration: none; }
+.pp-mata:hover { background: #DCEFD2; }
+.pp-tgl { font-weight: 800; color: var(--ink); }
+.pp-tgl small { display: block; font-weight: 600; color: #8A94A6; font-size: 10px; }
+.pp-shift { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 7px; background: #EEF1F6; color: #475569; }
+.pp-shift.m { background: #1D3A5C; color: #fff; }
+.pp-legend { display: flex; gap: 16px; flex-wrap: wrap; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 14px; box-shadow: 0 1px 3px rgba(16,36,61,.05); }
+.pp-legend .it { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; color: var(--ink); }
+.pp-legend .sw { width: 20px; height: 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; flex: none; }
+.pp-legend small { display: block; font-weight: 600; color: #8A94A6; font-size: 10px; margin-top: 1px; }
+</style>
+</head>
+<body class="locked">
+
+<div id="lockScreen"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"><p>Desktop Only</p></div>
+
+<div class="main-wrapper" style="gap:14px" id="ppIsi">
+<div id="topBar"></div>
+
+<div class="pp-toolbar">
+<div style="font-size:13px;font-weight:800;color:var(--ink)">PANTAU KETERISIAN POSKO</div>
+<div id="bulanPicker"></div>
+<div style="flex:1"></div>
+<a class="btn-semua-rekap" href="index.html" title="Kembali ke Beranda" style="background:#fff;color:var(--ink);border:1px solid var(--border-color);box-shadow:none">&larr; Dashboard</a>
+</div>
+
+<div class="pp-legend">
+<div class="it"><span class="sw" style="background:#EEF5E7;color:#3F6B2E">&#10003;</span><div>Terisi<small>Laporan sudah masuk utk shift ini</small></div></div>
+<div class="it"><span class="sw" style="background:#FCF1DF;color:#9A5F12">&#8987;</span><div>Proses<small>Belum ada laporan, shift belum berakhir</small></div></div>
+<div class="it"><span class="sw" style="background:#FBE9E7;color:#A82F24">&#10007;</span><div>Belum Terisi<small>Belum ada laporan, shift sudah berakhir</small></div></div>
+</div>
+
+<div class="kpis" id="kpiRow"></div>
+
+<div class="pp-tbl-wrap">
+<table class="pptbl">
+<thead><tr><th>Tanggal</th><th>Shift</th><th>Personel</th><th>Fasilitas</th><th>Log Book</th></tr></thead>
+<tbody id="ppBody"></tbody>
+</table>
+</div>
+<div class="note" id="ppCatatan" style="flex-shrink:0"></div>
+
+</div>
+
+<aside class="drawer" id="drawerLihat">
+<div class="dh"><span>LIHAT LAPORAN</span><button type="button" onclick="tutupLihat()" title="Tutup">&#10005;</button></div>
+<div class="lhsub" id="lihatSub"></div>
+<div class="lhbody" id="lihatIsi"></div>
+</aside>
+
+<script src="akses.js"></script>
+<script src="shell.js"></script>
+<script src="sync.js"></script>
+<script src="fasilitas-data.js"></script>
+<script src="data.js"></script>
+<script>
+function $(id) { return document.getElementById(id); }
+const D = window.AVS_DATA, HARI_INI = new Date();
+let bulanAktif = { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() };
+const ISO_HARI_INI = `${HARI_INI.getFullYear()}-${String(HARI_INI.getMonth() + 1).padStart(2, '0')}-${String(HARI_INI.getDate()).padStart(2, '0')}`;
+
+const EYE_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+function badge(st, jenis, tanggal, sk) {
+  const peta = { terisi: ['&#10003;', 'Terisi'], proses: ['&#8987;', 'Proses'], belum: ['&#10007;', 'Belum Terisi'] };
+  const [ic, lbl] = peta[st];
+  const mata = (st === 'terisi') ? `<button type="button" class="pp-mata" onclick="bukaPratinjau('${jenis}','${tanggal}','${sk}')" title="Lihat pratinjau web laporan ini">${EYE_SVG}</button>` : '';
+  return `<span class="pp-badge ${st}">${ic} ${lbl}</span>${mata}`;
+}
+
+/* ---------- Pratinjau laporan (laci dari samping, tanpa pindah halaman) ----------
+   Porting renderLihatHTML dari laporan-personel.html / fasilitas.html / logbook.html
+   supaya tampilannya identik dengan laci "Lihat Laporan" yang sudah ada di tiap halaman. */
+function renderLihatPersonel(kat) {
+  return (kat || []).map((k) => {
+    const absen = (k.absen || []).filter((p) => p && String(p.nama || '').trim());
+    const jml = parseInt(k.jml, 10) || 0, hadir = jml - absen.length;
+    const judul = `${esc(k.nama)} &mdash; Jumlah ${jml} &bull; Hadir ${hadir} &bull; Kurang ${absen.length}`;
+    const isi = absen.length
+      ? absen.map((p) => `<div class="lb-auto-item"><span>${esc(p.nama)}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(p.alasan === 'Lainnya' ? (p.ket || 'Lainnya') : p.alasan)}</span></div>`).join('')
+      : '<div class="lihat-empty">Lengkap, tidak ada yang tidak hadir.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${judul}</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada kategori kekuatan.</div>';
+}
+function renderLihatFasilitas(pos) {
+  return (pos || []).map((p) => {
+    const isi = (p.items || []).map((it) => {
+      if (it.bentuk === 'C') {
+        const masalah = !it.lengkap;
+        return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${it.lengkap ? 'Lengkap' : 'Tidak Lengkap'}</span></div>`;
+      }
+      if (it.bentuk === 'B') {
+        const baik = Math.max(0, (it.jumlah || 0) - (it.rusak || 0)), masalah = (it.rusak || 0) > 0;
+        return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${it.jumlah || 0} unit &bull; Baik ${baik}${masalah ? ` &bull; Rusak ${it.rusak}` : ''}</span></div>`;
+      }
+      const masalah = it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan';
+      return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${esc(it.kondisi)} &bull; ${esc(it.status)}</span></div>`;
+    }).join('') || '<div class="lihat-empty">Belum ada item.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosFasilitasTerbaru(p.id, p.name))}</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada pos.</div>';
+}
+function renderLihatLogbook(catatan, catatanSerahTerima) {
+  let html = `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${(catatan || []).length})</div>`;
+  html += (catatan || []).length
+    ? catatan.map((c) => `<div class="lb-auto-item"><span>${esc(c.uraian) || '(kosong)'}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(c.jam || '--:--')}</span></div>`).join('')
+    : '<div class="lihat-empty">Belum ada catatan waktu.</div>';
+  html += '</div>';
+  const st = String(catatanSerahTerima || '').trim();
+  html += `<div class="lb-auto"><div class="t"><i></i>Catatan Serah Terima</div><div style="font-size:12.5px;color:var(--ink);line-height:1.6;white-space:pre-wrap">${st ? esc(st) : '<span class="lihat-empty">(kosong)</span>'}</div></div>`;
+  return html;
+}
+function esc(s) { return AVS.esc(s); }
+function tutupLihat() { $('drawerLihat').classList.remove('open'); }
+function bukaPratinjau(jenis, tanggal, sk) {
+  const cocok = (r) => r.tanggal === tanggal && ((r.shift || '').toLowerCase().startsWith('malam') ? 'M' : 'P') === sk;
+  let r, isi, labelJenis;
+  if (jenis === 'personel') { r = gabunganTerkini.personel.find(cocok); isi = r ? renderLihatPersonel(r.kategoriKekuatan) : ''; labelJenis = 'Laporan Personel'; }
+  else if (jenis === 'fasilitas') { r = gabunganTerkini.fasilitas.find(cocok); isi = r ? renderLihatFasilitas(r.posFasilitas) : ''; labelJenis = 'Laporan Fasilitas'; }
+  else { r = gabunganTerkini.logbook.find(cocok); isi = r ? renderLihatLogbook(r.catatanKegiatan, r.catatanSerahTerima) : ''; labelJenis = 'Log Book'; }
+  if (!r) return;
+  $('lihatSub').textContent = `${labelJenis} • Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${tglIndo(tanggal).atas}`;
+  $('lihatIsi').innerHTML = isi;
+  $('drawerLihat').classList.add('open');
+}
+const BULAN_PENDEK = AVS.BULAN_PENDEK, BULAN = AVS.BULAN;
+function tglIndo(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return { atas: `${d} ${BULAN_PENDEK[m - 1]} ${y}`, bawah: AVS.HARI[dt.getDay()] };
+}
+
+// remote = salinan terakhir dari server (Google Apps Script), diisi pollRemote(); kosong
+// sampai polling pertama selesai, atau tetap kosong kalau sinkronisasi belum diatur
+// (AVS_SYNC.aktif() === false) -- render() tetap jalan normal dgn data lokal saja di kedua
+// kasus itu, tidak ada bedanya dari perilaku sebelum fitur ini ada.
+let remote = { personel: [], fasilitas: [], logbook: [] };
+let gabunganTerkini = { personel: [], fasilitas: [], logbook: [] }; // dipakai lagi oleh bukaPratinjau
+
+function render() {
+  const personel = AVS_SYNC.gabung(D.bacaPersonel(), remote.personel);
+  const fasilitas = AVS_SYNC.gabung(D.bacaFasilitas(), remote.fasilitas);
+  const logbook = AVS_SYNC.gabung(D.bacaLogbook(), remote.logbook);
+  gabunganTerkini = { personel, fasilitas, logbook };
+  const daftar = D.statusPantauPosko(personel, fasilitas, logbook, bulanAktif.y, bulanAktif.m, HARI_INI);
+
+  $('ppBody').innerHTML = daftar.length ? daftar.map((r) => {
+    const t = tglIndo(r.tanggal);
+    const sk = r.shift === 'Malam' ? 'M' : 'P';
+    return `<tr class="${r.tanggal === ISO_HARI_INI ? 'hari-ini' : ''}">
+<td class="pp-tgl">${t.atas}<small>${t.bawah}</small></td>
+<td><span class="pp-shift ${sk === 'M' ? 'm' : ''}">${r.shift}</span></td>
+<td>${badge(r.personel, 'personel', r.tanggal, sk)}</td>
+<td>${badge(r.fasilitas, 'fasilitas', r.tanggal, sk)}</td>
+<td>${badge(r.logbook, 'logbook', r.tanggal, sk)}</td>
+</tr>`;
+  }).join('') : '<tr><td colspan="5"><div class="empty">Belum ada shift yang dinilai pada bulan ini.</div></td></tr>';
+
+  const hitung = (jenis) => { const acc = { terisi: 0, proses: 0, belum: 0 }; daftar.forEach((r) => acc[r[jenis]]++); return acc; };
+  const p = hitung('personel'), f = hitung('fasilitas'), l = hitung('logbook');
+  $('kpiRow').innerHTML = `
+<div class="kpi" style="--acc:#10243D;--acc-bg:#E6ECF4"><div class="lbl">Shift Dinilai</div><div class="val">${daftar.length}</div></div>
+<div class="kpi" style="--acc:#3F6B2E;--acc-bg:#EEF5E7"><div class="lbl">Personel Terisi</div><div class="val">${p.terisi}<small>/ ${daftar.length} shift</small></div></div>
+<div class="kpi" style="--acc:#3F6B2E;--acc-bg:#EEF5E7"><div class="lbl">Fasilitas Terisi</div><div class="val">${f.terisi}<small>/ ${daftar.length} shift</small></div></div>
+<div class="kpi" style="--acc:#A82F24;--acc-bg:#FBE9E7"><div class="lbl">Belum Terisi (semua jenis)</div><div class="val">${p.belum + f.belum + l.belum}</div></div>`;
+
+  $('ppCatatan').textContent = AVS_SYNC.aktif()
+    ? `Menampilkan ${BULAN[bulanAktif.m]} ${bulanAktif.y} • data digabung dari seluruh posko (disinkronkan otomatis tiap ${FLUSH_DETIK} detik).`
+    : `Menampilkan ${BULAN[bulanAktif.m]} ${bulanAktif.y} • data digabung dari seluruh perangkat yang mengisi laporan di browser ini.`;
+}
+
+const FLUSH_DETIK = 20;
+async function pollRemote() {
+  const [p, f, l] = await Promise.all([AVS_SYNC.ambilSemua('personel'), AVS_SYNC.ambilSemua('fasilitas'), AVS_SYNC.ambilSemua('logbook')]);
+  remote = { personel: p, fasilitas: f, logbook: l };
+  render();
+}
+
+window.AVS_gerbangAdminSaja(function () {
+  AVS.pasangKunci();
+  AVS.nav('pantau');
+  AVS.pemilihBulan($('bulanPicker'), {
+    get: () => bulanAktif,
+    set: (y, m) => { bulanAktif = { y, m }; render(); },
+    info: () => ({ teks: '' }),
+    maks: { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() }
+  });
+  render(); // tampil cepat dgn data lokal dulu, tanpa menunggu jaringan
+  if (AVS_SYNC.aktif()) { pollRemote(); setInterval(pollRemote, FLUSH_DETIK * 1000); }
+});
+</script>
+</body>
+</html>

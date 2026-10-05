@@ -19,7 +19,7 @@
 .kt-row input.bd { text-align: center; padding: 0; border: none; border-radius: 7px; font-weight: 800; pointer-events: none; }
 .kt-row input.bd.k { background: #FBE9E7; color: #A82F24; } .kt-row input.bd.k.z { background: #EEF1F6; color: #8A94A6; } .kt-row input.bd.h { background: #E4F3F4; color: #0F5F65; }
 #kekuatanContainer .kat-card.err input.bd.k { background: #F8C9C2; }
-.kt-row button.add { height: 28px; border: 1px dashed #9DB0C7; border-radius: 7px; background: transparent; color: var(--secondary); font: 700 10.5px 'Inter', sans-serif; cursor: pointer; }
+.kt-row button.add { height: 28px; border: 1px dashed #9DB0C7; border-radius: 7px; background: transparent; color: var(--secondary); font: 700 10.5px 'Montserrat', 'Inter', sans-serif; cursor: pointer; }
 .kt-row button.add:hover { background: #E4F3F4; }
 .abs-rows { display: flex; flex-direction: column; gap: 5px; padding: 6px 0 2px; }
 .dynamic-row[data-kind="absen"] { display: grid; grid-template-columns: 1fr 158px 26px; gap: 6px; margin: 0; align-items: center; }

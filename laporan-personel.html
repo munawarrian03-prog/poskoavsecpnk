@@ -24,7 +24,7 @@
 <body class="locked">
 
 <!-- LAYAR KUNCI: aplikasi hanya untuk komputer/laptop -->
-<div id="lockScreen"><img src="Logo/AVS.png" alt="Logo AVSEC PNK"></div>
+<div id="lockScreen"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"><p>Desktop Only</p></div>
 
 <datalist id="listPersonel"></datalist>
 
@@ -90,10 +90,11 @@
 <div class="panel-box" id="pageSaved" style="display: none; height: 100%;">
 <div class="panel-title">DAFTAR LAPORAN TERSIMPAN</div>
 <div class="stool">
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="selectlike"><small>Regu</small><select id="fRegu" onchange="renderSavedReports()"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
-<div class="selectlike"><small>Shift</small><select id="fShift" onchange="renderSavedReports()"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<button type="button" style="align-self:flex-end;height:30px;padding:0 12px;border-radius:7px;border:1px solid #D7DEE8;background:#fff;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer" onclick="resetFilterTersimpan()" title="Hapus filter tanggal">✕ Reset Tanggal</button>
 <div style="flex:1"></div>
 </div>
 <div class="sumline" id="sumLine"></div>
@@ -106,23 +107,28 @@
 <span id="compStatus" class="compStatus-balance" onclick="togglePratinjau(true)" title="Klik untuk melihat catatan pemeriksaan">✓ SESUAI (BALANCE)</span>
 <span class="tt" id="totalPenempatanDisplay">TOTAL PENEMPATAN: 0 PERSONEL</span>
 <span class="sp"></span>
-<button type="button" class="sbtn ghost" onclick="togglePratinjau()">Pratinjau</button>
-<button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button>
+<button type="button" class="sbtn ghost" onclick="bukaLihatDraft()">Pratinjau Web</button>
 <button type="button" class="sbtn red" onclick="saveReport()">Simpan Laporan</button>
 </div>
 </div>
 
-<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
+<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU WA ‹</button>
 <aside class="drawer" id="drawer">
-<div class="dh"><span>PRATINJAU LAPORAN</span><button type="button" onclick="copyReport()" title="Salin teks laporan" style="background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Inter';cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="dh"><span>Pratinjau Laporan WA</span><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
 <div class="issue-box" id="issueBox"></div>
 <div class="output-area" id="outputReport">Mengolah laporan...</div>
+<div class="dfoot"><button type="button" class="sbtn ghost" onclick="copyReport()">Salin</button><button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button></div>
 </aside>
 <aside class="drawer" id="drawerRw">
 <div class="dh"><span>RIWAYAT PERUBAHAN</span><button type="button" onclick="tutupRiwayat()" title="Tutup">✕</button></div>
 <div class="rwsub" id="rwSub"></div>
 <div class="rwlist" id="rwList"></div>
 <div class="rwnote">Riwayat menyimpan 30 entri terakhir per laporan (entri "Dibuat" selalu dipertahankan). Riwayat mencatat perubahan, tidak dapat mengembalikan versi lama.</div>
+</aside>
+<aside class="drawer" id="drawerLihat">
+<div class="dh"><span>LIHAT LAPORAN</span><button type="button" onclick="tutupLihat()" title="Tutup">✕</button></div>
+<div class="lhsub" id="lihatSub"></div>
+<div class="lhbody" id="lihatIsi"></div>
 </aside>
 
 
@@ -134,7 +140,7 @@
 <button class="modal-close" onclick="closeViewModal()">✕</button>
 </div>
 <div class="modal-body">
-<div class="output-area" id="modalViewContent" style="height: 100%; max-height: 60vh;"></div>
+<div class="output-area" id="modalViewContent" style="min-height: 200px; max-height: 60vh;"></div>
 </div>
 <div class="modal-footer">
 <button type="button" class="btn-success btn-wa" onclick="kirimWAModal()">Kirim ke WA</button>
@@ -151,7 +157,10 @@
 
 <script src="lib/html2pdf.bundle.min.js"></script>
 <script src="personel-pdf.js"></script>
+<script src="akses.js"></script>
 <script src="shell.js"></script>
+<script src="sync.js"></script>
+<script>AVS_gerbangUtama();</script>
 <script src="personel.js"></script>
 <script src="kategori.js"></script>
 <script>
@@ -608,7 +617,7 @@ function generateReportTextFromData(tanggal, shift, regu, kat, pos) {
   });
   t += `*TOTAL HADIR: ${info.totalHadir} PERSONEL*\n\n------------------------------------\n\n*PENEMPATAN PERSONEL:*\n\n`;
   info.posRows.forEach((r) => {
-    t += `*${r.p.name}*\n`;
+    t += `*${AVS.namaPosPersonelTerbaru(r.p.id, r.p.name)}*\n`;
     if (!r.valid.length) t += `- Nihil\n\n`;
     else { r.valid.forEach((p, i) => { t += `${i + 1}. ${rapikan(p.nama)}${p.peran ? ' ' + p.peran : ''}\n`; }); t += `\n`; }
   });
@@ -671,7 +680,8 @@ function updateBadge() {
   if (!r) { b.style.display = 'none'; b.innerHTML = ''; return; }
   const k = AVS.ketJejak(r);
   b.innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
-    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>`;
+    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>` +
+    `<button type="button" class="batal" onclick="newReport()">Batal</button>`;
   b.style.display = 'flex';
 }
 function bukaRiwayat() {
@@ -687,7 +697,7 @@ function bukaRiwayatDari(r) {
   const judul = `${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${r.tanggal ? new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'} • Laporan Personel`;
   const out = AVS.renderRiwayat(r, judul);
   $('rwSub').textContent = out.sub; $('rwList').innerHTML = out.html;
-  togglePratinjau(false); $('drawerRw').classList.add('open');
+  togglePratinjau(false); tutupLihat(); $('drawerRw').classList.add('open');
 }
 function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
 document.addEventListener('click', (e) => { const p = $('rwPop'); if (p && p.classList.contains('open') && !p.contains(e.target)) p.classList.remove('open'); });
@@ -695,7 +705,43 @@ function togglePratinjau(force) {
   const d = $('drawer'), buka = force === undefined ? !d.classList.contains('open') : !!force;
   d.classList.toggle('open', buka);
   $('hdl').style.display = buka ? 'none' : '';
+  if (buka) { tutupRiwayat(); tutupLihat(); }
 }
+
+/* ---------- Laci "Lihat" (tampilan web hanya-baca, tidak dapat diubah) ---------- */
+function renderLihatHTML(kat, pos) {
+  const info = hitungData(kat, pos);
+  const pb = getPembuatLaporanInfo(pos, 'text');
+  let html = info.rows.map((row) => {
+    const judul = `${esc(labelKategori(row.k))} &mdash; Jumlah ${row.jml} &bull; Hadir ${row.hdr} &bull; Kurang ${row.krg || 0}`;
+    const isi = row.valid.length
+      ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(alasanText(p))}</span></div>`).join('')
+      : '<div class="lihat-empty">Lengkap, tidak ada yang tidak hadir.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${judul}</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada kategori kekuatan.</div>';
+  html += `<div class="lihat-total">TOTAL HADIR: <b>${info.totalHadir}</b> PERSONEL</div>`;
+  html += info.posRows.map((row) => {
+    const isi = row.valid.length
+      ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}${p.peran ? ` <small style="color:#8A94A6;font-weight:600">${esc(p.peran)}</small>` : ''}</span></div>`).join('')
+      : '<div class="lihat-empty">Nihil.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosPersonelTerbaru(row.p.id, row.p.name))} &mdash; ${row.valid.length} orang</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada pos penempatan.</div>';
+  html += `<div class="lihat-total">TOTAL PENEMPATAN: <b>${info.totalPenempatan}</b> PERSONEL</div>`;
+  html += `<div class="lihat-footer">Dibuat oleh, ${esc(pb.jabatanLabel.replace(/\n/g, ' '))} &mdash; ${esc(pb.nama)}</div>`;
+  return html;
+}
+function bukaLihat(id) {
+  const r = getReports().find((x) => x.id === id); if (!r) return;
+  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
+  $('lihatIsi').innerHTML = renderLihatHTML(r.kategoriKekuatan, r.posPenempatan);
+  togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
+}
+function bukaLihatDraft() {
+  $('lihatSub').textContent = `Regu ${$('regu').value || '-'} • ${($('shift').value || '').split(' (')[0]} • ${$('tanggal').value ? formatTanggalIndo($('tanggal').value) : '-'} • (draf belum disimpan)`;
+  $('lihatIsi').innerHTML = renderLihatHTML(kategoriKekuatan, posPenempatan);
+  togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
+}
+function tutupLihat() { $('drawerLihat').classList.remove('open'); }
 function saveReport() {
   const tanggal = $('tanggal').value, shift = $('shift').value, regu = $('regu').value;
   if (!tanggal || !shift || !regu) { toast('Harap lengkapi Tanggal, Shift, dan Regu!', 'err'); return; }
@@ -710,12 +756,15 @@ function saveReport() {
     savedAt: new Date().toLocaleString('id-ID'), versi: 2
   };
   const reports = lsGet(STORAGE_KEY, []);
+  const dup = reports.find((r) => r.tanggal === tanggal && r.shift === shift && r.id !== reportData.id);
+  if (dup) { toast(`Laporan Personel ${formatTanggalIndo(tanggal)} shift ${shift.split(' (')[0]} sudah ada (Regu ${dup.regu}). Satu tanggal hanya boleh satu laporan Pagi dan satu Malam — ubah laporan yang sudah ada itu.`, 'err'); return; }
   const idx = reports.findIndex((r) => r.id === reportData.id);
   const lama = idx !== -1 ? reports[idx] : null;
   const perubahan = lama ? AVS.diffPersonel(normReport(lama), reportData) : [];
   AVS.catatJejak(reportData, lama, perubahan);   // waktu dibuat, waktu pembaruan terakhir, riwayat & rincian perubahan
   if (idx !== -1) reports[idx] = reportData; else reports.unshift(reportData);
   if (!lsSet(STORAGE_KEY, reports)) return;
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.kirim('personel', reportData);
 
   lsSet(LAST_KEY, kategoriKekuatan.map((k) => k.id).filter((id) => KAT_BAWAAN.some((b) => b.id === id)));
   editingReportId = reportData.id;   // simpan berikutnya menimpa laporan ini, bukan membuat duplikat
@@ -747,6 +796,7 @@ function jejakHTML(r) {
   if (k.j.pernahDiubah) return `<span class="upd">✎ Diperbarui</span><span>${esc(k.dibuat)}</span><span>•</span><span><b>${esc(k.ubah)}</b></span>`;
   return `<span>${esc(k.dibuat)}</span>${k.j.tercatat ? '<span>•</span><span>Belum pernah diubah</span>' : ''}`;
 }
+function resetFilterTersimpan() { $('fMulai').value = ''; $('fSampai').value = ''; renderSavedReports(); }
 function renderSavedReports() {
   const box = $('savedReportsList');
   const { semua, list } = laporanTerfilter();
@@ -768,9 +818,9 @@ function renderSavedReports() {
 <div class="pchips">${chBal}<span class="pchip" style="background:#E4F3F4;color:#0F5F65">Hadir ${info.totalHadir}</span><span class="pchip" style="background:${kurang ? '#FBE9E7' : '#EEF1F6'};color:${kurang ? '#A82F24' : '#5C6675'}">Tidak hadir ${kurang}</span><span class="pchip" style="background:#EEF1F6;color:#5C6675">${r.kategoriKekuatan.length} kategori</span></div>
 </div>
 <div class="saved-actions">
-<button type="button" class="btn-info" onclick="viewReport('${esc(r.id)}')">Lihat</button>
+<button type="button" class="btn-info" onclick="bukaLihat('${esc(r.id)}')">Lihat</button>
 <button type="button" class="btn-warning" onclick="editReport('${esc(r.id)}')">Ubah</button>
-<button type="button" class="btn-success btn-wa" onclick="kirimWAId('${esc(r.id)}')">Kirim WA</button>
+<button type="button" class="btn-success btn-wa" onclick="viewReport('${esc(r.id)}')">Kirim WA</button>
 <button type="button" class="btn-success" onclick="exportPDF('${esc(r.id)}')">Unduh PDF</button>
 <button type="button" class="btn-info" style="background:#EEF1F6;color:#475569" onclick="bukaRiwayatId('${esc(r.id)}')">Riwayat</button>
 <button type="button" class="btn-danger" onclick="deleteReport('${esc(r.id)}')">Hapus</button>
@@ -791,11 +841,10 @@ function closeViewModal() { $('viewModal').style.display = 'none'; }
 function copyModalReport() {
   copyText($('modalViewContent').innerText).then((ok) => toast(ok ? 'Teks laporan berhasil disalin!' : 'Gagal menyalin teks.', ok ? 'ok' : 'err'));
 }
-function kirimWAModal() { bukaWA($('modalViewContent').innerText); }
-function kirimWAId(id) {
-  const r = getReports().find((x) => x.id === id); if (!r) return;
-  if (!konfirmasi('mengirim laporan', hitungData(r.kategoriKekuatan, r.posPenempatan), r.tanggal, r.shift, r.regu)) return;
-  bukaWA(textOfReport(r));
+function kirimWAModal() {
+  const r = getReports().find((x) => x.id === modalReportId);
+  if (r && !konfirmasi('mengirim laporan', hitungData(r.kategoriKekuatan, r.posPenempatan), r.tanggal, r.shift, r.regu)) return;
+  bukaWA($('modalViewContent').innerText);
 }
 
 function editReport(id) {
@@ -815,6 +864,7 @@ function deleteReport(id) {
   if (!confirm('Hapus laporan ini?')) return;
   const rest = lsGet(STORAGE_KEY, []).filter((r) => r.id !== id);
   lsSet(STORAGE_KEY, rest);
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.hapus('personel', id);
   if (editingReportId === id) { editingReportId = null; updateBadge(); }
   renderSavedReports();
 }
@@ -849,13 +899,14 @@ function switchPage(page) {
    satu tombol gabungan (seluruh jenis laporan) di rekap.html. Lihat RENCANA-PENGEMBANGAN.md. */
 
 /* ---------- PDF ---------- */
-function exportPDF(id) {
+async function exportPDF(id) {
   const r = getReports().find((x) => x.id === id); if (!r) return;
   if (typeof html2pdf === 'undefined') { toast('Pustaka PDF (lib/html2pdf.bundle.min.js) tidak termuat.', 'err'); return; }
   if (typeof window.buildPersonelPdfHTML !== 'function') { toast('Pembangun PDF (personel-pdf.js) tidak termuat.', 'err'); return; }
   const pembuat = window.pembuatDariPosPenempatan(r.posPenempatan);
   const tglCetak = new Date().toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   $('pdfContent').innerHTML = window.buildPersonelPdfHTML(r, pembuat, tglCetak);
+  await AVS.tungguFontSiap();
   html2pdf().set({
     margin: 10,
     filename: `Lap Personel - ${String(r.regu).replace(/[\\/:*?"<>|]/g, '')} - (${r.tanggal}).pdf`,
@@ -882,10 +933,6 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeVie
 
 window.addEventListener('DOMContentLoaded', () => {
   AVS.nav('personel');
-  const semuaLap = getReports(), hIni = new Date();
-  const terbaru = semuaLap.map((r) => r.tanggal).filter(Boolean).sort().reverse()[0];
-  const awalRentang = terbaru ? `${terbaru.slice(0, 8)}01` : tanggalLokalISO(new Date(hIni.getFullYear(), hIni.getMonth(), 1));
-  $('fMulai').value = awalRentang; $('fSampai').value = tanggalLokalISO(hIni);
   updateCount();
   cekPerangkat();
   isiDaftarPersonel();
@@ -899,6 +946,14 @@ window.addEventListener('DOMContentLoaded', () => {
 window.adaPerubahanBelumTersimpan = () => dirty === true;
 AVS.daftarSW();
 
+// Deep-link dari Pantau Posko: #lihat=<tanggal-ISO>|<P|M> -> buka pratinjau laporan shift tsb.
+(function () {
+  const m = /^#lihat=([^|]+)\|([PM])$/.exec(location.hash);
+  if (!m) return;
+  const tgl = decodeURIComponent(m[1]), sk = m[2];
+  const r = getReports().find((x) => x.tanggal === tgl && shiftKunci(x.shift) === sk);
+  if (r) bukaLihat(r.id);
+})();
 </script>
 </body>
 </html>

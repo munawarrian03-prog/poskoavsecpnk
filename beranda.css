@@ -87,6 +87,31 @@ a.pill:hover { background: #CDE9EB; }
 .note { font-size: 10.5px; color: var(--text-muted); font-weight: 500; padding: 0 4px 4px; flex-shrink: 0; }
 svg .col { cursor: default; }
 
+/* ---------- Mockup: section "Bulanan" (pengganti "Bulan Ini") ---------- */
+.bulanan-head { align-items: center; }
+.mata-btn { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; background: #EEF5E7; color: #3F6B2E; flex: none; border: none; cursor: pointer; text-decoration: none; }
+.mata-btn:hover { background: #DCEFD2; }
+.mata-btn svg { width: 15px; height: 15px; fill: currentColor; }
+.ev.bast .dt { background: #E4F3F4; }
+.ev.bast .dt b { color: var(--secondary); }
+.ev.bast .dt span { color: #0F5F65; }
+.kepat-grid { display: flex; flex-direction: column; gap: 9px; flex: 1; justify-content: center; }
+.kepat-row { display: flex; align-items: center; gap: 10px; }
+.kepat-row .kr-lbl { font-size: 11.5px; font-weight: 700; color: var(--text-main); width: 92px; flex: none; }
+.kepat-row .kr-track { flex: 1; height: 9px; border-radius: 5px; background: #EAEFF5; overflow: hidden; }
+.kepat-row .kr-track i { display: block; height: 100%; border-radius: 5px; }
+.kepat-row .kr-val { font-size: 12.5px; font-weight: 800; color: var(--ink); width: 54px; text-align: right; flex: none; }
+.kepat-total { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: 2px; text-align: center; }
+.kepat-total b { color: var(--ink); font-weight: 800; }
+
+/* Modal "Daftar Shift Belum Lengkap" (#kepatuhanBody) pakai latar gelap (--console-bg) --
+   table.tp aslinya didesain utk kartu putih, jadi warna isi Tanggal & Shift perlu
+   ditimpa supaya kontras terhadap latar gelap (bukan warisi warna teks gelap default). */
+#kepatuhanBody table.tp th { color: #8DA0C2; border-bottom-color: var(--console-border); }
+#kepatuhanBody table.tp td { color: #F2F5FA; border-bottom-color: var(--console-border); }
+#kepatuhanBody table.tp .nm { color: #ffffff; }
+#kepatuhanBody table.tp tr:hover td { background: rgba(255,255,255,.04); }
+
 #isi { display: flex; flex-direction: column; gap: 12px; }
 
 /* ---- kartu KPI yang bisa diklik (shift belum dilaporkan) ---- */
@@ -109,7 +134,7 @@ svg .col { cursor: default; }
 /* ---- sakelar mode hitung (butir 15) ---- */
 #modeSeg { display: flex; flex-direction: column; gap: 3px; }
 #modeSeg .seg2 { display: flex; background: #E6EBF3; border-radius: 9px; padding: 3px; }
-#modeSeg .seg2 button { border: none; background: transparent; font: 700 11px 'Inter', sans-serif; color: #64748B; padding: 6px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+#modeSeg .seg2 button { border: none; background: transparent; font: 700 11px 'Montserrat', 'Inter', sans-serif; color: #64748B; padding: 6px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
 #modeSeg .seg2 button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(16,36,61,.18); }
 
 /* =====================================================
@@ -121,7 +146,7 @@ svg .col { cursor: default; }
 .rauto { height: auto; }
 
 /* header baru */
-.rl-head { display: flex; align-items: flex-start; gap: 14px; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(16,36,61,.05); flex-shrink: 0; }
+.rl-head { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; min-height: 47px; padding: 0 18px; box-shadow: 0 1px 3px rgba(16,36,61,.05); flex-shrink: 0; }
 .rl-head h2 { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: .2px; }
 .rl-head p { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; font-weight: 500; }
 .rl-sp { flex: 1; }
