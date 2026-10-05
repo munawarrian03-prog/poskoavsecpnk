@@ -398,6 +398,22 @@ ${catatanTak}
   }
   function renderSemua() { renderPersonel(); renderFasilitas(); renderKejadian(); renderKepatuhan(); gambarGrafikTren(); }
 
+  // Muat ulang Personel/Fasilitas/Log Book dari localStorage LOKAL, lalu -- kalau sinkronisasi
+  // lintas perangkat aktif (lihat sync.js) -- gabung dgn salinan dari seluruh posko di server,
+  // supaya Rekap yg dibuka Admin ikut menghitung laporan yg disimpan Posko di komputer lain.
+  // Dipanggil sekali saat halaman dibuka (sama seperti Kejadian, data.js bacaKejadian()), BUKAN
+  // tiap klik "Terapkan" -- rentang tanggal cuma menyaring data yg sudah termuat, tidak perlu
+  // tarik ulang dari server tiap ganti filter.
+  async function muatData() {
+    personel = D.bacaPersonel(); fasilitas = D.bacaFasilitas(); logbook = D.bacaLogbook();
+    if (typeof AVS_SYNC !== 'undefined' && AVS_SYNC.aktif()) {
+      const [rp, rf, rl] = await Promise.all([AVS_SYNC.ambilSemua('personel'), AVS_SYNC.ambilSemua('fasilitas'), AVS_SYNC.ambilSemua('logbook')]);
+      personel = AVS_SYNC.gabung(personel, rp);
+      fasilitas = AVS_SYNC.gabung(fasilitas, rf);
+      logbook = AVS_SYNC.gabung(logbook, rl);
+    }
+  }
+
   function bangunTata() {
     $('isiRekap').innerHTML = `
 <div class="blokhdr"><div class="ic" style="background:#157A82">${svg(IC.people)}</div><h2>Laporan Personel</h2><span>rentang &amp; regu terpilih</span><div class="blokline"></div></div>
@@ -570,7 +586,8 @@ ${catatanTak}
         hasil.logbook = timpaLS('savedLogbook', d.logbook, (r) => r.tanggal, hasil);
         if (Array.isArray(d.kejadian) && d.kejadian.length) hasil.kejadian = await timpaKejadianDB(d.kejadian);
         $('hasilImpor').innerHTML = `<b style="color:#0F5F65">Impor selesai:</b> ${hasil.personel} Personel, ${hasil.fasilitas} Fasilitas, ${hasil.logbook} Log Book, ${hasil.kejadian} Kejadian ditambahkan/ditimpa.${hasil.lewat ? ` (${hasil.lewat} data tidak valid dilewati)` : ''}`;
-        personel = D.bacaPersonel(); fasilitas = D.bacaFasilitas(); logbook = D.bacaLogbook(); kejadian = await D.bacaKejadian();
+        kejadian = await D.bacaKejadian();
+        await muatData();
         hitungUlang(); renderSemua();
         toast('Data berhasil dipulihkan.');
       } catch (e) { $('hasilImpor').innerHTML = '<b style="color:#A82F24">Berkas cadangan tidak valid.</b>'; }
@@ -589,6 +606,8 @@ ${catatanTak}
     filterAktif = { mulai: $('fMulai').value, akhir: $('fAkhir').value, regu: 'all' };
     hitungUlang(); renderSemua();
     kejadian = await D.bacaKejadian();
+    hitungUlang(); renderSemua();
+    await muatData(); // tarik salinan Personel/Fasilitas/Log Book dari posko lain (kalau sinkronisasi aktif)
     hitungUlang(); renderSemua();
   }
 
