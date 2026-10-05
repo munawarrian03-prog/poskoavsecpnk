@@ -22,7 +22,7 @@ CARA PASANG
        fonts/  Logo/  lib/ (termasuk lib/xlsx.core.min.js untuk impor Jadwal Dinas)
   2. Buka sekali dengan internet agar aplikasi tersimpan untuk pemakaian offline.
   3. Setiap kali ada berkas yang diubah, naikkan angka versi di sw.js
-     (baris: const CACHE_NAME = 'kekuatan-app-v15';) supaya browser memakai versi baru.
+     (baris: const CACHE_NAME = 'kekuatan-app-v16';) supaya browser memakai versi baru.
 
 CATATAN
   - Data laporan tersimpan di browser komputer yang dipakai. Gunakan Ekspor Backup secara berkala.
