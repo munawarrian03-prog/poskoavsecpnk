@@ -1,5 +1,5 @@
 // Naikkan versi ini setiap kali file aplikasi diubah agar browser memperbarui cache
-const CACHE_NAME = 'kekuatan-app-v16';
+const CACHE_NAME = 'kekuatan-app-v17';
 
 // Aset yang disimpan agar aplikasi tetap jalan saat offline
 const ASSETS_TO_CACHE = [
@@ -19,6 +19,7 @@ const ASSETS_TO_CACHE = [
   './kejadian.css',
   './shell.js',
   './data.js',
+  './sync.js',
   './beranda.js',
   './rekap.js',
   './rekap-pdf.js',
@@ -87,6 +88,11 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   if (!/^https?:$/.test(new URL(req.url).protocol)) return;
+  // Hanya kelola cache utk aset aplikasi sendiri (same-origin). Permintaan lintas-origin
+  // (mis. polling ke Google Apps Script di sync.js) dibiarkan lewat apa adanya -- tidak perlu
+  // & tidak boleh ikut logika network-first/cache-fallback di bawah, supaya data pantauan
+  // selalu terkini dan tidak pernah "nyangkut" di respons lama yang sempat ter-cache.
+  if (new URL(req.url).origin !== self.location.origin) return;
 
   const network = fetch(req).then((res) => {
     if (res && res.status === 200) {

@@ -76,6 +76,7 @@ table.pptbl tr.hari-ini td:first-child { box-shadow: inset 3px 0 0 #C9922E; }
 
 <script src="akses.js"></script>
 <script src="shell.js"></script>
+<script src="sync.js"></script>
 <script src="fasilitas-data.js"></script>
 <script src="data.js"></script>
 <script>
@@ -138,9 +139,9 @@ function tutupLihat() { $('drawerLihat').classList.remove('open'); }
 function bukaPratinjau(jenis, tanggal, sk) {
   const cocok = (r) => r.tanggal === tanggal && ((r.shift || '').toLowerCase().startsWith('malam') ? 'M' : 'P') === sk;
   let r, isi, labelJenis;
-  if (jenis === 'personel') { r = D.bacaPersonel().find(cocok); isi = r ? renderLihatPersonel(r.kategoriKekuatan) : ''; labelJenis = 'Laporan Personel'; }
-  else if (jenis === 'fasilitas') { r = D.bacaFasilitas().find(cocok); isi = r ? renderLihatFasilitas(r.posFasilitas) : ''; labelJenis = 'Laporan Fasilitas'; }
-  else { r = D.bacaLogbook().find(cocok); isi = r ? renderLihatLogbook(r.catatanKegiatan, r.catatanSerahTerima) : ''; labelJenis = 'Log Book'; }
+  if (jenis === 'personel') { r = gabunganTerkini.personel.find(cocok); isi = r ? renderLihatPersonel(r.kategoriKekuatan) : ''; labelJenis = 'Laporan Personel'; }
+  else if (jenis === 'fasilitas') { r = gabunganTerkini.fasilitas.find(cocok); isi = r ? renderLihatFasilitas(r.posFasilitas) : ''; labelJenis = 'Laporan Fasilitas'; }
+  else { r = gabunganTerkini.logbook.find(cocok); isi = r ? renderLihatLogbook(r.catatanKegiatan, r.catatanSerahTerima) : ''; labelJenis = 'Log Book'; }
   if (!r) return;
   $('lihatSub').textContent = `${labelJenis} • Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${tglIndo(tanggal).atas}`;
   $('lihatIsi').innerHTML = isi;
@@ -153,8 +154,18 @@ function tglIndo(iso) {
   return { atas: `${d} ${BULAN_PENDEK[m - 1]} ${y}`, bawah: AVS.HARI[dt.getDay()] };
 }
 
+// remote = salinan terakhir dari server (Google Apps Script), diisi pollRemote(); kosong
+// sampai polling pertama selesai, atau tetap kosong kalau sinkronisasi belum diatur
+// (AVS_SYNC.aktif() === false) -- render() tetap jalan normal dgn data lokal saja di kedua
+// kasus itu, tidak ada bedanya dari perilaku sebelum fitur ini ada.
+let remote = { personel: [], fasilitas: [], logbook: [] };
+let gabunganTerkini = { personel: [], fasilitas: [], logbook: [] }; // dipakai lagi oleh bukaPratinjau
+
 function render() {
-  const personel = D.bacaPersonel(), fasilitas = D.bacaFasilitas(), logbook = D.bacaLogbook();
+  const personel = AVS_SYNC.gabung(D.bacaPersonel(), remote.personel);
+  const fasilitas = AVS_SYNC.gabung(D.bacaFasilitas(), remote.fasilitas);
+  const logbook = AVS_SYNC.gabung(D.bacaLogbook(), remote.logbook);
+  gabunganTerkini = { personel, fasilitas, logbook };
   const daftar = D.statusPantauPosko(personel, fasilitas, logbook, bulanAktif.y, bulanAktif.m, HARI_INI);
 
   $('ppBody').innerHTML = daftar.length ? daftar.map((r) => {
@@ -177,7 +188,16 @@ function render() {
 <div class="kpi" style="--acc:#3F6B2E;--acc-bg:#EEF5E7"><div class="lbl">Fasilitas Terisi</div><div class="val">${f.terisi}<small>/ ${daftar.length} shift</small></div></div>
 <div class="kpi" style="--acc:#A82F24;--acc-bg:#FBE9E7"><div class="lbl">Belum Terisi (semua jenis)</div><div class="val">${p.belum + f.belum + l.belum}</div></div>`;
 
-  $('ppCatatan').textContent = `Menampilkan ${BULAN[bulanAktif.m]} ${bulanAktif.y} • data digabung dari seluruh perangkat yang mengisi laporan di browser ini.`;
+  $('ppCatatan').textContent = AVS_SYNC.aktif()
+    ? `Menampilkan ${BULAN[bulanAktif.m]} ${bulanAktif.y} • data digabung dari seluruh posko (disinkronkan otomatis tiap ${FLUSH_DETIK} detik).`
+    : `Menampilkan ${BULAN[bulanAktif.m]} ${bulanAktif.y} • data digabung dari seluruh perangkat yang mengisi laporan di browser ini.`;
+}
+
+const FLUSH_DETIK = 20;
+async function pollRemote() {
+  const [p, f, l] = await Promise.all([AVS_SYNC.ambilSemua('personel'), AVS_SYNC.ambilSemua('fasilitas'), AVS_SYNC.ambilSemua('logbook')]);
+  remote = { personel: p, fasilitas: f, logbook: l };
+  render();
 }
 
 window.AVS_gerbangAdminSaja(function () {
@@ -189,7 +209,8 @@ window.AVS_gerbangAdminSaja(function () {
     info: () => ({ teks: '' }),
     maks: { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() }
   });
-  render();
+  render(); // tampil cepat dgn data lokal dulu, tanpa menunggu jaringan
+  if (AVS_SYNC.aktif()) { pollRemote(); setInterval(pollRemote, FLUSH_DETIK * 1000); }
 });
 </script>
 </body>

@@ -169,6 +169,7 @@
 <script type="text/javascript" src="lib/html2pdf.bundle.min.js"></script>
 <script src="akses.js"></script>
 <script src="shell.js"></script>
+<script src="sync.js"></script>
 <script>AVS_gerbangUtama();</script>
 <script src="fasilitas-data.js"></script>
 <script src="fasilitas-pdf.js"></script>
@@ -489,6 +490,7 @@ function saveReport() {
   AVS.catatJejak(reportData, lama, perubahan);
   if (idx !== -1) reports[idx] = reportData; else reports.unshift(reportData);
   if (!lsSet(STORAGE_KEY, reports)) return;
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.kirim('fasilitas', reportData);
   editingReportId = reportData.id; dirty = false;
     toast(lama ? 'Laporan diperbarui: ' + AVS.waktu(reportData.diperbaruiPada) : 'Laporan berhasil disimpan!');
   updateCount(); switchPage('saved');
@@ -516,6 +518,7 @@ function loadForEdit(id) {
 function deleteReport(id) {
   if (!confirm('Hapus laporan ini? Tindakan tidak dapat dibatalkan.')) return;
   lsSet(STORAGE_KEY, lsGet(STORAGE_KEY, []).filter((r) => r.id !== id));
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.hapus('fasilitas', id);
   updateCount(); renderSavedReports();
   toast('Laporan dihapus.');
 }

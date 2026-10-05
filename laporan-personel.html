@@ -159,6 +159,7 @@
 <script src="personel-pdf.js"></script>
 <script src="akses.js"></script>
 <script src="shell.js"></script>
+<script src="sync.js"></script>
 <script>AVS_gerbangUtama();</script>
 <script src="personel.js"></script>
 <script src="kategori.js"></script>
@@ -763,6 +764,7 @@ function saveReport() {
   AVS.catatJejak(reportData, lama, perubahan);   // waktu dibuat, waktu pembaruan terakhir, riwayat & rincian perubahan
   if (idx !== -1) reports[idx] = reportData; else reports.unshift(reportData);
   if (!lsSet(STORAGE_KEY, reports)) return;
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.kirim('personel', reportData);
 
   lsSet(LAST_KEY, kategoriKekuatan.map((k) => k.id).filter((id) => KAT_BAWAAN.some((b) => b.id === id)));
   editingReportId = reportData.id;   // simpan berikutnya menimpa laporan ini, bukan membuat duplikat
@@ -862,6 +864,7 @@ function deleteReport(id) {
   if (!confirm('Hapus laporan ini?')) return;
   const rest = lsGet(STORAGE_KEY, []).filter((r) => r.id !== id);
   lsSet(STORAGE_KEY, rest);
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.hapus('personel', id);
   if (editingReportId === id) { editingReportId = null; updateBadge(); }
   renderSavedReports();
 }

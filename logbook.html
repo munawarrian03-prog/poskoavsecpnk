@@ -162,6 +162,7 @@
 <script type="text/javascript" src="lib/html2pdf.bundle.min.js"></script>
 <script src="akses.js"></script>
 <script src="shell.js"></script>
+<script src="sync.js"></script>
 <script>AVS_gerbangUtama();</script>
 <script src="kategori.js"></script>
 <script src="fasilitas-data.js"></script>
@@ -342,6 +343,7 @@ function saveReport() {
   AVS.catatJejak(reportData, lama, perubahan);
   if (idx !== -1) reports[idx] = reportData; else reports.unshift(reportData);
   if (!lsSet(STORAGE_KEY, reports)) return;
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.kirim('logbook', reportData);
   editingReportId = reportData.id; dirty = false;   toast(lama ? 'Catatan diperbarui: ' + AVS.waktu(reportData.diperbaruiPada) : 'Catatan berhasil disimpan!');
   updateCount(); switchPage('saved');
 }
@@ -367,6 +369,7 @@ function loadForEdit(id) {
 function deleteReport(id) {
   if (!confirm('Hapus catatan ini? Tindakan tidak dapat dibatalkan.')) return;
   lsSet(STORAGE_KEY, lsGet(STORAGE_KEY, []).filter((r) => r.id !== id));
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.hapus('logbook', id);
   updateCount(); renderSavedReports(); toast('Catatan dihapus.');
 }
 
