@@ -20,6 +20,27 @@
     } catch (e) { return null; }
   }
   function tulisSesi(peran) { localStorage.setItem(KUNCI_SESI, JSON.stringify({ peran, lastActivity: Date.now() })); }
+
+  // Alihkan ke halaman utama peran begitu PIN berhasil dimasukkan (login pertama ATAU
+  // ganti peran lewat "‹ Pilih peran lain" setelah logout), KALAU halaman yang sedang
+  // dibuka memang khusus untuk peran lain -- supaya tidak "nyangkut" di halaman peran
+  // sebelumnya (lihat laporan bug: logout Posko -> masuk Admin, halaman Posko masih
+  // terbuka sampai pindah menu manual). TIDAK dipakai untuk sesi yang sudah berjalan
+  // (buka halaman lewat URL langsung tetap diizinkan lintas peran seperti biasa) --
+  // hanya dipicu pada momen PIN baru saja dimasukkan.
+  const HALAMAN_KHUSUS_POSKO = ['laporan-personel.html', 'fasilitas.html', 'logbook.html'];
+  const HALAMAN_KHUSUS_ADMIN = ['rekap.html', 'pantau-posko.html'];
+  const HALAMAN_UTAMA_PERAN = { admin: 'pantau-posko.html', posko: 'index.html' };
+  function halamanSaatIni() { return location.pathname.split('/').pop() || 'index.html'; }
+  function alihkanJikaPerlu(peran) {
+    const h = halamanSaatIni();
+    const takRelevan = (peran === 'admin' && HALAMAN_KHUSUS_POSKO.includes(h)) || (peran === 'posko' && HALAMAN_KHUSUS_ADMIN.includes(h));
+    if (!takRelevan) return false;
+    const tujuan = HALAMAN_UTAMA_PERAN[peran];
+    if (tujuan === h) return false;
+    location.href = tujuan;
+    return true;
+  }
   function perbaruiAktivitas() {
     const s = bacaSesi(); if (!s) return;
     localStorage.setItem(KUNCI_SESI, JSON.stringify({ peran: s.peran, lastActivity: Date.now() }));
@@ -73,6 +94,7 @@ ${tampilkanGanti ? '<button id="gerbangBtnGanti" style="width:100%;height:30px;m
       tulisSesi(peran);
       ov.remove();
       pasangPemantauAktivitas();
+      if (tampilkanGanti && alihkanJikaPerlu(peran)) return; // sedang pindah ke halaman utama peran ini
       onBerhasil();
     };
     document.getElementById('gerbangBtn').onclick = coba;
