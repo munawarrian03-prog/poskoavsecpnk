@@ -553,12 +553,19 @@ ${catatanTak}
     }
     toast(`Dicadangkan: ${personel.length} Personel, ${fasilitas.length} Fasilitas, ${logbook.length} Log Book, ${kejadian.length} Kejadian.`);
   }
-  function timpaLS(key, arrBaru, wajib, hasilRef) {
+  // jenis diisi ('personel'/'fasilitas'/'logbook') supaya tiap record yang berhasil
+  // dipulihkan ikut dikirim ke server (AVS_SYNC) -- tanpa ini, data hasil Pulihkan cuma
+  // tersimpan di browser Admin yang memulihkan, tidak ikut menyebar lagi ke Posko/PC lain.
+  function timpaLS(key, arrBaru, wajib, hasilRef, jenis) {
     if (!Array.isArray(arrBaru)) return 0;
     let list; try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { list = []; }
     const map = new Map(list.map((r) => [String(r.id), r]));
     let n = 0;
-    arrBaru.forEach((r) => { if (!r || !r.id || !wajib(r)) { hasilRef.lewat++; return; } r.id = String(r.id); map.set(r.id, r); n++; });
+    arrBaru.forEach((r) => {
+      if (!r || !r.id || !wajib(r)) { hasilRef.lewat++; return; }
+      r.id = String(r.id); map.set(r.id, r); n++;
+      if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.kirim(jenis, r);
+    });
     localStorage.setItem(key, JSON.stringify(Array.from(map.values())));
     return n;
   }
@@ -581,9 +588,9 @@ ${catatanTak}
       try {
         const d = JSON.parse(reader.result);
         const hasil = { personel: 0, fasilitas: 0, logbook: 0, kejadian: 0, lewat: 0 };
-        hasil.personel = timpaLS('savedReports', d.personel, (r) => r.tanggal && Array.isArray(r.kategoriKekuatan) && Array.isArray(r.posPenempatan), hasil);
-        hasil.fasilitas = timpaLS('savedFasilitas', d.fasilitas, (r) => r.tanggal && Array.isArray(r.posFasilitas), hasil);
-        hasil.logbook = timpaLS('savedLogbook', d.logbook, (r) => r.tanggal, hasil);
+        hasil.personel = timpaLS('savedReports', d.personel, (r) => r.tanggal && Array.isArray(r.kategoriKekuatan) && Array.isArray(r.posPenempatan), hasil, 'personel');
+        hasil.fasilitas = timpaLS('savedFasilitas', d.fasilitas, (r) => r.tanggal && Array.isArray(r.posFasilitas), hasil, 'fasilitas');
+        hasil.logbook = timpaLS('savedLogbook', d.logbook, (r) => r.tanggal, hasil, 'logbook');
         if (Array.isArray(d.kejadian) && d.kejadian.length) hasil.kejadian = await timpaKejadianDB(d.kejadian);
         $('hasilImpor').innerHTML = `<b style="color:#0F5F65">Impor selesai:</b> ${hasil.personel} Personel, ${hasil.fasilitas} Fasilitas, ${hasil.logbook} Log Book, ${hasil.kejadian} Kejadian ditambahkan/ditimpa.${hasil.lewat ? ` (${hasil.lewat} data tidak valid dilewati)` : ''}`;
         kejadian = await D.bacaKejadian();

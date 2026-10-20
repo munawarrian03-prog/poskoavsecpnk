@@ -55,17 +55,30 @@
       .then((r) => r.json()).then((j) => !!(j && j.ok)).catch(() => false);
   }
 
+  // Hapus SATU entri (hasil kirim sukses) dari antrian TERKINI di localStorage -- bukan
+  // menimpa seluruh antrian dengan salinan lokal basi. Tanpa ini, entri baru yang masuk
+  // (lewat antrikan()) SELAGI fetch entri sebelumnya masih berjalan akan ikut terhapus,
+  // karena tertimpa salinan lama yang belum tahu soal entri baru itu (lihat kasus
+  // Pulihkan: 3 kirim() dipanggil beruntun dlm satu tick -- tanpa perbaikan ini hanya
+  // entri PERTAMA yang benar-benar terkirim, dua lainnya "hilang" dari antrian).
+  function hapusDariAntrian(jenis, data) {
+    const q = antrianBaca();
+    const idx = q.findIndex((x) => x.jenis === jenis && x.data && data && x.data.id === data.id);
+    if (idx !== -1) { q.splice(idx, 1); antrianTulis(q); }
+  }
+
   let sedangFlush = false;
   function flush() {
     if (!aktif() || sedangFlush) return;
-    let sisa = antrianBaca(); if (!sisa.length) return;
+    if (!antrianBaca().length) return;
     sedangFlush = true;
     (async () => {
-      while (sisa.length) {
-        const ok = await kirimSatu(sisa[0]);
+      while (true) {
+        const depan = antrianBaca()[0]; // selalu baca ulang -- antrian bisa bertambah selagi fetch di bawah berjalan
+        if (!depan) break;
+        const ok = await kirimSatu(depan);
         if (!ok) break; // gagal (offline/GAS error) -> hentikan, sisanya dicoba lagi di flush berikutnya
-        sisa = sisa.slice(1);
-        antrianTulis(sisa); // simpan progres supaya yang sudah sukses tidak terkirim ulang
+        hapusDariAntrian(depan.jenis, depan.data);
       }
       sedangFlush = false;
     })();
