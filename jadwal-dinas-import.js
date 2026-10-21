@@ -27,6 +27,15 @@
   function pad2(n) { return String(n).padStart(2, '0'); }
   function isoTanggal(y, m /*0-11*/, d) { return `${y}-${pad2(m + 1)}-${pad2(d)}`; }
   function jumlahHari(y, m) { return new Date(y, m + 1, 0).getDate(); }
+  // Objek Date dari sel Excel (XLSX.read ..cellDates:true) SEHARUSNYA pas tengah malam
+  // dari tanggal yang dimaksud, tapi SheetJS bisa meleset beberapa detik/menit tergantung
+  // zona waktu browser (terbukti kena di WIB/Asia-Jakarta). Digeser ke tengah hari dulu
+  // (jauh dari batas tengah malam mana pun) sebelum dibaca tanggalnya, supaya kemelesetan
+  // kecil itu tidak pernah melompati batas hari dan membuat tanggal mundur/maju satu hari.
+  function tanggalDariSelExcel(d) {
+    const tengahHari = new Date(d.getTime() + 12 * 60 * 60 * 1000);
+    return { y: tengahHari.getFullYear(), m: tengahHari.getMonth(), d: tengahHari.getDate() };
+  }
 
   // Cari baris berisi >=5 sel Date berurutan (bentuk GRUP). Kembalikan {row, minCol, maxCol, tanggal:[{col,date}]} atau null.
   function cariBarisTanggalDate(rows, maxScan) {
@@ -126,7 +135,7 @@
       const jadwal = {};
       tglInfo.tanggal.forEach(({ col, date }) => {
         const kode = bersih(row[col]);
-        if (kode) jadwal[isoTanggal(date.getFullYear(), date.getMonth(), date.getDate())] = kode.toUpperCase();
+        if (kode) { const t = tanggalDariSelExcel(date); jadwal[isoTanggal(t.y, t.m, t.d)] = kode.toUpperCase(); }
       });
       bucket.orang.push({
         no: kolom.colNo != null ? row[kolom.colNo] : null,

@@ -14,6 +14,46 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Bug: tanggal mundur/maju satu hari saat impor Jadwal Dinas dari Excel (sheet tipe GRUP)
+- **Status:** Selesai
+- **Dicatat:** 2026-10-21
+- **Konteks:** Pengguna melaporkan setelah mengunggah Excel jadwal dinas, tanggal yang
+  seharusnya "Libur" di kalender web malah tampil "Masuk Pagi" — kode shift tergeser satu
+  hari dari tanggal aslinya.
+- **Masalah ditemukan:** di `jadwal-dinas-import.js`, fungsi `parseSheetGrup()` (dipakai
+  sheet tipe GRUP, mis. ROSTER ORGANIK & IASS — sheet tipe DATAR mis. NEW IASS TIDAK
+  terdampak karena tidak memakai objek `Date` sama sekali, hanya angka 1-31 polos), baris:
+  ```js
+  jadwal[isoTanggal(date.getFullYear(), date.getMonth(), date.getDate())] = kode.toUpperCase();
+  ```
+  `date` adalah objek `Date` hasil `XLSX.read(..., { cellDates: true })` (SheetJS 0.18.5,
+  `lib/xlsx.core.min.js`). Dibuktikan lewat reproduksi langsung (bikin file Excel dgn
+  serial tanggal bersih/tanpa pecahan, baca ulang dgn library yang sama): di zona waktu
+  **Asia/Jakarta (WIB)**, objek `Date` yang dihasilkan SheetJS untuk serial tanggal
+  tersebut melenceng beberapa detik SEBELUM tengah malam yang dimaksud (bukan pas tengah
+  malam) — kemungkinan besar imbas offset historis zona waktu Jakarta era 1899 yang
+  dipakai SheetJS sbg basis perhitungan serial. Akibatnya `getFullYear()/getMonth()/
+  getDate()` (pembaca waktu LOKAL) membaca tanggal SATU HARI LEBIH MUNDUR dari yang
+  sebenarnya — kode shift tanggal 2 tersimpan ke kunci ISO tanggal 1, kode tanggal 3 ke
+  tanggal 2, dst. Tidak muncul di UTC atau zona waktu lain yang sudah dicoba (hanya WIB).
+- **Keputusan:** disetujui untuk diperbaiki.
+- **Rencana perbaikan:** sebelum membaca tanggal dari objek `Date` tsb, geser dulu ke
+  tengah hari (+12 jam) supaya kemelesetan beberapa detik/menit itu tidak pernah
+  melompati batas hari, baru baca `getFullYear()/getMonth()/getDate()` dari hasil
+  geseran itu. Perbaikan lokal di satu fungsi saja, tidak mengubah `XLSX.read()` atau
+  cara deteksi sel tanggal (`instanceof Date`).
+- **Dampak ke pengguna:** jadwal yang SUDAH terlanjur diunggah dgn tanggal salah (sheet
+  tipe GRUP) perlu diunggah ulang setelah perbaikan ini dipasang — perbaikan ini tidak
+  mengoreksi data yang sudah tersimpan, hanya mencegah kesalahan yang sama terulang pada
+  unggahan berikutnya.
+- **Diverifikasi:** reproduksi manual dgn `lib/xlsx.core.min.js` (versi persis yang
+  dipakai web ini) di TZ=Asia/Jakarta, TZ=UTC, dan TZ=America/New_York — sebelum
+  perbaikan: tanggal mundur satu hari di WIB (benar di UTC/New_York). Sesudah
+  perbaikan: benar di ketiganya. Diverifikasi juga lewat `praProsesWorkbook()` yang
+  sebenarnya (bukan cuma fungsi tanggalnya saja) dengan sheet GRUP tiruan (5 kolom
+  tanggal berurutan + legenda) di ketiga zona waktu tsb — hasil akhir `jadwal{}` persis
+  cocok dengan tanggal aslinya di Excel.
+
 ### Pulihkan (restore) di Rekap belum ikut tersinkron ke server (sync GAS)
 - **Status:** Selesai
 - **Dicatat:** 2026-10-20
