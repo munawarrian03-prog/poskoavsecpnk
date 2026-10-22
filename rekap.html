@@ -58,7 +58,8 @@ table.rtbl td.col-tgl { white-space: normal; min-width: 160px; }
 <div class="fld2"><label>Regu</label><select id="fRegu"><option value="all">Semua Regu</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
 <button type="button" class="rk-btn ghost" id="btnTerapkan" onclick="Rekap.terapkanFilter()">Terapkan</button>
 <div class="rk-sp"></div>
-<button type="button" class="rk-btn ghost" onclick="Rekap.bukaBackup()">⇅ Cadangkan / Pulihkan</button>
+<button type="button" class="rk-btn ghost" id="btnBackup" onclick="Rekap.bukaBackup()">⇅ Cadangkan / Pulihkan</button>
+<button type="button" class="rk-btn ghost" id="btnMuatUlang" style="display:none" onclick="Rekap.muatUlang()">⟳ Muat Ulang</button>
 <button type="button" class="rk-btn teal" id="btnPdf" onclick="Rekap.unduhPDF()">⬇ Unduh Rekap (PDF)</button>
 </div>
 

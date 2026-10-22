@@ -361,6 +361,7 @@ async function bastSimpan() {
     let lama = null; if (bastEditingId) { try { lama = await dbGet(bastEditingId); } catch (e) { /* abaikan */ } }
     AVS.catatJejak(rec, lama, []);
     await dbPut(rec);
+    if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.kirim('bast', rec);
     bastCatatNomor(rec);
     bastLaporan.nomorBast = rec.nomorBast; bastLaporan.nomorDikunci = rec.nomorDikunci; bastRenderNomor();
     bastEditingId = bastLaporan.id = rec.id; bastDirty = false; bastUpdateBadge();

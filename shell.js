@@ -56,7 +56,6 @@
   const MENU_ADMIN = [
     ['pantau', 'Pantau Laporan', 'pantau-posko.html', 'search'],
     ['rekap', 'Rekap', 'rekap.html', 'chart'],
-    ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
     ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
   ];
   const MENU_POSKO = [
@@ -64,14 +63,19 @@
     ['fasilitas', 'Laporan Fasilitas', 'fasilitas.html', 'wrench'],
     ['logbook', 'Log Book', 'logbook.html', 'book'],
     ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
-    ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
+    ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal'],
+    ['rekap', 'Rekap', 'rekap.html', 'chart']
   ];
   const kunciDinamis = (peran) => 'avsNavDinamis_' + peran;
   function menuPeran(peran) { return peran === 'admin' ? MENU_ADMIN : MENU_POSKO; }
   function bacaDinamis(peran, urutanKey) {
+    // Kalau menu peran ini pas/kurang dari JUMLAH_TETAP, semuanya sudah "tetap" -- tidak
+    // ada sisa utk slot dinamis (lihat renderNav: null berarti slot itu tidak dirender
+    // sama sekali, bukan menduplikasi salah satu menu yang sudah tampil di "tetap").
+    if (urutanKey.length <= JUMLAH_TETAP) return null;
     const bawaan = urutanKey[JUMLAH_TETAP] || urutanKey[urutanKey.length - 1]; // default: item ke-4 (mis. Kejadian)
     const simpan = localStorage.getItem(kunciDinamis(peran));
-    return (simpan && urutanKey.includes(simpan)) ? simpan : bawaan;
+    return (simpan && urutanKey.includes(simpan) && !urutanKey.slice(0, JUMLAH_TETAP).includes(simpan)) ? simpan : bawaan;
   }
   function simpanDinamis(peran, key) { localStorage.setItem(kunciDinamis(peran), key); }
   function renderNav(aktif) {
@@ -86,11 +90,11 @@
     // Kalau halaman yang sedang aktif ada di daftar tersembunyi (mis. dibuka langsung lewat
     // URL/bookmark, bukan lewat klik carousel), majukan ia ke slot dinamis supaya tetap
     // kelihatan -- menu aktif tidak boleh tersembunyi di balik ikon carousel.
-    if (aktif !== 'beranda' && urutanKey.includes(aktif) && !tetap.includes(aktif) && aktif !== dinamis) {
+    if (dinamis !== null && aktif !== 'beranda' && urutanKey.includes(aktif) && !tetap.includes(aktif) && aktif !== dinamis) {
       dinamis = aktif;
       simpanDinamis(peranKey, dinamis);
     }
-    const tersembunyi = urutanKey.filter((k) => !tetap.includes(k) && k !== dinamis);
+    const tersembunyi = dinamis === null ? [] : urutanKey.filter((k) => !tetap.includes(k) && k !== dinamis);
     const tombolBeranda = `<a class="nav-btn ${aktif === 'beranda' ? 'active' : ''}" href="index.html" title="Beranda">${AVS.svg(IC.home)}<span>Beranda</span></a>`;
     const tombolMenu = (k) => { const it = byKey[k]; return `<a class="nav-btn ${k === aktif ? 'active' : ''}" href="${it.href}" title="${AVS.esc(it.t)}">${AVS.svg(IC[it.ic])}<span>${AVS.esc(it.t)}</span></a>`; };
     const ddItem = (k) => { const it = byKey[k]; return `<a href="${it.href}" data-k="${k}" data-peran="${peranKey}">${AVS.svg(IC[it.ic])}${AVS.esc(it.t)}</a>`; };
@@ -101,7 +105,7 @@
       const itDekat = byKey[tersembunyi[0]];
       ikonCarousel = `<div class="nav-ov"><button type="button" class="nav-btn nav-ov-btn" title="${AVS.esc(itDekat.t)}">${AVS.svg(IC[itDekat.ic])}</button><div class="nav-ov-dd">${tersembunyi.map(ddItem).join('')}</div></div>`;
     }
-    return tombolBeranda + tetap.map(tombolMenu).join('') + tombolMenu(dinamis) + ikonCarousel;
+    return tombolBeranda + tetap.map(tombolMenu).join('') + (dinamis === null ? '' : tombolMenu(dinamis)) + ikonCarousel;
   }
   // Dipanggil saat salah satu item di daftar tersembunyi diklik: pindahkan ia ke slot dinamis
   // SEBELUM link-nya dibiarkan navigasi normal ke halaman tujuan (localStorage sinkron,
@@ -369,7 +373,11 @@
   /* ---------- Rujukan silang ke Laporan Personel (dipakai Fasilitas & Log Book) ---------- */
   // Mencari Laporan Personel tersimpan untuk Tanggal+Shift+Regu yang sama.
   // Selalu membaca localStorage TERKINI (live), bukan salinan beku.
-  AVS.cariLaporanPersonel = function (tanggal, shift, regu) {
+  // daftarOpsional: kalau diisi (mis. data gabungan lokal+server di Pantau Posko), dicari
+  // di situ SAJA -- bukan localStorage. Dibiarkan kosong (default) = perilaku lama, selalu
+  // baca localStorage lokal, dipakai 3 halaman editor seperti sebelumnya (tidak berubah).
+  AVS.cariLaporanPersonel = function (tanggal, shift, regu, daftarOpsional) {
+    if (daftarOpsional) return daftarOpsional.find((r) => r && r.tanggal === tanggal && r.shift === shift && r.regu === regu) || null;
     try {
       const arr = JSON.parse(localStorage.getItem('savedReports') || '[]');
       return arr.find((r) => r && r.tanggal === tanggal && r.shift === shift && r.regu === regu) || null;
@@ -381,8 +389,8 @@
   // jabatanLabel = satu baris (dipakai label "DISUSUN OLEH:" di layar).
   // jabatanWA = "a.n. CHIEF" & peran-nya di baris terpisah, sama seperti blok
   // tanda tangan teks WA Laporan Personel (laporan-personel.html, getLabelJabatanPembuatLaporan).
-  AVS.infoPembuatDariPersonel = function (tanggal, shift, regu) {
-    const rec = AVS.cariLaporanPersonel(tanggal, shift, regu);
+  AVS.infoPembuatDariPersonel = function (tanggal, shift, regu, daftarOpsional) {
+    const rec = AVS.cariLaporanPersonel(tanggal, shift, regu, daftarOpsional);
     if (!rec) return { ada: false, nama: '', jabatanLabel: '', jabatanWA: '' };
     const posko = (rec.posPenempatan || []).find((p) => p.id === 'posko') || (rec.posPenempatan || [])[0];
     const pertama = posko && (posko.personel || []).find((p) => p && rapikanD(p.nama));

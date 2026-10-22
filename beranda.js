@@ -144,15 +144,64 @@
     return `<div class="evlist">${daftar.slice(0, 5).map((x) => { const t = x.tanggal.split('-'); return `<a class="ev bast evmain" href="kejadian.html#ubah=${encodeURIComponent(x.id)}" title="Buka laporan"><div class="dt"><b>${t[2]}</b><span>${BULAN_PENDEK[+t[1] - 1].toUpperCase()}</span></div><div class="tx"><b>${E(x.pihakSatu || '-')} → ${E(x.pihakDua || '-')}</b><span>${E(x.nomorBast || '-')}</span></div></a>`; }).join('')}</div>`;
   }
 
-  function renderKepatuhanIndikator(r) {
+  // Kartu "Kepatuhan Grup" -- porting PERSIS dari widget sejenis di rekap.js (cincinKepatuhan/
+  // grafikKepatuhanPerGrup/reguBertugasJadwal), bukan bikin cara hitung baru. Regu tiap shift
+  // dipetakan dari Jadwal Dinas yang sudah diunggah (localStorage['savedJadwalDinas']), BUKAN
+  // dari field `regu` di laporan -- lebih akurat krn memakai roster piket sungguhan, bukan
+  // sekadar laporan yang kebetulan ada. Shift yang bulan jadwalnya belum diunggah dihitung
+  // terpisah sbg "tak terpetakan", tidak masuk grup manapun (lihat cincinKepatuhan: ditandai
+  // "-" abu-abu, bukan 0%, supaya tidak disalahartikan sbg "sama sekali tidak patuh").
+  const WARNA_GRUP = { A: '#2a78d6', B: '#eb6834', C: '#1baf7a', D: '#eda100' };
+  function reguBertugasJadwal(tanggalISO, shiftLabel) {
+    const kode = shiftLabel === 'Pagi' ? 'P' : shiftLabel === 'Malam' ? 'M' : null;
+    if (!kode) return null;
+    let semua; try { semua = JSON.parse(localStorage.getItem('savedJadwalDinas') || '{}'); } catch (e) { return null; }
+    const data = semua[tanggalISO.slice(0, 7)]; if (!data || !data.units) return null;
+    const unit = data.units.find((u) => u.punyaGrup && /ORGANIK/i.test(u.nama)) || data.units.find((u) => u.punyaGrup);
+    if (!unit) return null;
+    const PETA = { ALPHA: 'A', BRAVO: 'B', CHARLIE: 'C', DELTA: 'D' };
+    for (const g of unit.grup) {
+      if (!g.orang.length) continue;
+      const cnt = {};
+      g.orang.forEach((o) => { const k = (o.jadwal && o.jadwal[tanggalISO]) || '-'; cnt[k] = (cnt[k] || 0) + 1; });
+      const kodeUtama = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+      if (kodeUtama === kode) { const nama = String(g.nama || '').toUpperCase(); return PETA[nama] || nama.slice(0, 1) || null; }
+    }
+    return null;
+  }
+  function cincinKepatuhan(grup, pct, warna, adaData) {
+    const R = 30, lebar = 8, cx = 36, cy = 36, keliling = 2 * Math.PI * R;
+    const dash = adaData ? Math.max(0, Math.min(1, pct / 100)) * keliling : 0;
+    return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:0;height:100%;width:100%">
+<div style="flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center">
+<svg viewBox="0 0 72 72" style="width:auto;height:auto;max-width:100%;max-height:100%;display:block">
+<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#E9EDF4" stroke-width="${lebar}"/>
+<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${warna}" stroke-width="${lebar}" stroke-linecap="round" stroke-dasharray="${dash} ${keliling}" transform="rotate(-90 ${cx} ${cy})"/>
+<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="15" font-weight="800" fill="#10243D">${adaData ? pct + '%' : '-'}</text>
+</svg>
+</div>
+<div style="font-size:11px;font-weight:700;color:#1A2233;display:flex;align-items:center;gap:5px;white-space:nowrap;flex:none"><i style="width:8px;height:8px;border-radius:2px;background:${warna};flex:none"></i>Grup ${E(grup)}</div>
+</div>`;
+  }
+  function grafikKepatuhanPerGrup(totalPerGrup, belumPerGrup, takTerpetakan) {
+    const cincin = D.REGU.map((g) => {
+      const total = totalPerGrup[g], blm = belumPerGrup[g], adaData = total > 0;
+      const pct = adaData ? Math.round((total - blm) / total * 100) : 0;
+      return cincinKepatuhan(g, pct, WARNA_GRUP[g], adaData);
+    }).join('');
+    const catatanTak = takTerpetakan > 0 ? `<div style="font-size:10px;color:#8A94A6;font-weight:600;text-align:center;flex:none">${takTerpetakan} shift belum lengkap regu-nya tak terpetakan</div>` : '';
+    return `<div style="display:flex;flex-direction:column;flex:1;min-height:0;gap:8px">
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px 8px">${cincin}</div>
+${catatanTak}
+</div>`;
+  }
+  function renderKepatuhanGrup(r) {
     if (!r.total) return '<div class="empty">Belum ada shift yang jatuh tempo<br>pada bulan ini.</div>';
-    const baris = [
-      { lbl: 'Personel', n: r.personelBelum, c: '#1D3A5C' },
-      { lbl: 'Fasilitas', n: r.fasilitasBelum, c: '#9A5F12' },
-      { lbl: 'Log Book', n: r.logbookBelum, c: '#A82F24' }
-    ];
-    const baris2 = baris.map((b) => `<div class="kepat-row"><span class="kr-lbl">${E(b.lbl)}</span><span class="kr-track"><i style="width:${Math.min(100, b.n / r.total * 100)}%;background:${b.c}"></i></span><span class="kr-val">${b.n} / ${r.total}</span></div>`).join('');
-    return `<div class="kepat-grid">${baris2}<div class="kepat-total">Total <b>${r.daftar.length}</b> shift dengan laporan belum lengkap</div></div>`;
+    const belumPerGrup = { A: 0, B: 0, C: 0, D: 0 }, totalPerGrup = { A: 0, B: 0, C: 0, D: 0 };
+    let takTerpetakan = 0;
+    r.daftar.forEach((x) => { if (belumPerGrup[x.regu] !== undefined) belumPerGrup[x.regu]++; else takTerpetakan++; });
+    r.semuaShift.forEach((x) => { if (totalPerGrup[x.regu] !== undefined) totalPerGrup[x.regu]++; });
+    return grafikKepatuhanPerGrup(totalPerGrup, belumPerGrup, takTerpetakan);
   }
 
   function tabelKepatuhanPenuh(daftar) {
@@ -168,6 +217,8 @@
     const f = D.statFasilitas(fasilitas, y, m);
     const kj = D.statKejadianRentang(kejadian, start, end);
     kepatuhanCache = D.kepatuhanRentang(personel, fasilitas, logbook, start, end, HARI_INI);
+    kepatuhanCache.daftar.forEach((x) => { x.regu = reguBertugasJadwal(x.tanggal, x.shift); });
+    kepatuhanCache.semuaShift.forEach((x) => { x.regu = reguBertugasJadwal(x.tanggal, x.shift); });
 
     $('rowBulanan1').innerHTML = `
 <div class="dcard c4 rauto"><div class="h"><div><h3>Ketidakhadiran Terbanyak</h3><div class="sub">${BULAN[m]} ${y} • per orang per hari</div></div></div>${p.top.length ? grafikBatangNama(p.top, '#C93B2E') : '<div class="empty">Belum ada data ketidakhadiran<br>pada bulan ini.</div>'}</div>
@@ -177,7 +228,7 @@
     $('rowBulanan2').innerHTML = `
 <div class="dcard c4 rauto"><div class="h"><div><h3>Daftar Kejadian Terbaru</h3><div class="sub">5 terbaru • ${BULAN[m]} ${y}</div></div><a class="mata-btn" href="kejadian.html#tersimpan" title="Lihat semua di Laporan Tersimpan">${SVG_MATA}</a></div>${daftarKejadianLK(kj.lk.daftar)}</div>
 <div class="dcard c4 rauto"><div class="h"><div><h3>Daftar BAST Terbaru</h3><div class="sub">5 terbaru • ${BULAN[m]} ${y}</div></div><a class="mata-btn" href="kejadian.html#tersimpan" title="Lihat semua di Laporan Tersimpan">${SVG_MATA}</a></div>${daftarBAST(kj.bast.daftar)}</div>
-<div class="dcard c4 rauto"><div class="h"><div><h3>Shift Belum Lengkap</h3><div class="sub">${BULAN[m]} ${y}</div></div><button type="button" class="mata-btn" onclick="Beranda.bukaKepatuhan()" title="Lihat semua">${SVG_MATA}</button></div>${renderKepatuhanIndikator(kepatuhanCache)}</div>`;
+<div class="dcard c4 rauto"><div class="h"><div><h3>Kepatuhan Grup</h3><div class="sub">${BULAN[m]} ${y} • per grup dihitung sendiri-sendiri</div></div><button type="button" class="mata-btn" onclick="Beranda.bukaKepatuhan()" title="Lihat shift belum lengkap">${SVG_MATA}</button></div>${renderKepatuhanGrup(kepatuhanCache)}</div>`;
 
     renderCatatan();
   }
@@ -275,9 +326,21 @@
     renderBulanan();
     await muatData(); // tarik salinan Personel/Fasilitas/Log Book dari posko lain (kalau sinkronisasi aktif)
     renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni();
+    // Tombol "Muat Ulang" khusus Admin -- Beranda cuma menarik data sinkronisasi SEKALI saat
+    // halaman dimuat (tidak polling spt Pantau Posko), jadi Admin perlu cara menyegarkan
+    // tanpa reload penuh halaman. Posko tidak melihat tombol ini (lihat RENCANA-PENGEMBANGAN.md).
+    if (typeof AVS_PERAN === 'function' && AVS_PERAN() === 'admin') $('btnMuatUlang').style.display = '';
+  }
+  async function muatUlang() {
+    const btn = $('btnMuatUlang'); if (btn.disabled) return;
+    btn.disabled = true; btn.style.opacity = '.5';
+    await muatData();
+    renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni();
+    btn.disabled = false; btn.style.opacity = '';
+    toast('Data diperbarui.');
   }
 
-  window.Beranda = { bukaShiftKosong, tutupShiftKosong, salinPengingatKosong, salinTeks, bukaKepatuhan, tutupKepatuhan };
+  window.Beranda = { bukaShiftKosong, tutupShiftKosong, salinPengingatKosong, salinTeks, bukaKepatuhan, tutupKepatuhan, muatUlang };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mulai); else mulai();
 
   window.adaPerubahanBelumTersimpan = () => false;

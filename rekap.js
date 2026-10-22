@@ -251,12 +251,25 @@ ${catatanTak}
   /* =========================================================
      BLOK FASILITAS
      ========================================================= */
+  // Kondisi (Baik/Rusak) & Status (Digunakan/Tidak Digunakan) persis field yang ada di
+  // form Laporan Fasilitas (bentuk A) -- menggantikan kolom "Jenis" lama yang menggabung
+  // keduanya jadi satu label. Kalau satu alat (nomor yang sama) punya lebih dari satu
+  // kemunculan dgn Kondisi/Status/Keterangan berbeda, tiap kemunculan jadi baris-dalam
+  // sendiri (rowspan pada #/Item/Pos/Kali), masing-masing dgn tanggalnya sendiri.
   function tabelFasilitas(daftar) {
     const rows = daftar;
     if (!rows.length) return '<div class="empty">Belum ada masalah fasilitas<br>dilaporkan pada rentang ini.</div>';
-    const warna = (j) => j === 'Rusak' ? '#A82F24' : '#9A5F12', bg = (j) => j === 'Rusak' ? '#FBE9E7' : '#FCF1DF';
-    const trs = rows.map((x, i) => `<tr><td>${i + 1}</td><td class="nm">${E(x.item)}</td><td>${E(x.pos)}</td><td><b>${x.jumlah}</b></td><td><span class="tag" style="background:${bg(x.jenis)};color:${warna(x.jenis)}">${E(x.jenis)}</span></td><td class="col-tgl"><span class="tgi"><i style="background:#8A94A6"></i>${E(ringkasTanggalList(x.tanggal))}</span></td></tr>`).join('');
-    return `<table class="rtbl"><thead><tr><th>#</th><th>Item</th><th>Pos</th><th>Kali</th><th>Jenis</th><th>Tanggal</th></tr></thead><tbody>${trs}</tbody></table>`;
+    const warnaK = (k) => k === 'Rusak' ? ['#FBE9E7', '#A82F24'] : ['#EEF5E7', '#3F6B2E'];
+    const warnaS = (s) => s === 'Tidak Digunakan' ? ['#FCF1DF', '#9A5F12'] : ['#EEF1F6', '#475569'];
+    const trs = rows.map((x, i) => {
+      const catatan = (x.catatan && x.catatan.length) ? x.catatan : [{ tanggal: (x.tanggal || [])[0] || '', kondisi: '-', status: '-', keterangan: '' }];
+      return catatan.map((c, j) => {
+        const [kBg, kFg] = warnaK(c.kondisi), [sBg, sFg] = warnaS(c.status);
+        const depan = j === 0 ? `<td rowspan="${catatan.length}">${i + 1}</td><td rowspan="${catatan.length}" class="nm">${E(x.item)}</td><td rowspan="${catatan.length}">${E(x.pos)}</td><td rowspan="${catatan.length}"><b>${x.jumlah}</b></td>` : '';
+        return `<tr>${depan}<td><span class="tag" style="background:${kBg};color:${kFg}">${E(c.kondisi)}</span></td><td><span class="tag" style="background:${sBg};color:${sFg}">${E(c.status)}</span></td><td class="col-tgl">${E(c.keterangan) || '<span style="color:#8A94A6">-</span>'} <span class="tgi"><i style="background:#8A94A6"></i>${E(c.tanggal ? labelTunggal(c.tanggal) : '-')}</span></td></tr>`;
+      }).join('');
+    }).join('');
+    return `<table class="rtbl"><thead><tr><th>#</th><th>Item</th><th>Pos</th><th>Kali</th><th>Kondisi</th><th>Status</th><th>Keterangan</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
   function renderFasilitas() {
     const r = RF;
@@ -607,6 +620,13 @@ ${catatanTak}
   async function mulai() {
     A.pasangKunci(); A.nav('rekap');
     bangunTata();
+    // Cadangkan/Pulihkan dipindah ke Posko (yang mengisi laporan sehari-hari) -- Admin
+    // tetap bisa melihat Rekap, cuma tombol ini yang disembunyikan (lihat RENCANA-PENGEMBANGAN.md).
+    const admin = typeof AVS_PERAN === 'function' && AVS_PERAN() === 'admin';
+    if ($('btnBackup')) $('btnBackup').style.display = admin ? 'none' : '';
+    // Muat Ulang khusus Admin -- Rekap sekarang juga dibuka Posko (lihat MENU_POSKO di
+    // shell.js), jadi pengecekan peran di sini WAJIB, bukan kebetulan krn menu tersembunyi.
+    if ($('btnMuatUlang')) $('btnMuatUlang').style.display = admin ? '' : 'none';
     const awalBulan = new Date(HARI_INI.getFullYear(), HARI_INI.getMonth(), 1);
     $('fMulai').value = isoHariIni(awalBulan); $('fAkhir').value = isoHariIni(HARI_INI);
     personel = D.bacaPersonel(); fasilitas = D.bacaFasilitas(); logbook = D.bacaLogbook();
@@ -617,8 +637,16 @@ ${catatanTak}
     await muatData(); // tarik salinan Personel/Fasilitas/Log Book dari posko lain (kalau sinkronisasi aktif)
     hitungUlang(); renderSemua();
   }
+  async function muatUlang() {
+    const btn = $('btnMuatUlang'); if (!btn || btn.disabled) return;
+    btn.disabled = true; btn.style.opacity = '.5';
+    await muatData();
+    hitungUlang(); renderSemua();
+    btn.disabled = false; btn.style.opacity = '';
+    toast('Data diperbarui.');
+  }
 
-  window.Rekap = { terapkanFilter, unduhPDF, bukaBackup, tutupBackup, ekspor, impor, gantiFolderBackup };
+  window.Rekap = { terapkanFilter, unduhPDF, bukaBackup, tutupBackup, ekspor, impor, gantiFolderBackup, muatUlang };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mulai); else mulai();
   window.adaPerubahanBelumTersimpan = () => false;
   AVS.daftarSW();

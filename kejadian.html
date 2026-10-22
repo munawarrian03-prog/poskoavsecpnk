@@ -298,6 +298,7 @@
 
 <script src="akses.js"></script>
 <script src="shell.js"></script>
+<script src="sync.js"></script>
 <script>AVS_gerbangUtama();</script>
 <script src="lib/pdfmake.min.js"></script>
 <script src="lib/fonts-carlito.js"></script>
@@ -1196,6 +1197,15 @@ async function bukaRiwayat(id) {
   togglePratinjauWA(false); $('drawerRw').classList.add('open');
 }
 function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
+// Salinan record utk dikirim ke sinkronisasi lintas perangkat (AVS_SYNC) -- foto
+// lampiran & tanda tangan DIBUANG dulu (bisa base64 besar, berisiko lewat batas 50.000
+// karakter/sel Google Sheets yang dipakai backend sync). Data lokal (IndexedDB) milik
+// perangkat ini sendiri TIDAK terpengaruh -- tetap lengkap dgn foto seperti biasa.
+function kejadianUntukSync(rec) {
+  const salinan = Object.assign({}, rec);
+  delete salinan.fotos; delete salinan.ttd;
+  return salinan;
+}
 async function simpan() {
   if (!laporan.tanggal || !rapikan(laporan.caseInfo)) { toast('Isi Tanggal dan Informasi Kasus terlebih dahulu.', 'err'); return; }
   const rec = clone(laporan);
@@ -1207,6 +1217,7 @@ async function simpan() {
     const perubahan = lama ? AVS.diffKejadian(lengkapiModel(clone(lama)), rec) : [];
     AVS.catatJejak(rec, lama, perubahan);   // waktu dibuat, waktu pembaruan terakhir, riwayat & rincian perubahan
     await dbPut(rec);
+    if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.kirim('kejadian', kejadianUntukSync(rec));
     catatNomor(rec);
     laporan.fileNumber = rec.fileNumber; laporan.nomorDikunci = rec.nomorDikunci; renderNomor();
     await dbDel(KEY_DRAFT).catch(() => {});
@@ -1277,7 +1288,9 @@ async function editReport(id) {
 }
 async function hapusLaporan(id) {
   if (!confirm('Hapus laporan kejadian ini beserta foto lampirannya? Tindakan ini tidak dapat dibatalkan.')) return;
+  let r = null; try { r = await dbGet(id); } catch (e) { /* abaikan */ }
   await dbDel(id);
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.hapus((r && r.jenis === 'BAST') ? 'bast' : 'kejadian', id);
   if (editingId === id) { editingId = null; laporan.id = null; updateBadge(); updateKirimState(); }
   updateCount(); renderTersimpan();
 }

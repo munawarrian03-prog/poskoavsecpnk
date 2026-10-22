@@ -15,7 +15,10 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 ## Inventaris Perubahan
 
 ### 1. Unduh PDF dari drawer pratinjau (ikon mata) di Pantau Posko — Personel/Fasilitas/Logbook
-- **Status:** Direncanakan
+- **Status:** Selesai
+- **Diverifikasi:** mock-server + Playwright — klik mata → tombol Unduh PDF muncul →
+  berkas PDF benar-benar terunduh; utk Fasilitas (shift remote-only), "Disusun Oleh"
+  terisi nama yang benar (dari `gabunganTerkini.personel`, bukan kosong).
 - **Dicatat:** 2026-10-22
 - **Konteks:** Admin yang klik ikon mata di Pantau Posko cuma melihat pratinjau web
   (`bukaPratinjau()`), tidak bisa mengunduh PDF-nya langsung dari situ — harus minta
@@ -37,7 +40,10 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   utk Kejadian & BAST — berkaitan tapi punya kerumitan tersendiri).
 
 ### 2. Kolom keterisian Kejadian & BAST di tabel Pantau Posko (opsional, tampilkan "Nihil")
-- **Status:** Direncanakan
+- **Status:** Selesai
+- **Diverifikasi:** mock-server + Playwright — record Kejadian/BAST remote-only tampil
+  "Terisi" + ikon mata di baris shift yang benar (BAST dibuktikan masuk baris Malam
+  krn jam 21:15), drawer menampilkan isi teks yang benar, tidak ada tombol Unduh PDF.
 - **Dicatat:** 2026-10-22
 - **Keputusan final:** di tabel Pantau Posko, di samping kolom Log Book, tambah kolom
   Kejadian dan BAST — tidak wajib terisi. Terisi → ikon mata (**pratinjau drawer SAJA,
@@ -61,7 +67,13 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   (reaktivasi, Opsi A) — tanpa itu kolom ini cuma mencerminkan data lokal Admin sendiri.
 
 ### 3. Hilangkan menu "Laporan Kejadian" dari navigasi akun Admin
-- **Status:** Direncanakan
+- **Status:** Selesai
+- **Catatan implementasi:** menghapus item ini dari `MENU_ADMIN` (3 item persis
+  JUMLAH_TETAP) membuka bug lama di `renderNav()` yang akan menduplikasi menu terakhir
+  (slot "dinamis" jatuh ke item yang sudah tampil di "tetap") -- diperbaiki sekaligus
+  (`bacaDinamis`/`renderNav` sekarang aman utk menu sepanjang berapa pun).
+- **Diverifikasi:** Playwright — menu Admin tampil [Beranda, Pantau Laporan, Rekap,
+  Jadwal Dinas] tanpa duplikat & tanpa ikon overflow; menu Posko tidak berubah.
 - **Dicatat:** 2026-10-22
 - **Rencana:** di `MENU_ADMIN` (`shell.js`), hapus entri `kejadian`. Menu Posko
   (`MENU_POSKO`) tidak berubah — Posko tetap punya akses Laporan Kejadian seperti
@@ -73,7 +85,10 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   dari halaman itu (perlu gerbang baru, beda dari sekadar menyembunyikan menu).
 
 ### 4. Kolom Kondisi/Status/Keterangan pada "Alat Bermasalah" di Rekap
-- **Status:** Direncanakan
+- **Status:** Selesai
+- **Diverifikasi:** Playwright — 1 alat rusak 2x dgn keterangan & tanggal berbeda
+  tampil sbg 2 baris-dalam di bawah nomor yang sama (rowspan benar), kolom Kondisi/
+  Status/Keterangan terisi benar per kemunculan.
 - **Dicatat:** 2026-10-22 (diperjelas 2026-10-22)
 - **Keputusan final — susunan kolom:** `# | Item | Pos | Kali | Kondisi | Status | Keterangan`.
   - Kolom **"Jenis"** yang ada sekarang (isinya campuran "Rusak"/"Tidak Digunakan")
@@ -104,8 +119,17 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   adanya), lalu `tabelFasilitas()` dirender ulang dgn `rowspan` per alat.
 
 ### 5. Kartu "Shift Belum Lengkap" di Beranda jadi "Kepatuhan Grup" (breakdown per Regu)
-- **Status:** Direncanakan
+- **Status:** Selesai
 - **Dicatat:** 2026-10-22 (diperjelas 2026-10-22)
+- **Catatan implementasi (berubah dari rencana awal):** ternyata Rekap SUDAH punya
+  widget "Kepatuhan Grup" yang lengkap (`cincinKepatuhan`/`grafikKepatuhanPerGrup`/
+  `reguBertugasJadwal` di `rekap.js`, sudah ada sebelum sesi ini) -- 4 cincin progres
+  per regu, regu tiap shift dipetakan dari Jadwal Dinas yang sudah diunggah
+  (`localStorage['savedJadwalDinas']`), BUKAN dari field `regu` di laporan. Ini jauh
+  lebih akurat daripada rencana donat-komposisi di bawah (yang tidak punya cara
+  mengetahui regu yang BERTUGAS pada shift tanpa laporan sama sekali) -- jadi widget
+  ini DIPORTING ke `beranda.js` apa adanya (bukan dibuat ulang dgn `grafikDonat`),
+  termasuk aturan "-" abu-abu utk regu yang Jadwal Dinas bulan itu belum diunggah.
 - **Keputusan:** judul & ISI kartu "Shift Belum Lengkap" di Beranda diganti jadi
   "Kepatuhan Grup" — isinya breakdown **per Regu (A/B/C/D)**, bukan lagi 3 baris per
   jenis laporan (Personel/Fasilitas/Log Book) seperti sekarang. Ditampilkan sebagai
@@ -115,7 +139,12 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   modal yang terbuka TETAP menampilkan "Shift Belum Lengkap" apa adanya (tabel yang
   sudah ada, `tabelKepatuhanPenuh`) — jadi hanya tampilan kartu ringkasnya yang berubah
   sudut pandang & bentuk grafik, detail di modal tidak berubah.
-  - Mockup: lihat bagian #6 di https://claude.ai/artifact/Hyh9e8oeG4xDcksj8eWRMH
+  - Mockup (arah awal, sebelum ditemukan widget Rekap yang sudah ada): bagian #6 di
+    https://claude.ai/artifact/Hyh9e8oeG4xDcksj8eWRMH
+- **Diverifikasi:** Playwright — data uji dgn Jadwal Dinas (Regu A piket Pagi, Regu B
+  piket Malam) + laporan sebagian lengkap: cincin Regu A=50%, Regu B=0%, C/D="-" (tak
+  ada jadwal) — sesuai hitungan manual. Tampilan identik Admin vs Posko (dicek HTML
+  sama persis). Modal "lihat semua" tetap tabel shift belum lengkap, tidak berubah.
 - **Syarat:** tampilan Beranda akun Posko & Admin harus tetap identik (dicek: SAAT INI
   memang sudah identik — `beranda.js` tidak punya percabangan berdasar peran sama
   sekali; kartu baru ini juga tidak boleh beda antar peran).
@@ -218,7 +247,9 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   — semua tetap sesuai perilaku sebelumnya (errors: bersih).
 
 ### Pindahkan akses Cadangkan/Pulihkan dari Admin ke Posko di Rekap
-- **Status:** Direncanakan
+- **Status:** Selesai
+- **Diverifikasi:** Playwright — akun Admin: tombol tersembunyi; akun Posko: tombol
+  tampil & menu Rekap muncul di navigasi (via ikon overflow, setelah Jadwal Dinas).
 - **Dicatat:** 2026-10-22
 - **Konteks:** Lanjutan dari perbaikan Pulihkan di atas — setelah Pulihkan ikut
   tersinkron ke server, pengguna memutuskan tombol Cadangkan/Pulihkan sebaiknya dipegang
@@ -239,7 +270,15 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   tombol Cadangkan/Pulihkan di Rekap miliknya (tapi tetap bisa lihat data).
 
 ### Sinkronisasi Laporan Kejadian & BAST lintas perangkat (Opsi A — teks saja)
-- **Status:** Direncanakan
+- **Status:** Selesai (kode repo) — LANGKAH GOOGLE SHEET/CODE.GS BELUM DIKERJAKAN PENGGUNA
+- **Diverifikasi (kode repo):** mock-server + Playwright — simpan Kejadian dgn
+  fotos[]+ttd terisi → sampai di server TANPA fotos/ttd (field lain penuh); simpan
+  BAST → sampai di server LENGKAP; hapus Kejadian → ikut terhapus dari server dgn
+  jenis yang benar ('kejadian' vs 'bast', dibedakan dari `r.jenis` sebelum dihapus).
+- **PENTING, belum dikerjakan:** langkah di Google Sheet & Code.gs (2 tab baru,
+  pemetaan `SHEETS`, redeploy) MASIH PERLU DIKERJAKAN SENDIRI oleh pengguna di
+  deployment Apps Script miliknya — tanpa itu, pengiriman akan gagal diam-diam
+  (masuk antrian retry selamanya) sampai tab & pemetaannya ada.
 - **Dicatat:** 2026-10-20 (dibatalkan 2026-10-22, DIAKTIFKAN KEMBALI 2026-10-22 demi #2)
 - **Masalah:** Laporan Kejadian bisa membawa foto lampiran & tanda tangan sebagai
   base64 — berisiko melebihi batas 50.000 karakter per sel Google Sheets yang dipakai
@@ -273,7 +312,9 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   dgn foto). Hapus juga disinkronkan (`AVS_SYNC.hapus()`) sama seperti 3 jenis lain.
 
 ### Tombol "Muat Ulang" manual di Rekap & Beranda
-- **Status:** Direncanakan
+- **Status:** Selesai
+- **Diverifikasi:** Playwright — tombol tampil hanya utk Admin di kedua halaman,
+  tersembunyi utk Posko; diklik tidak menimbulkan error.
 - **Dicatat:** 2026-10-20 (diaktifkan kembali 2026-10-22)
 - **Konteks:** Rekap & Beranda cuma menarik data sinkronisasi sekali saat halaman dimuat
   (tidak ada polling seperti Pantau Posko). Opsi 4 (tombol manual "Muat Ulang" di toolbar

@@ -189,20 +189,38 @@
   // (Personel/Fasilitas/Log Book) -- dipakai halaman "Pantau Posko". Batas akhir shift sama dengan
   // shiftKosongGabungan (Pagi berakhir 20:00 hari itu, Malam berakhir 08:00 hari berikutnya), TANPA
   // tenggang: begitu lewat batas dan belum ada laporan, langsung dianggap "belum" (bukan "proses").
-  function statusPantauPosko(personelList, fasilitasList, logbookList, y, m, hariIni) {
+  // kejadianList/bastList bersifat OPSIONAL (tidak wajib terisi, beda dari 3 jenis lain
+  // di atas) -- kalau tidak diisi (undefined), kolomnya tidak dihitung sama sekali.
+  // BAST tidak punya field `shift` (lihat kejadian-bast.js) -- baris Pagi/Malam-nya
+  // ditentukan dari JAM `waktu`: sebelum 20:00 = Pagi, 20:00 ke atas = Malam.
+  function statusPantauPosko(personelList, fasilitasList, logbookList, y, m, hariIni, kejadianList, bastList) {
     hariIni = hariIni || new Date();
     const bikinSet = (list) => { const s = new Set(); (list || []).forEach((r) => { const t = pecah(r && r.tanggal); if (t && t.y === y && t.m === m) s.add(t.d + '|' + shiftKey(r.shift)); }); return s; };
+    const bikinSetBast = (list) => {
+      const s = new Set();
+      (list || []).forEach((r) => {
+        const t = pecah(r && r.tanggal); if (!t || t.y !== y || t.m !== m) return;
+        const jam = parseInt(String(r.waktu || '0').split(':')[0], 10) || 0;
+        s.add(t.d + '|' + (jam < 20 ? 'P' : 'M'));
+      });
+      return s;
+    };
     const adaP = bikinSet(personelList), adaF = bikinSet(fasilitasList), adaL = bikinSet(logbookList);
+    const adaK = kejadianList !== undefined ? bikinSet(kejadianList) : null;
+    const adaB = bastList !== undefined ? bikinSetBast(bastList) : null;
     const batas = hariBerjalan(y, m, hariIni), now = hariIni.getTime(), out = [];
     const status = (ada, akhir) => ada ? 'terisi' : (now < akhir ? 'proses' : 'belum');
     for (let d = 1; d <= batas; d++) {
       [['P', 'Pagi', 20, 0, 0], ['M', 'Malam', 8, 0, 1]].forEach(([k, label, jam, menit, tambahHari]) => {
         const akhir = new Date(y, m, d + tambahHari, jam, menit, 0, 0).getTime();
         const key = d + '|' + k;
-        out.push({
+        const baris = {
           tanggal: fmtISO(y, m, d), hari: HARI_ID[new Date(y, m, d).getDay()], shift: label,
           personel: status(adaP.has(key), akhir), fasilitas: status(adaF.has(key), akhir), logbook: status(adaL.has(key), akhir)
-        });
+        };
+        if (adaK) baris.kejadian = adaK.has(key) ? 'terisi' : 'nihil';
+        if (adaB) baris.bast = adaB.has(key) ? 'terisi' : 'nihil';
+        out.push(baris);
       });
     }
     return out.reverse();
@@ -311,13 +329,22 @@
         totalMasalah += jenisList.length;
         jenisList.forEach(() => tanggalMasalah.push(tgl));
         const key = (p.id || p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
-        if (!e) { e = { item: rapikan(it.name), pos: rapikan(namaPosTerkini(p)), jumlah: 0, jenis: {}, tanggal: [] }; bermasalah.set(key, e); }
+        if (!e) { e = { item: rapikan(it.name), pos: rapikan(namaPosTerkini(p)), jumlah: 0, jenis: {}, tanggal: [], catatan: [] }; bermasalah.set(key, e); }
         e.jumlah += jenisList.length; e.tanggal.push(tgl);
         jenisList.forEach((jenis) => { e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; if (jenis === 'Tidak Digunakan') tidakDigunakan++; });
+        // Satu KEMUNCULAN (satu laporan) = satu baris catatan, bukan dipecah per jenisList --
+        // Kondisi & Status ditampilkan berdampingan utk kemunculan yang sama (lihat tabelFasilitas
+        // di rekap.js). Bentuk B (hitungan unit) tidak punya konsep Status per-unit -> '-'.
+        e.catatan.push({
+          tanggal: tgl,
+          kondisi: it.bentuk === 'A' ? (it.kondisi || '-') : 'Rusak',
+          status: it.bentuk === 'A' ? (it.status || '-') : '-',
+          keterangan: rapikan(it.keterangan) || ''
+        });
       }));
     });
     const dominan = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0][0];
-    const daftar = Array.from(bermasalah.values()).map((e) => ({ item: e.item, pos: e.pos, jumlah: e.jumlah, jenis: dominan(e.jenis), tanggal: e.tanggal.sort().reverse() })).sort((a, b) => b.jumlah - a.jumlah || a.item.localeCompare(b.item, 'id'));
+    const daftar = Array.from(bermasalah.values()).map((e) => ({ item: e.item, pos: e.pos, jumlah: e.jumlah, jenis: dominan(e.jenis), tanggal: e.tanggal.sort().reverse(), catatan: e.catatan.sort((a, b) => b.tanggal.localeCompare(a.tanggal)) })).sort((a, b) => b.jumlah - a.jumlah || a.item.localeCompare(b.item, 'id'));
     const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, tanggalMasalah);
     return { totalMasalah, tidakDigunakan, dokTotal, dokLengkap, dokPct: dokTotal > 0 ? Math.round(dokLengkap / dokTotal * 100) : null, laporanTersimpan, shiftAda: shiftAda.size, daftar, tren, granularitas: bk.granularitas };
   }
@@ -371,6 +398,7 @@
     daftar.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
     return { total: totalDinilai, personelBelum: cP, fasilitasBelum: cF, logbookBelum: cL, daftar, semuaShift };
   }
+
 
   function statKejadian(list, y, m, hariIni) {
     hariIni = hariIni || new Date();
