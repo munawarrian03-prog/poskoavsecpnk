@@ -105,15 +105,18 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   Posko (simpan/hapus/offline-retry), Rekap, Beranda, dan kondisi sync belum dikonfigurasi
   — semua tetap sesuai perilaku sebelumnya (errors: bersih).
 
-### (Dibahas, belum diputuskan) Sinkronisasi Laporan Kejadian & BAST lintas perangkat
-- **Status:** Didiskusikan, ditunda — menunggu keputusan Opsi A (teks saja) vs Opsi B (termasuk foto)
+### (Dibatalkan) Sinkronisasi Laporan Kejadian & BAST lintas perangkat
+- **Status:** Dibatalkan
 - **Dicatat:** 2026-10-20
-- **Masalah:** Laporan Kejadian bisa membawa foto lampiran & tanda tangan sebagai base64 —
-  berisiko melebihi batas 50.000 karakter per sel Google Sheets yang dipakai backend sync
-  saat ini. BAST (tanpa foto) aman memakai pola yang sama seperti Personel/Fasilitas/Logbook.
-- **Ditunda sampai:** pengguna memutuskan antara sync teks-saja (cepat, foto tetap lokal)
-  atau redesain backend untuk menampung foto (lebih besar, perlu Google Drive sebagai
-  penyimpanan foto, bukan sel Sheet).
+- **Dibatalkan:** 2026-10-22
+- **Masalah (konteks sebelum dibatalkan):** Laporan Kejadian bisa membawa foto lampiran &
+  tanda tangan sebagai base64 — berisiko melebihi batas 50.000 karakter per sel Google
+  Sheets yang dipakai backend sync saat ini. BAST (tanpa foto) aman memakai pola yang sama
+  seperti Personel/Fasilitas/Logbook, tapi Kejadian tetap jadi ganjalan karena foto.
+- **Keputusan:** dibatalkan atas permintaan pengguna — tidak dilanjutkan baik Opsi A
+  (teks saja) maupun Opsi B (redesain backend ke Google Drive untuk foto). Laporan
+  Kejadian & BAST tetap bersifat lokal-per-perangkat seperti sebelum fitur sinkronisasi
+  dibangun, tidak ikut digabung lintas posko.
 
 ### (Ditunda) Tombol "Muat Ulang" manual di Rekap & Beranda
 - **Status:** Pending/diarsipkan — menunggu instruksi lanjutan
@@ -122,14 +125,13 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   (tidak ada polling seperti Pantau Posko). Opsi 4 (tombol manual "Muat Ulang" di toolbar
   Rekap / header Beranda) sudah di-mockup, tapi pengerjaannya diarsipkan dulu oleh pengguna.
 
-### (Didiskusikan, belum diputuskan) Tombol "Cadangkan Data" di menu Akun Posko
-- **Status:** Mockup disetujui arahnya, implementasi belum dikerjakan
+### (Dibatalkan) Tombol "Cadangkan Data" di menu Akun Posko
+- **Status:** Dibatalkan
 - **Dicatat:** 2026-10-20
-- **Keputusan desain yang sudah diambil:** ditaruh di dropdown "Akun" (bukan menu baru),
-  cuma Cadangkan (bukan Pulihkan — tetap Admin-saja di Rekap demi keamanan data), dan
-  membawa data **gabungan seluruh posko** (sama seperti `ekspor()` di Rekap), bukan cuma
-  data lokal device itu sendiri.
-  - Catatan implementasi: `ekspor()` saat ini nempel di `rekap.js`, dibangun di atas data
-    yang hanya dimuat oleh `rekap.html`. Supaya bisa dipanggil dari dropdown Akun (tersedia
-    di semua halaman), logikanya perlu dipindah ke tempat bersama (`shell.js`) yang
-    membaca & menggabung data sendiri saat tombol diklik.
+- **Dibatalkan:** 2026-10-22
+- **Keputusan desain yang sudah diambil sebelum dibatalkan:** ditaruh di dropdown "Akun"
+  (bukan menu baru), cuma Cadangkan (bukan Pulihkan — tetap Admin-saja di Rekap demi
+  keamanan data), dan membawa data **gabungan seluruh posko** (sama seperti `ekspor()`
+  di Rekap), bukan cuma data lokal device itu sendiri.
+- **Keputusan:** dibatalkan atas permintaan pengguna, mockup tidak dilanjutkan jadi kode.
+  Cadangkan/Pulihkan tetap hanya ada di Rekap (Admin), seperti sebelum diskusi ini.
