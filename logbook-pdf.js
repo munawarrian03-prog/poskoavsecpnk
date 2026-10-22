@@ -52,7 +52,7 @@
 </div>
 <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px 10px">
 <div><div style="font-size:6.5pt;font-weight:800;color:#8A94A6;text-transform:uppercase;letter-spacing:.5px">Materi</div><div style="font-size:8.5pt;font-weight:500;color:#1A2233;margin-top:3px;line-height:1.5">${esc(k.materi) || '-'}</div></div>
-<div><div style="font-size:6.5pt;font-weight:800;color:#8A94A6;text-transform:uppercase;letter-spacing:.5px">Waktu Pelaksanaan</div><div style="font-size:9pt;font-weight:700;color:#10243D;margin-top:2px">${esc(k.waktuMulai) || '--:--'} &ndash; ${esc(k.waktuSelesai) || '--:--'}</div></div>
+<div><div style="font-size:6.5pt;font-weight:800;color:#8A94A6;text-transform:uppercase;letter-spacing:.5px">Waktu Pelaksanaan</div><div style="font-size:9pt;font-weight:700;color:#10243D;margin-top:2px">${k.lokasi === 'Whatsapp Grup' ? (esc(k.waktuMulai) || '--:--') : `${esc(k.waktuMulai) || '--:--'} &ndash; ${esc(k.waktuSelesai) || '--:--'}`}</div></div>
 </div>`;
     return `${seksiJudul('Catatan Kesiapan Tugas')}<div style="border:1px solid #E1E6EF;border-radius:7px;padding:10px 12px;margin-bottom:14px;background:#FAFBFD">${isi}</div>`;
   }

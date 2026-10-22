@@ -464,3 +464,27 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
      `labelRentang` yang sudah ada).
 - **Tidak diubah:** `rekap-pdf.js` (PDF Rekap menangkap DOM yang sudah dirender, jadi otomatis
   ikut tabel yang sudah digabung tanpa perlu disentuh).
+
+### Log Book: hapus label "(otomatis)" pada Lokasi + waktu tunggal utk Briefing
+- **Status:** Selesai
+- **Diverifikasi:** Playwright — label kt-fld tidak ada lagi yang berisi "(otomatis)"; mode
+  Apel (default) tetap tampil rentang Waktu Mulai/s.d./Waktu Selesai seperti sebelumnya
+  (regresi: isi 07:00–07:30 tetap tampil rentang di drawer Lihat & PDF, Lokasi "Ruang Kelas
+  Avsec" tetap benar); ganti Kegiatan ke Briefing (Lokasi otomatis jadi "Whatsapp Grup") ->
+  field berubah jadi satu "Waktu" tunggal (s.d. & Waktu Selesai disembunyikan); isi 07:30 ->
+  drawer Lihat & PDF tampil "07:30" tunggal, tidak ada tanda rentang "–"; tidak ada error
+  console/halaman di kedua mode.
+- **Dicatat:** 2026-10-22
+- **Konteks:** 2 permintaan pengguna:
+  1. Label "Lokasi (otomatis)" di Catatan Kesiapan Tugas disederhanakan jadi "Lokasi" saja
+     (field tetap non-aktif/auto-terisi dari Kegiatan, cuma teks "(otomatis)"-nya dihapus).
+  2. Briefing (lokasi "Whatsapp Grup") sifatnya beda dari Apel (lokasi "Ruang Kelas Avsec")
+     — briefing lewat WA grup biasanya tercatat sbg satu waktu kirim, bukan rentang
+     mulai-selesai seperti apel tatap muka. Field waktu kini otomatis berubah jadi satu
+     "Waktu" tunggal saat Lokasi = "Whatsapp Grup", dan kembali jadi rentang "Waktu Mulai
+     s.d. Waktu Selesai" saat Lokasi = "Ruang Kelas Avsec".
+- **Keputusan desain:** nilai `waktuSelesai` yang sudah tersimpan TIDAK dihapus saat
+  berpindah ke mode tunggal (field cuma disembunyikan) — supaya kalau Kegiatan diganti
+  balik ke Apel, isian rentang sebelumnya tidak hilang. Toggle mode ditentukan dari nilai
+  `kesiapanTugas.lokasi === 'Whatsapp Grup'` (dicek di `logbook.html`: form + drawer "Lihat",
+  dan `logbook-pdf.js`: PDF) — konsisten di ketiga tempat yang menampilkan Waktu Pelaksanaan.

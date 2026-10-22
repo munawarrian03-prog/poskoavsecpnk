@@ -95,14 +95,14 @@
 <div class="kt-card">
 <div class="kt-grid3">
 <div class="kt-fld"><label>Kegiatan</label><select id="ktKegiatan" onchange="ubahKesiapan('kegiatan',this.value)"><option value="Apel">Apel</option><option value="Briefing">Briefing</option></select></div>
-<div class="kt-fld"><label>Lokasi (otomatis)</label><input type="text" id="ktLokasi" disabled></div>
+<div class="kt-fld"><label>Lokasi</label><input type="text" id="ktLokasi" disabled></div>
 <div class="kt-fld"><label>Pemimpin</label><select id="ktPemimpin" onchange="ubahKesiapan('pemimpin',this.value)"><option value="">— pilih —</option></select></div>
 </div>
 <div class="kt-fld"><label>Materi</label><input type="text" id="ktMateri" placeholder="Tuliskan materi yang dibahas..." oninput="ubahKesiapan('materi',this.value)"></div>
 <div class="kt-waktu">
-<div class="kt-fld"><label>Waktu Mulai</label><input type="time" id="ktMulai" onchange="ubahKesiapan('waktuMulai',this.value)"></div>
-<span>s.d.</span>
-<div class="kt-fld"><label>Waktu Selesai</label><input type="time" id="ktSelesai" onchange="ubahKesiapan('waktuSelesai',this.value)"></div>
+<div class="kt-fld"><label id="ktMulaiLabel">Waktu Mulai</label><input type="time" id="ktMulai" onchange="ubahKesiapan('waktuMulai',this.value)"></div>
+<span id="ktWaktuSd">s.d.</span>
+<div class="kt-fld" id="ktSelesaiFld"><label>Waktu Selesai</label><input type="time" id="ktSelesai" onchange="ubahKesiapan('waktuSelesai',this.value)"></div>
 </div>
 </div>
 </div>
@@ -274,12 +274,24 @@ function personelPoskoNama(tanggal, shift, regu) {
   const pos = (rec.posPenempatan || []).find((p) => p.id === 'posko') || (rec.posPenempatan || [])[0];
   return ((pos && pos.personel) || []).map((p) => rapikan(p && p.nama)).filter(Boolean);
 }
+// Briefing (Lokasi = "Whatsapp Grup") tidak punya rentang waktu seperti Apel di Ruang Kelas
+// Avsec -- cukup satu waktu tunggal. "Waktu Selesai" & "s.d." disembunyikan, label "Waktu
+// Mulai" jadi "Waktu" saja, tapi field waktuSelesai yang sudah tersimpan TIDAK dihapus (cuma
+// tidak ditampilkan) -- supaya kalau Kegiatan diganti balik ke Apel, isiannya tidak hilang.
+function waktuTunggal() { return kesiapanTugas.lokasi === 'Whatsapp Grup'; }
+function terapkanModeWaktu() {
+  const tunggal = waktuTunggal();
+  $('ktMulaiLabel').textContent = tunggal ? 'Waktu' : 'Waktu Mulai';
+  $('ktWaktuSd').style.display = tunggal ? 'none' : '';
+  $('ktSelesaiFld').style.display = tunggal ? 'none' : '';
+}
 function renderKesiapanTugas() {
   $('ktKegiatan').value = kesiapanTugas.kegiatan;
   $('ktLokasi').value = kesiapanTugas.lokasi;
   $('ktMateri').value = kesiapanTugas.materi;
   $('ktMulai').value = kesiapanTugas.waktuMulai;
   $('ktSelesai').value = kesiapanTugas.waktuSelesai;
+  terapkanModeWaktu();
   const nama = personelPoskoNama($('tanggal').value, $('shift').value, $('regu').value);
   const sel = $('ktPemimpin');
   const opsi = ['<option value="">— pilih —</option>'].concat(nama.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`));
@@ -291,7 +303,7 @@ function renderKesiapanTugas() {
 }
 function ubahKesiapan(field, val) {
   kesiapanTugas[field] = val;
-  if (field === 'kegiatan') { kesiapanTugas.lokasi = LOKASI_KEGIATAN[val] || ''; $('ktLokasi').value = kesiapanTugas.lokasi; }
+  if (field === 'kegiatan') { kesiapanTugas.lokasi = LOKASI_KEGIATAN[val] || ''; $('ktLokasi').value = kesiapanTugas.lokasi; terapkanModeWaktu(); }
   markDirty();
 }
 
@@ -545,7 +557,7 @@ function renderLihatHTML(catatan, catatanSerahTerima, kesiapan) {
     `<div class="lb-auto-item"><span>Lokasi</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.lokasi) || '-'}</span></div>` +
     `<div class="lb-auto-item"><span>Pemimpin</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.pemimpin) || '-'}</span></div>` +
     `<div class="lb-auto-item"><span>Materi</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.materi) || '-'}</span></div>` +
-    `<div class="lb-auto-item"><span>Waktu Pelaksanaan</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.waktuMulai) || '--:--'} – ${esc(k.waktuSelesai) || '--:--'}</span></div>`;
+    `<div class="lb-auto-item"><span>Waktu Pelaksanaan</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${k.lokasi === 'Whatsapp Grup' ? (esc(k.waktuMulai) || '--:--') : `${esc(k.waktuMulai) || '--:--'} – ${esc(k.waktuSelesai) || '--:--'}`}</span></div>`;
   html += '</div>';
   html += `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${catatan.length})</div>`;
   html += catatan.length
