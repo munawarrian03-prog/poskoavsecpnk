@@ -14,6 +14,99 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### 1. Unduh PDF dari drawer pratinjau (ikon mata) di Pantau Posko — Personel/Fasilitas/Logbook
+- **Status:** Direncanakan
+- **Dicatat:** 2026-10-22
+- **Konteks:** Admin yang klik ikon mata di Pantau Posko cuma melihat pratinjau web
+  (`bukaPratinjau()`), tidak bisa mengunduh PDF-nya langsung dari situ — harus minta
+  Posko mengunduhkan sendiri.
+- **Temuan saat audit kelayakan:** `personel-pdf.js`/`fasilitas-pdf.js`/`logbook-pdf.js`
+  adalah modul murni (bangun HTML dari data record), tidak terikat ke halaman tertentu —
+  `pantau-posko.html` sudah punya record lengkapnya di `gabunganTerkini`, jadi bisa
+  dipakai lagi. TAPI: PDF Fasilitas & Log Book mencari laporan Personel (Log Book juga
+  Fasilitas) yang cocok tanggal+shift+regu untuk mengisi "Disusun Oleh" & ringkasan —
+  pencarian itu (`AVS.cariLaporanPersonel`, `AVS.infoPembuatDariPersonel` di `shell.js`)
+  SELALU membaca `localStorage` lokal saja, bukan data gabungan. Tanpa perbaikan, PDF
+  utk shift yang dilaporkan dari posko LAIN akan punya "Disusun Oleh" kosong.
+- **Rencana perbaikan:** muat `html2pdf.bundle.min.js` + 3 modul `*-pdf.js` di
+  `pantau-posko.html`; tambah tombol "Unduh PDF" di drawer pratinjau; beri
+  `AVS.cariLaporanPersonel`/`AVS.infoPembuatDariPersonel` parameter opsional "daftar
+  data" (default: tetap baca lokal seperti sekarang, tidak mengubah 3 halaman editor)
+  supaya Pantau Posko bisa mengoper `gabunganTerkini.personel` ke situ.
+- **Lingkup:** Personel, Fasilitas, Log Book saja pada tahap ini (lihat #2 di bawah
+  utk Kejadian & BAST — berkaitan tapi punya kerumitan tersendiri).
+
+### 2. Kolom keterisian Kejadian & BAST di tabel Pantau Posko (opsional, tampilkan "Nihil")
+- **Status:** Direncanakan — ADA PERTANYAAN TERBUKA, belum bisa dikerjakan
+- **Dicatat:** 2026-10-22
+- **Rencana dari pengguna:** di tabel Pantau Posko, di samping kolom Log Book, tambah
+  kolom Kejadian dan BAST — tidak wajib terisi (beda dari Personel/Fasilitas/Logbook).
+  Terisi → ikon mata (pratinjau + Unduh PDF, sama seperti #1). Tidak terisi → tulisan
+  "Nihil" (bukan badge "Belum Terisi" yang berkonotasi "seharusnya ada tapi belum").
+- **Kendala yang ditemukan saat audit:** tabel Pantau Posko disusun PER SHIFT (Pagi/
+  Malam per tanggal) — cocok untuk Personel/Fasilitas/Logbook/**Kejadian** karena
+  ketiganya (+Kejadian) punya field `shift`. **BAST tidak punya field `shift` sama
+  sekali** (`kejadian-bast.js`) — modelnya cuma `tanggal` + `waktu` (jam kejadian
+  serah-terima), bisa terjadi nol, satu, atau beberapa kali sehari, tidak terikat
+  batas Pagi/Malam. Jadi "keterisian BAST per baris shift" tidak punya definisi yang
+  jelas dari data yang ada sekarang.
+- **Pertanyaan untuk pengguna (perlu dijawab sebelum dikerjakan):**
+  1. Untuk kolom **BAST**, bagaimana menentukan "terisi" per baris shift? Pilihan:
+     (a) cocokkan hanya berdasar `tanggal` (BAST dgn tanggal itu, shift mana pun, muncul
+     di KEDUA baris Pagi & Malam hari itu), atau (b) tentukan "Pagi"/"Malam" dari jam
+     `waktu` BAST itu sendiri (mis. sebelum 20:00 = Pagi), atau (c) bentuk tabel/kolom
+     lain di luar struktur per-shift yang ada sekarang khusus utk BAST.
+  2. Kalau SATU shift punya LEBIH DARI SATU laporan Kejadian/BAST (mis. 2 BAST di
+     shift Pagi yang sama) — ikon mata membuka daftar/dropdown, atau langsung yang
+     pertama/terbaru?
+- **Rencana perbaikan (setelah pertanyaan di atas terjawab):** perluas
+  `D.statusPantauPosko()` (`data.js`) menerima daftar kejadian juga, tambah kolom di
+  `pantau-posko.html`; "Unduh PDF" memakai `kejadian-pdf.js`/`kejadian-bast-pdf.js`
+  yang sudah ada (pola sama seperti #1).
+
+### 3. Hilangkan menu "Laporan Kejadian" dari navigasi akun Admin
+- **Status:** Direncanakan
+- **Dicatat:** 2026-10-22
+- **Rencana:** di `MENU_ADMIN` (`shell.js`), hapus entri `kejadian`. Menu Posko
+  (`MENU_POSKO`) tidak berubah — Posko tetap punya akses Laporan Kejadian seperti
+  sekarang.
+- **Catatan:** `kejadian.html` sendiri memakai gerbang umum (`AVS_gerbangUtama`, bukan
+  admin-only) — Admin masih BISA membuka halaman itu lewat URL langsung/bookmark kalau
+  tahu alamatnya, cuma tidak ada lagi tautannya di menu. Perlu dikonfirmasi apakah itu
+  cukup (sesuai permintaan: "hilangkan **menu**"), atau Admin juga harus diblokir total
+  dari halaman itu (perlu gerbang baru, beda dari sekadar menyembunyikan menu).
+
+### 4. Keterangan pada item "Alat Bermasalah" di Rekap
+- **Status:** Direncanakan — perlu klarifikasi kecil
+- **Dicatat:** 2026-10-22
+- **Rencana:** di kartu "Fasilitas Sering Bermasalah"/alat bermasalah pada Rekap, tambah
+  kolom/baris "Keterangan" di tabelnya.
+- **Perlu diperjelas:** keterangan yang dimaksud itu teks APA? Record Fasilitas memang
+  sudah punya field `keterangan` per-item (dipakai `ringkasBermasalahFasilitas` di
+  `beranda.js`: `it.keterangan || (Rusak/Tidak Digunakan)`) — kemungkinan besar ini
+  yang dimaksud (menampilkan isi keterangan asli dari laporan), tapi `D.statFasilitas()`
+  di `data.js` SAAT INI hanya mengagregasi `jumlah`/`jenis`, tidak menyimpan teks
+  keterangan per kemunculan (kalau sama 1 alat rusak 3x dgn keterangan beda-beda, perlu
+  diputuskan: tampilkan keterangan yang mana — yang terbaru? digabung semua?).
+
+### 5. Kartu "Shift Belum Lengkap" di Beranda jadi "Kepatuhan Grup"
+- **Status:** Direncanakan — ADA PERTANYAAN TERBUKA, belum bisa dikerjakan
+- **Dicatat:** 2026-10-22
+- **Rencana dari pengguna:** judul & isi kartu "Shift Belum Lengkap" di Beranda diubah
+  jadi "Kepatuhan Grup"; tapi saat ikon mata diklik, isi modalnya TETAP menampilkan
+  "shift belum lengkap" (tabel yang sudah ada, `tabelKepatuhanPenuh`). Pastikan
+  tampilan Beranda akun Posko & Admin tetap identik (sejauh pengecekan saya, SAAT INI
+  memang sudah identik — `beranda.js` tidak punya percabangan berdasar peran sama
+  sekali; ini jadi syarat yang harus dijaga, bukan bug yang sudah ada).
+- **Pertanyaan untuk pengguna:** "Kepatuhan Grup" itu isinya seperti apa? Kartu yang
+  ada sekarang (`renderKepatuhanIndikator`) menunjukkan 3 baris progres PER JENIS
+  laporan (Personel/Fasilitas/Log Book) — bukan per Regu/Grup. Apakah maksudnya:
+  (a) isi kartu diganti jadi breakdown PER REGU (A/B/C/D — regu mana yang paling
+  rajin/lalai melapor), dengan 3 baris jenis yang sekarang dipindah/dihapus, atau
+  (b) sekadar ganti judul & kata-kata saja, isinya (3 baris per jenis) tetap sama?
+  Kalau (a), perlu data tambahan: `kepatuhanRentang()` di `data.js` saat ini
+  menghitung per JENIS, belum per REGU — perlu fungsi baru.
+
 ### Bug: tanggal mundur/maju satu hari saat impor Jadwal Dinas dari Excel (sheet tipe GRUP)
 - **Status:** Selesai
 - **Dicatat:** 2026-10-21
@@ -105,6 +198,27 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   Posko (simpan/hapus/offline-retry), Rekap, Beranda, dan kondisi sync belum dikonfigurasi
   — semua tetap sesuai perilaku sebelumnya (errors: bersih).
 
+### Pindahkan akses Cadangkan/Pulihkan dari Admin ke Posko di Rekap
+- **Status:** Direncanakan
+- **Dicatat:** 2026-10-22
+- **Konteks:** Lanjutan dari perbaikan Pulihkan di atas — setelah Pulihkan ikut
+  tersinkron ke server, pengguna memutuskan tombol Cadangkan/Pulihkan sebaiknya dipegang
+  Posko (yang mengisi laporan sehari-hari), bukan Admin.
+- **Keputusan:**
+  - Di akun **Admin**, menu Rekap: tombol **Cadangkan/Pulihkan disembunyikan**. Admin
+    tetap bisa membuka Rekap untuk melihat rekap/grafik, hanya tombol itu yang hilang.
+  - Di akun **Posko**: menu **Rekap dimunculkan** di navigasi utama, diletakkan
+    **setelah menu Jadwal Dinas** (`MENU_POSKO` di `shell.js`). Tombol
+    Cadangkan/Pulihkan **dimunculkan** di Rekap milik Posko.
+- **Rencana perbaikan:** tambah `rekap` ke `MENU_POSKO` di `shell.js` (urutan setelah
+  `jadwal`); di `rekap.html`/`rekap.js`, bungkus tombol Cadangkan/Pulihkan dengan
+  pengecekan `AVS_PERAN() === 'posko'` (tampil) vs `=== 'admin'` (sembunyi) — kebalikan
+  dari asumsi awal (Pulihkan dikira perlu dibatasi ke Admin demi keamanan; pengguna
+  memutuskan sebaliknya).
+- **Dampak ke pengguna:** Posko mendapat akses penuh ke Rekap (termasuk grafik/rekap
+  yang sebelumnya cuma bisa dilihat Admin) sekaligus Cadangkan/Pulihkan; Admin kehilangan
+  tombol Cadangkan/Pulihkan di Rekap miliknya (tapi tetap bisa lihat data).
+
 ### (Dibatalkan) Sinkronisasi Laporan Kejadian & BAST lintas perangkat
 - **Status:** Dibatalkan
 - **Dicatat:** 2026-10-20
@@ -118,12 +232,18 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   Kejadian & BAST tetap bersifat lokal-per-perangkat seperti sebelum fitur sinkronisasi
   dibangun, tidak ikut digabung lintas posko.
 
-### (Ditunda) Tombol "Muat Ulang" manual di Rekap & Beranda
-- **Status:** Pending/diarsipkan — menunggu instruksi lanjutan
-- **Dicatat:** 2026-10-20
+### Tombol "Muat Ulang" manual di Rekap & Beranda
+- **Status:** Direncanakan
+- **Dicatat:** 2026-10-20 (diaktifkan kembali 2026-10-22)
 - **Konteks:** Rekap & Beranda cuma menarik data sinkronisasi sekali saat halaman dimuat
   (tidak ada polling seperti Pantau Posko). Opsi 4 (tombol manual "Muat Ulang" di toolbar
-  Rekap / header Beranda) sudah di-mockup, tapi pengerjaannya diarsipkan dulu oleh pengguna.
+  Rekap / header Beranda) sudah di-mockup, sempat diarsipkan, sekarang dilanjutkan.
+- **Keputusan baru:** tombol ini **khusus muncul di akun Admin saja** — dibungkus
+  pengecekan `AVS_PERAN() === 'admin'` sebelum dirender, sama seperti pola yang dipakai
+  untuk fitur Admin-only lain. Posko tidak melihat tombol ini di Beranda miliknya.
+  (Di Rekap otomatis Admin-saja secara praktik, tapi sejak Rekap juga dimunculkan di
+  menu Posko — lihat entri di atas — pengecekan peran ini jadi WAJIB, bukan cuma
+  kebetulan karena menu tersembunyi.)
 
 ### (Dibatalkan) Tombol "Cadangkan Data" di menu Akun Posko
 - **Status:** Dibatalkan
