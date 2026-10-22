@@ -299,18 +299,31 @@ ${catatanTak}
     }
   }
 
-  // Muat ulang Personel/Fasilitas/Log Book dari localStorage LOKAL, lalu -- kalau sinkronisasi
-  // lintas perangkat aktif (lihat sync.js) -- gabung dgn salinan dari seluruh posko di server,
-  // supaya Beranda yg dibuka Admin ikut menghitung laporan yg disimpan Posko di komputer lain.
-  // Pola & alasan sama persis dgn rekap.js (muatData()): sekali saat halaman dibuka, bukan tiap
-  // ganti bulan -- pemilih bulan cuma menyaring data yg sudah termuat.
+  // Muat ulang Personel/Fasilitas/Log Book/Kejadian/BAST dari penyimpanan LOKAL, lalu -- kalau
+  // sinkronisasi lintas perangkat aktif (lihat sync.js) -- gabung dgn salinan dari seluruh posko
+  // di server, supaya Beranda yg dibuka Admin ikut menghitung laporan yg disimpan Posko di
+  // komputer lain. Pola & alasan sama persis dgn rekap.js (muatData()) dan pantau-posko.html
+  // (render()/pollRemote()): sekali saat halaman dibuka, bukan tiap ganti bulan -- pemilih bulan
+  // cuma menyaring data yg sudah termuat.
+  // PENTING (bug diperbaiki 2026-10-22): sebelumnya `kejadian` HANYA dibaca dari IndexedDB lokal
+  // (D.bacaKejadian()) tanpa pernah digabung dgn salinan server spt 3 jenis lain -- jadi kartu
+  // "Daftar Kejadian Terbaru"/"Daftar BAST Terbaru" di Beranda Admin selalu kosong kalau laporan
+  // Kejadian/BAST itu dibuat di komputer LAIN (mis. Posko), meski sinkronisasi sudah aktif &
+  // laporannya sudah ada di server -- Pantau Posko sudah benar krn sudah menggabung kejadian/
+  // bast remote (lihat pantau-posko.html), Beranda belum. `kejadian` di sini berisi LK+BAST
+  // tercampur (sama spt hasil D.bacaKejadian()), dipisah oleh D.statKejadianRentang via field
+  // `jenis` -- jadi remote.kejadian & remote.bast digabung jadi satu sebelum di-gabung() dgn
+  // salinan lokal (AVS_SYNC.gabung cuma mencocokkan by id, tidak peduli jenis).
   async function muatData() {
     personel = D.bacaPersonel(); fasilitas = D.bacaFasilitas(); logbook = D.bacaLogbook();
+    const kejadianLokal = await D.bacaKejadian(); // IndexedDB, async -- LK + BAST tercampur
+    kejadian = kejadianLokal;
     if (typeof AVS_SYNC !== 'undefined' && AVS_SYNC.aktif()) {
-      const [rp, rf, rl] = await Promise.all([AVS_SYNC.ambilSemua('personel'), AVS_SYNC.ambilSemua('fasilitas'), AVS_SYNC.ambilSemua('logbook')]);
+      const [rp, rf, rl, rk, rb] = await Promise.all([AVS_SYNC.ambilSemua('personel'), AVS_SYNC.ambilSemua('fasilitas'), AVS_SYNC.ambilSemua('logbook'), AVS_SYNC.ambilSemua('kejadian'), AVS_SYNC.ambilSemua('bast')]);
       personel = AVS_SYNC.gabung(personel, rp);
       fasilitas = AVS_SYNC.gabung(fasilitas, rf);
       logbook = AVS_SYNC.gabung(logbook, rl);
+      kejadian = AVS_SYNC.gabung(kejadianLokal, rk.concat(rb));
     }
   }
 
@@ -321,10 +334,8 @@ ${catatanTak}
     fasilitas = D.bacaFasilitas();
     logbook = D.bacaLogbook();
     pasangPemilihBulan();
-    renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni();
-    kejadian = await D.bacaKejadian();           // lengkapi dengan data kejadian (IndexedDB, async)
-    renderBulanan();
-    await muatData(); // tarik salinan Personel/Fasilitas/Log Book dari posko lain (kalau sinkronisasi aktif)
+    renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni(); // tampil cepat dgn data lokal dulu, Kejadian/BAST menyusul
+    await muatData(); // lengkapi Kejadian/BAST (IndexedDB) + tarik salinan dari posko lain (kalau sinkronisasi aktif)
     renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni();
     // Tombol "Muat Ulang" khusus Admin -- Beranda cuma menarik data sinkronisasi SEKALI saat
     // halaman dimuat (tidak polling spt Pantau Posko), jadi Admin perlu cara menyegarkan

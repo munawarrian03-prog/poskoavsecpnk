@@ -488,3 +488,37 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   balik ke Apel, isian rentang sebelumnya tidak hilang. Toggle mode ditentukan dari nilai
   `kesiapanTugas.lokasi === 'Whatsapp Grup'` (dicek di `logbook.html`: form + drawer "Lihat",
   dan `logbook-pdf.js`: PDF) — konsisten di ketiga tempat yang menampilkan Waktu Pelaksanaan.
+
+### Bug: Kejadian & BAST di Beranda Admin tidak muncul meski sinkronisasi sudah aktif
+- **Status:** Selesai
+- **Diverifikasi:** Playwright —
+  (1) simulasi sinkronisasi aktif dgn data Kejadian/BAST yg HANYA ada di "server" (remote,
+  via AVS_SYNC.ambilSemua yg di-mock), TIDAK ada di IndexedDB lokal (persis kasus Admin yg
+  Beranda-nya dibuka di komputer lain dari Posko yg membuat laporan itu) -> kartu "Daftar
+  Kejadian Terbaru" & "Daftar BAST Terbaru" sekarang menampilkan laporan tsb (sebelum
+  perbaikan: tetap kosong);
+  (2) regresi — sinkronisasi nonaktif (placeholder, keadaan default repo) tetap jalan normal,
+  kartu kosong tampil pesan "Belum ada..." seperti sebelumnya, tanpa error.
+- **Dicatat:** 2026-10-22
+- **Dilaporkan oleh pengguna:** setelah deploy ke Netlify sungguhan, Kejadian & BAST di
+  Beranda Admin tidak muncul.
+- **Akar masalah:** `beranda.js` (`mulai()`) membaca `kejadian` HANYA dari IndexedDB lokal
+  (`await D.bacaKejadian()`) tanpa pernah digabung dgn salinan server lewat `AVS_SYNC`,
+  BERBEDA dari Personel/Fasilitas/Log Book yang sudah digabung dgn benar di `muatData()`, dan
+  BERBEDA dari `pantau-posko.html` yang sudah menggabung Kejadian/BAST remote dgn benar sejak
+  awal (lihat `render()`/`pollRemote()` di situ). Jadi Kejadian/BAST yang dibuat Posko di
+  komputer lain tidak pernah sampai ke Beranda Admin, meski laporan itu sudah tersimpan di
+  Google Sheet lewat sinkronisasi — gap murni di sisi Beranda, bukan di `sync.js`/`Code.gs`.
+- **Perbaikan:** `muatData()` di `beranda.js` kini juga membaca Kejadian (IndexedDB) +
+  menggabungnya dgn `AVS_SYNC.ambilSemua('kejadian')` & `AVS_SYNC.ambilSemua('bast')` —
+  `remote.kejadian` & `remote.bast` digabung jadi SATU array sebelum di-`AVS_SYNC.gabung()`
+  dgn salinan lokal (karena `D.statKejadianRentang` mengharapkan satu list LK+BAST tercampur,
+  dipisah via field `jenis`; `AVS_SYNC.gabung()` sendiri cuma mencocokkan by `id`, tidak peduli
+  jenis, jadi aman digabung). `mulai()` disederhanakan supaya kejadian ikut dibaca di dalam
+  `muatData()` (dulu dibaca terpisah SEBELUM `muatData()`, jadi tidak pernah ikut tergabung
+  dgn remote). Tombol "Muat Ulang" (Admin) otomatis ikut memperbaiki ini juga krn memanggil
+  `muatData()` yang sama.
+- **Prasyarat di luar kode (perlu dicek pengguna):** perbaikan ini hanya berlaku kalau
+  sinkronisasi memang AKTIF — `sync.js` yang di-deploy ke Netlify sudah berisi GAS_URL/TOKEN
+  ASLI (bukan placeholder), DAN tab `Kejadian`/`BAST` + pemetaannya di `Code.gs` sudah
+  dikerjakan (lihat entri "Sinkronisasi Laporan Kejadian & BAST lintas perangkat" di atas).
