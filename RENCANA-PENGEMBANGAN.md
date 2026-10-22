@@ -284,14 +284,3 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   (Di Rekap otomatis Admin-saja secara praktik, tapi sejak Rekap juga dimunculkan di
   menu Posko — lihat entri di atas — pengecekan peran ini jadi WAJIB, bukan cuma
   kebetulan karena menu tersembunyi.)
-
-### (Dibatalkan) Tombol "Cadangkan Data" di menu Akun Posko
-- **Status:** Dibatalkan
-- **Dicatat:** 2026-10-20
-- **Dibatalkan:** 2026-10-22
-- **Keputusan desain yang sudah diambil sebelum dibatalkan:** ditaruh di dropdown "Akun"
-  (bukan menu baru), cuma Cadangkan (bukan Pulihkan — tetap Admin-saja di Rekap demi
-  keamanan data), dan membawa data **gabungan seluruh posko** (sama seperti `ekspor()`
-  di Rekap), bukan cuma data lokal device itu sendiri.
-- **Keputusan:** dibatalkan atas permintaan pengguna, mockup tidak dilanjutkan jadi kode.
-  Cadangkan/Pulihkan tetap hanya ada di Rekap (Admin), seperti sebelum diskusi ini.
