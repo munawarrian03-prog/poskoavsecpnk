@@ -72,34 +72,50 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   cukup (sesuai permintaan: "hilangkan **menu**"), atau Admin juga harus diblokir total
   dari halaman itu (perlu gerbang baru, beda dari sekadar menyembunyikan menu).
 
-### 4. Keterangan pada item "Alat Bermasalah" di Rekap
+### 4. Kolom Kondisi/Status/Keterangan pada "Alat Bermasalah" di Rekap
 - **Status:** Direncanakan
-- **Dicatat:** 2026-10-22
-- **Rencana:** di kartu "Fasilitas Sering Bermasalah"/alat bermasalah pada Rekap, tambah
-  kolom "Keterangan" di tabelnya.
-- **Keputusan:** kalau alat yang sama muncul bermasalah lebih dari satu kali (jumlah >1)
-  dengan keterangan berbeda-beda per kemunculan, SEMUA keterangan itu **digabung** di
-  baris yang sama (nomor urut yang sama), masing-masing diberi **keterangan waktu**
-  (tanggal laporannya) supaya tetap bisa dibedakan mana keterangan dari laporan kapan.
+- **Dicatat:** 2026-10-22 (diperjelas 2026-10-22)
+- **Keputusan final — susunan kolom:** `# | Item | Pos | Kali | Kondisi | Status | Keterangan`.
+  - Kolom **"Jenis"** yang ada sekarang (isinya campuran "Rusak"/"Tidak Digunakan")
+    **diganti nama jadi "Kondisi"**, isinya khusus **Baik/Rusak** — sesuai field
+    `kondisi` yang sudah ada di form Laporan Fasilitas (bentuk A).
+  - Kolom baru **"Status"**: **Digunakan/Tidak Digunakan** — sesuai field `status`
+    yang sudah ada di form Laporan Fasilitas (bentuk A). Diletakkan ANTARA Kondisi
+    dan Keterangan.
+  - Kolom baru **"Keterangan"**: teks keterangan asli dari laporan.
+  - Kalau alat yang sama (nomor urut yang sama) punya LEBIH DARI SATU kemunculan
+    dengan Kondisi/Status/Keterangan berbeda-beda, semua kemunculan itu ditampilkan
+    sebagai baris-dalam di bawah nomor yang sama (rowspan pada # /Item/Pos/Kali),
+    masing-masing baris-dalam punya Kondisi, Status, Keterangan, DAN tanggal
+    laporannya sendiri (supaya tetap bisa dibedakan laporan kapan):
+    ```
+    [Kondisi 1] [Status 1] [Keterangan 1] [Tanggal 1]
+    [Kondisi 2] [Status 2] [Keterangan 2] [Tanggal 2]
+    ```
+  - Mockup: lihat bagian #5 di https://claude.ai/artifact/Hyh9e8oeG4xDcksj8eWRMH
 - **Rencana perbaikan:** kartu "Alat Bermasalah" di Rekap dipakai lewat
   `D.statFasilitasRentang()` (`data.js`) + `tabelFasilitas()` (`rekap.js`) — BUKAN
   fungsi `statFasilitas()`/`tabelFasilitasRingkas()` yang dipakai kartu serupa di
   Beranda (beda fungsi, scope perbaikan ini hanya di Rekap sesuai permintaan).
-  `statFasilitasRentang()` saat ini hanya mengumpulkan `jumlah`/`jenis` per alat —
-  perlu ditambah array `catatan: [{ tanggal, keterangan }]` yang dikumpulkan dari tiap
-  kemunculan (field `keterangan` yang sudah ada di item Fasilitas), lalu `tabelFasilitas()`
-  dirender ulang untuk menampilkan kolom "Keterangan" itu (gabungan tanggal+keterangan
-  per baris, per alat).
+  `statFasilitasRentang()` saat ini hanya mengagregasi `jumlah`/`jenis` (digabung
+  Rusak+Tidak Digunakan jadi satu label) per alat — perlu diubah menyimpan array
+  kemunculan `[{ tanggal, kondisi, status, keterangan }]` per alat (field `kondisi`/
+  `status`/`keterangan` sudah ada di item Fasilitas bentuk A, tinggal dibaca apa
+  adanya), lalu `tabelFasilitas()` dirender ulang dgn `rowspan` per alat.
 
 ### 5. Kartu "Shift Belum Lengkap" di Beranda jadi "Kepatuhan Grup" (breakdown per Regu)
 - **Status:** Direncanakan
-- **Dicatat:** 2026-10-22
+- **Dicatat:** 2026-10-22 (diperjelas 2026-10-22)
 - **Keputusan:** judul & ISI kartu "Shift Belum Lengkap" di Beranda diganti jadi
   "Kepatuhan Grup" — isinya breakdown **per Regu (A/B/C/D)**, bukan lagi 3 baris per
-  jenis laporan (Personel/Fasilitas/Log Book) seperti sekarang. Saat ikon mata diklik,
+  jenis laporan (Personel/Fasilitas/Log Book) seperti sekarang. Ditampilkan sebagai
+  **grafik donat** (gaya & pola sama seperti donat yang sudah ada di Rekap/Beranda,
+  mis. `grafikDonat`/`grafikDonatPos`) — satu warna per regu + legenda persentase
+  kelengkapan di sampingnya, bukan 4 baris progres linear. Saat ikon mata diklik,
   modal yang terbuka TETAP menampilkan "Shift Belum Lengkap" apa adanya (tabel yang
   sudah ada, `tabelKepatuhanPenuh`) — jadi hanya tampilan kartu ringkasnya yang berubah
-  sudut pandang, detail di modal tidak berubah.
+  sudut pandang & bentuk grafik, detail di modal tidak berubah.
+  - Mockup: lihat bagian #6 di https://claude.ai/artifact/Hyh9e8oeG4xDcksj8eWRMH
 - **Syarat:** tampilan Beranda akun Posko & Admin harus tetap identik (dicek: SAAT INI
   memang sudah identik — `beranda.js` tidak punya percabangan berdasar peran sama
   sekali; kartu baru ini juga tidak boleh beda antar peran).
