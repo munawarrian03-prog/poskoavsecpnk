@@ -399,3 +399,31 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   Tahap 1). Pengguna perlu memutuskan apakah/bagaimana checklist Fasilitas ingin
   disesuaikan menyusul perubahan ini — lingkupnya sengaja dibatasi hanya ke Laporan
   Personel sesuai permintaan, tidak menyentuh Fasilitas tanpa konfirmasi.
+
+### Sinkronkan penamaan pos di Fasilitas dengan daftar Pos Penempatan baru (Personel)
+- **Status:** Selesai
+- **Diverifikasi:** Playwright — form baru Fasilitas menampilkan `scp_int` sbg "LAGs
+  INSPECTION", pos SSCP kini id `sscp` nama "SSCP" (bukan lagi `scp_transit`/"SSCP +
+  (Dep & Arr)"), `ph_protection` kini "PUBLIC HALL" (huruf besar, konsisten dgn
+  Personel); `scp_vip` & 6 pos patroli baru (ph_dz/ph_pz/walking_P/vp_r4/P_15/P_33)
+  sengaja TIDAK ditambahkan (lihat keputusan di bawah); regresi — record Fasilitas
+  LAMA yang merujuk id `scp_transit` (sudah di-rename) tetap tampil dgn nama
+  tersimpan "SSCP + (Dep & Arr)" tanpa error, PDF tetap terunduh normal.
+- **Dicatat:** 2026-10-22
+- **Konteks:** Lanjutan dari entri "Update daftar Pos Penempatan di Laporan Personel"
+  — pengguna minta semua disesuaikan dgn perubahan kategori. `fasilitas-data.js`
+  (`POS_FASILITAS_BAWAAN`) punya nama/id ditulis manual sendiri (bukan diturunkan
+  otomatis dari `POS_BAWAAN`), jadi tidak ikut berubah otomatis dan perlu disunting
+  manual: `scp_int` "PSCP LAGs" → "LAGs INSPECTION"; `scp_transit` (id) → `sscp` (id),
+  nama "SSCP + (Dep & Arr)" → "SSCP" (SSCP di Personel kini dipecah jadi 5 pos
+  `sscp`/`sscp_ci`/`sscp_ad`/`sscp_ai`/`sscp_remote` untuk penugasan personel, tapi
+  checklist peralatan fisiknya tetap satu — dipakai bersama); `ph_protection` nama
+  "Public Hall" → "PUBLIC HALL" (menyamakan huruf besar dgn Personel).
+- **Keputusan pengguna (ditanya via pertanyaan singkat):**
+  - **PSCP VIP** (id `scp_vip`): checklist peralatan **belum diisi** — pengguna pilih
+    isi sendiri nanti, TODO di `fasilitas-data.js` tetap dipertahankan.
+  - **6 pos patroli baru** (Drop Zone, Pick Up Zone, Walking Patrol, Patroli R.4,
+    Perimeter 15, Perimeter 33): **sengaja tidak ditambahkan** ke Fasilitas —
+    sifatnya mobile/patroli, tidak punya checklist peralatan tetap tersendiri.
+- **Tidak diubah:** `fasilitas.html` dan `fasilitas-pdf.js` (sudah generik terhadap
+  isi `POS_FASILITAS_BAWAAN`, sama seperti Laporan Personel).

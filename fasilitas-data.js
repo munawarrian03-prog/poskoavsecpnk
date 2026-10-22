@@ -15,9 +15,13 @@
 // untuk laporan yang sedang dibuat; file ini adalah nilai awalnya.
 // id item harus unik dalam satu pos, huruf kecil + underscore.
 //
-// CATATAN PENTING: pos "SCP VIP" (id: scp_vip di kategori.js) BELUM
+// CATATAN PENTING: pos "PSCP VIP" (id: scp_vip di kategori.js) BELUM
 // dimasukkan ke sini. Isinya menunggu konfirmasi pengguna — lihat
 // RENCANA-PENGEMBANGAN.md, Tahap 1, sebelum melengkapi pos ini.
+//
+// Pos patroli/baru di kategori.js (ph_dz, ph_pz, walking_P, vp_r4, P_15,
+// P_33) SENGAJA TIDAK dimasukkan ke sini — sifatnya mobile/patroli, tidak
+// punya checklist peralatan tetap tersendiri (sudah dikonfirmasi pengguna).
 // =====================================================
 
 const POS_FASILITAS_BAWAAN = [
@@ -67,8 +71,8 @@ const POS_FASILITAS_BAWAAN = [
     ]
   },
   {
-    id: 'scp_int', // = "PSCP LAGs" di kategori.js
-    name: 'PSCP LAGs',
+    id: 'scp_int', // = "LAGs INSPECTION" di kategori.js
+    name: 'LAGs INSPECTION',
     items: [
       { id: 'lags_xray', name: 'Mesin X-Ray', bentuk: 'A' },
       { id: 'lags_lock', name: 'Locker',       bentuk: 'A' },
@@ -77,8 +81,10 @@ const POS_FASILITAS_BAWAAN = [
     ]
   },
   {
-    id: 'scp_transit', // = "SSCP + (Dep & Arr)" di kategori.js (nama disamakan dgn Laporan Personel)
-    name: 'SSCP + (Dep & Arr)',
+    id: 'sscp', // = "SSCP" di kategori.js (dulu 'scp_transit'/"SSCP + (Dep & Arr)", kini pos
+                // SSCP dipecah jadi 5 di Laporan Personel: sscp/sscp_ci/sscp_ad/sscp_ai/
+                // sscp_remote, tapi tetap satu checklist peralatan fisik di sini)
+    name: 'SSCP',
     items: [
       { id: 'sscp_xray', name: 'Mesin X-Ray', bentuk: 'A' },
       { id: 'sscp_wtmd', name: 'WTMD',         bentuk: 'A' },
@@ -120,7 +126,7 @@ const POS_FASILITAS_BAWAAN = [
   },
   {
     id: 'ph_protection', // = "PUBLIC HALL" di kategori.js
-    name: 'Public Hall',
+    name: 'PUBLIC HALL',
     items: [
       { id: 'ph_patroli', name: 'Mobil Patroli-03', bentuk: 'A' },
       { id: 'ph_dok',     name: 'Dokumen',          bentuk: 'C' }
