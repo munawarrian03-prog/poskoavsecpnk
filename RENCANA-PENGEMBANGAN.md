@@ -14,6 +14,39 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Catatan Kesiapan Tugas (Apel/Briefing) di Log Book + waktu manual + rapikan PDF
+- **Status:** Selesai
+- **Dicatat:** 2026-10-23
+- **Diverifikasi:** Playwright — dropdown Pemimpin terisi benar dari Personel posisi
+  POSKO; Lokasi ikut berubah otomatis saat Kegiatan diganti (Apel/Briefing); entri
+  baru Catatan Kegiatan punya jam kosong (bukan auto jam sekarang); data tersimpan &
+  termuat ulang benar; drawer "Lihat" & PDF menampilkan bagian Kesiapan Tugas dengan
+  benar, termasuk judul PDF "Log Book Harian". Regresi: record LAMA tanpa field
+  `kesiapanTugas` tetap tampil "Belum diisi" (tidak error) di drawer maupun PDF; form
+  baru/kosong tidak error (dropdown Pemimpin cuma "— pilih —").
+- **Keputusan (mockup disetujui, https://claude.ai/artifact/Ntu8ie1xLKCqbTEXkrvaBk):**
+  - Panel baru **"Catatan Kesiapan Tugas"** di `logbook.html`, ditaruh sebelum panel
+    "Catatan Kegiatan". **SATU kartu tetap** per laporan (bukan list berulang) — tidak
+    ada tombol tambah/hapus.
+  - Field: **Kegiatan** (dropdown Apel/Briefing) — **Lokasi** otomatis mengikuti
+    Kegiatan (Apel → "Ruang Kelas Avsec", Briefing → "Whatsapp Grup", field terkunci) —
+    **Pemimpin** (dropdown, sumbernya nama personel di posisi POSKO pada Laporan
+    Personel utk tanggal+shift+regu yang sama — pola sama seperti "Disusun Oleh") —
+    **Materi** (teks manual) — **Waktu Pelaksanaan** (jam mulai s.d. jam selesai).
+  - **Catatan Kegiatan** (sudah ada): tombol "+ Tambah Catatan Waktu" **tidak lagi
+    otomatis mengisi jam sekarang** — kolom jam kosong, wajib diisi manual.
+  - **PDF Log Book** (`logbook-pdf.js`): judul diubah dari "Log Book Serah Terima"
+    jadi **"Log Book Harian"**; bagian "Catatan Kesiapan Tugas" ditambahkan tepat
+    sebelum "Catatan Kegiatan"; skala tipografi dirapikan (judul 14pt, label kotak
+    identitas 6.5pt kapital+spasi huruf, nilai 10pt tebal, judul seksi 9.5pt kapital +
+    garis bawah tipis, isi 8.5–9pt, footer 6.5pt) — sebelumnya semua ukuran berkerumun
+    di 8.5–11pt.
+- **Lingkup:** `logbook.html` + `logbook-pdf.js` saja. Drawer pratinjau WEB milik
+  Pantau Posko (`pantau-posko.html`, fungsi `renderLihatLogbook` miliknya sendiri,
+  BUKAN PDF) belum ikut diperbarui menampilkan Catatan Kesiapan Tugas — PDF yang
+  diunduh dari Pantau Posko tetap ikut (memakai `buildLogbookPdfHTML` yang sama),
+  cuma pratinjau teks di drawer web-nya yang belum. Beri tahu kalau ingin disamakan.
+
 ### 1. Unduh PDF dari drawer pratinjau (ikon mata) di Pantau Posko — Personel/Fasilitas/Logbook
 - **Status:** Selesai
 - **Diverifikasi:** mock-server + Playwright — klik mata → tombol Unduh PDF muncul →

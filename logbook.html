@@ -30,6 +30,17 @@
 .lb-row textarea { width:100%; min-height:58px; border:1px solid #D7DEE8; border-radius:8px; padding:10px 12px; font:600 13px 'Montserrat', 'Inter'; line-height:1.5; resize:vertical; }
 .lb-row button { height:38px; border-radius:8px; border:1px solid #F3D3CD; background:#FDECEA; color:#A82F24; font-weight:800; cursor:pointer; font-size:15px; }
 .lb-add { align-self:flex-start; font-size:12px; font-weight:800; color:#157A82; background:#E4F3F4; border:none; border-radius:8px; padding:10px 16px; cursor:pointer; margin-top:4px; }
+.kt-card { border:1px solid #D7DEE8; background:#F7FBFB; border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:12px; }
+.kt-grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.kt-fld { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.kt-fld label { font-size:10px; font-weight:800; color:#8A94A6; text-transform:uppercase; letter-spacing:.3px; }
+.kt-fld select, .kt-fld input[type=text] { height:38px; border:1px solid #D7DEE8; border-radius:8px; padding:0 10px; font:600 13px 'Montserrat','Inter'; color:var(--ink); width:100%; }
+.kt-fld input[disabled] { background:#EEF1F6; color:#5C6675; font-weight:700; }
+.kt-waktu { display:flex; align-items:center; gap:10px; }
+.kt-waktu .kt-fld { flex:none; width:130px; }
+.kt-waktu .kt-fld input[type=time] { height:38px; border:1px solid #D7DEE8; border-radius:8px; padding:0 10px; font:700 13px 'Montserrat','Inter'; color:var(--ink); width:100%; }
+.kt-waktu span { font-size:12px; font-weight:800; color:#8A94A6; margin-top:16px; }
+@media (max-width:720px) { .kt-grid3 { grid-template-columns:1fr; } }
 .lb-pesan { width:100%; min-height:150px; border:2px solid #F0D9A8; background:#FFFBF2; border-radius:10px; padding:14px 16px; font:600 13.5px 'Montserrat', 'Inter'; line-height:1.6; resize:vertical; }
 .lb-savedcard { background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:14px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:14px; box-shadow:0 1px 3px rgba(16,36,61,.05); }
 .lb-savedcard .ttl { font-weight:800; color:var(--ink); font-size:13.5px; }
@@ -77,11 +88,30 @@
 <div class="form-area" id="pageForm" style="display:flex; overflow-y:auto;">
 <div style="width:100%">
 <div class="lb-wrap">
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+<div class="lb-panel">
+<h3>Catatan Kesiapan Tugas</h3>
+<div class="sub">Apel / Briefing sebelum memulai shift</div>
+<div class="kt-card">
+<div class="kt-grid3">
+<div class="kt-fld"><label>Kegiatan</label><select id="ktKegiatan" onchange="ubahKesiapan('kegiatan',this.value)"><option value="Apel">Apel</option><option value="Briefing">Briefing</option></select></div>
+<div class="kt-fld"><label>Lokasi (otomatis)</label><input type="text" id="ktLokasi" disabled></div>
+<div class="kt-fld"><label>Pemimpin</label><select id="ktPemimpin" onchange="ubahKesiapan('pemimpin',this.value)"><option value="">— pilih —</option></select></div>
+</div>
+<div class="kt-fld"><label>Materi</label><input type="text" id="ktMateri" placeholder="Tuliskan materi yang dibahas..." oninput="ubahKesiapan('materi',this.value)"></div>
+<div class="kt-waktu">
+<div class="kt-fld"><label>Waktu Mulai</label><input type="time" id="ktMulai" onchange="ubahKesiapan('waktuMulai',this.value)"></div>
+<span>s.d.</span>
+<div class="kt-fld"><label>Waktu Selesai</label><input type="time" id="ktSelesai" onchange="ubahKesiapan('waktuSelesai',this.value)"></div>
+</div>
+</div>
+</div>
 <div class="lb-panel">
 <h3>Catatan Kegiatan</h3>
 <div class="sub">Rekam kejadian penting sepanjang shift, urut berdasarkan waktu</div>
 <div class="lb-tl" id="catatanContainer"></div>
 <button type="button" class="lb-add" onclick="tambahCatatan()">+ Tambah Catatan Waktu</button>
+</div>
 </div>
 <div class="lb-panel">
 <h3>Catatan Serah Terima</h3>
@@ -188,6 +218,9 @@ let editingReportId = null;
 let catatanKegiatan = [];   // [{ id, jam, uraian }]
 let dirty = false;
 let modalReportId = null;
+const LOKASI_KEGIATAN = { Apel: 'Ruang Kelas Avsec', Briefing: 'Whatsapp Grup' };
+function modelKesiapanBaru() { return { kegiatan: 'Apel', lokasi: LOKASI_KEGIATAN.Apel, pemimpin: '', materi: '', waktuMulai: '', waktuSelesai: '' }; }
+let kesiapanTugas = modelKesiapanBaru();   // SATU kartu tetap per laporan, bukan list
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -224,13 +257,43 @@ function renderCatatan() {
 </div>`).join('') || '<div style="font-size:12px;color:#8A94A6;font-weight:600">Belum ada catatan. Klik "+ Tambah Catatan Waktu".</div>';
 }
 function tambahCatatan() {
-  const now = new Date(), jam = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-  catatanKegiatan.push({ id: uid(), jam, uraian: '' });
+  // Jam SENGAJA dikosongkan (bukan otomatis jam sekarang) -- wajib diisi manual,
+  // supaya jam yang tercatat memang jam kejadian sesungguhnya, bukan jam klik tombol.
+  catatanKegiatan.push({ id: uid(), jam: '', uraian: '' });
   markDirty(); renderCatatan();
   setTimeout(() => { const rows = document.querySelectorAll('#catatanContainer textarea'); if (rows.length) rows[rows.length - 1].focus(); }, 30);
 }
 function ubahCatatan(id, field, val) { const c = catatanKegiatan.find((x) => x.id === id); if (!c) return; c[field] = val; markDirty(); }
 function hapusCatatan(id) { catatanKegiatan = catatanKegiatan.filter((x) => x.id !== id); markDirty(); renderCatatan(); }
+
+/* ---------- Catatan Kesiapan Tugas (Apel/Briefing) -- SATU kartu tetap, bukan list ---------- */
+// Nama di dropdown "Pemimpin" diambil dari personel posisi POSKO pada Laporan Personel
+// tanggal+shift+regu yang sama -- pola sama seperti "Disusun Oleh" (AVS.infoPembuatDariPersonel).
+function personelPoskoNama(tanggal, shift, regu) {
+  const rec = AVS.cariLaporanPersonel(tanggal, shift, regu); if (!rec) return [];
+  const pos = (rec.posPenempatan || []).find((p) => p.id === 'posko') || (rec.posPenempatan || [])[0];
+  return ((pos && pos.personel) || []).map((p) => rapikan(p && p.nama)).filter(Boolean);
+}
+function renderKesiapanTugas() {
+  $('ktKegiatan').value = kesiapanTugas.kegiatan;
+  $('ktLokasi').value = kesiapanTugas.lokasi;
+  $('ktMateri').value = kesiapanTugas.materi;
+  $('ktMulai').value = kesiapanTugas.waktuMulai;
+  $('ktSelesai').value = kesiapanTugas.waktuSelesai;
+  const nama = personelPoskoNama($('tanggal').value, $('shift').value, $('regu').value);
+  const sel = $('ktPemimpin');
+  const opsi = ['<option value="">— pilih —</option>'].concat(nama.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`));
+  // Nama yang sudah tersimpan tapi tidak lagi ada di daftar terkini (mis. Personel diubah
+  // setelah Kesiapan Tugas diisi) tetap ditampilkan sbg pilihan, supaya tidak hilang diam-diam.
+  if (kesiapanTugas.pemimpin && !nama.includes(kesiapanTugas.pemimpin)) opsi.push(`<option value="${esc(kesiapanTugas.pemimpin)}">${esc(kesiapanTugas.pemimpin)} (tidak ada di Personel saat ini)</option>`);
+  sel.innerHTML = opsi.join('');
+  sel.value = kesiapanTugas.pemimpin;
+}
+function ubahKesiapan(field, val) {
+  kesiapanTugas[field] = val;
+  if (field === 'kegiatan') { kesiapanTugas.lokasi = LOKASI_KEGIATAN[val] || ''; $('ktLokasi').value = kesiapanTugas.lokasi; }
+  markDirty();
+}
 
 /* ---------- Rujukan Personel (kunci + Disusun oleh) ---------- */
 function statusPersonel() {
@@ -306,7 +369,7 @@ async function renderRingkasanOtomatis() {
   html += '</div>';
   el.innerHTML = html;
 }
-function headerChanged() { markDirty(); refreshPenyusunDanKunci(); renderRingkasanOtomatis(); refreshPratinjauLive(); }
+function headerChanged() { markDirty(); refreshPenyusunDanKunci(); renderRingkasanOtomatis(); refreshPratinjauLive(); renderKesiapanTugas(); }
 
 /* ---------- Teks WA ---------- */
 function generateWAText() {
@@ -326,7 +389,7 @@ function kirimWA() { window.open(AVS.urlWA(generateWAText()), '_blank'); }
 function salinWA() { const txt = generateWAText(); navigator.clipboard.writeText(txt).then(() => toast('Teks WA disalin.')).catch(() => { const ta = document.createElement('textarea'); ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Teks WA disalin.'); } catch(e) { toast('Gagal menyalin.','err'); } ta.remove(); }); }
 
 /* ---------- Simpan & muat ---------- */
-function snapshot() { return { catatanKegiatan: clone(catatanKegiatan), catatanSerahTerima: $('serahTerima').value }; }
+function snapshot() { return { catatanKegiatan: clone(catatanKegiatan), catatanSerahTerima: $('serahTerima').value, kesiapanTugas: clone(kesiapanTugas) }; }
 function saveReport() {
   const tanggal = $('tanggal').value, shift = $('shift').value, regu = $('regu').value;
   if (!tanggal || !shift || !regu) { toast('Harap lengkapi Tanggal, Shift, dan Regu!', 'err'); return; }
@@ -353,18 +416,18 @@ function newReport() {
   editingReportId = null; $('editBadge').style.display = 'none';
   const hIni = new Date(); $('tanggal').value = tanggalLokalISO(hIni);
   $('shift').value = ''; $('regu').value = '';
-  catatanKegiatan = []; $('serahTerima').value = ''; dirty = false;   renderCatatan(); refreshPenyusunDanKunci(); renderRingkasanOtomatis(); switchPage('form');
+  catatanKegiatan = []; $('serahTerima').value = ''; kesiapanTugas = modelKesiapanBaru(); dirty = false;   renderCatatan(); refreshPenyusunDanKunci(); renderRingkasanOtomatis(); renderKesiapanTugas(); switchPage('form');
 }
 function loadForEdit(id) {
   const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
   editingReportId = id; $('tanggal').value = r.tanggal; $('shift').value = r.shift; $('regu').value = r.regu;
-  catatanKegiatan = clone(r.catatanKegiatan || []); $('serahTerima').value = r.catatanSerahTerima || ''; dirty = false;
+  catatanKegiatan = clone(r.catatanKegiatan || []); $('serahTerima').value = r.catatanSerahTerima || ''; kesiapanTugas = clone(r.kesiapanTugas || modelKesiapanBaru()); dirty = false;
   const k = AVS.ketJejak(r);
   $('editBadge').style.display = 'flex';
   $('editBadge').innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
     `<button type="button" class="rw" onclick="bukaRiwayat('${editingReportId}')">Riwayat ▾</button>` +
     `<button type="button" class="batal" onclick="newReport()">Batal</button>`;
-    renderCatatan(); refreshPenyusunDanKunci(); renderRingkasanOtomatis(); switchPage('form');
+    renderCatatan(); refreshPenyusunDanKunci(); renderRingkasanOtomatis(); renderKesiapanTugas(); switchPage('form');
 }
 function deleteReport(id) {
   if (!confirm('Hapus catatan ini? Tindakan tidak dapat dibatalkan.')) return;
@@ -474,8 +537,17 @@ function bukaRiwayat(id) {
 function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
 
 /* ---------- Laci "Lihat" (tampilan web hanya-baca, tidak dapat diubah) ---------- */
-function renderLihatHTML(catatan, catatanSerahTerima) {
-  let html = `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${catatan.length})</div>`;
+function renderLihatHTML(catatan, catatanSerahTerima, kesiapan) {
+  const k = kesiapan || modelKesiapanBaru();
+  const kosong = !rapikan(k.pemimpin) && !rapikan(k.materi) && !k.waktuMulai && !k.waktuSelesai;
+  let html = `<div class="lb-auto"><div class="t"><i></i>Catatan Kesiapan Tugas</div>`;
+  html += kosong ? '<div class="lihat-empty">Belum diisi.</div>' : `<div class="lb-auto-item"><span>Kegiatan</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.kegiatan)}</span></div>` +
+    `<div class="lb-auto-item"><span>Lokasi</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.lokasi) || '-'}</span></div>` +
+    `<div class="lb-auto-item"><span>Pemimpin</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.pemimpin) || '-'}</span></div>` +
+    `<div class="lb-auto-item"><span>Materi</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.materi) || '-'}</span></div>` +
+    `<div class="lb-auto-item"><span>Waktu Pelaksanaan</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.waktuMulai) || '--:--'} – ${esc(k.waktuSelesai) || '--:--'}</span></div>`;
+  html += '</div>';
+  html += `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${catatan.length})</div>`;
   html += catatan.length
     ? catatan.map((c) => `<div class="lb-auto-item"><span>${esc(rapikan(c.uraian)) || '(kosong)'}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(c.jam || '--:--')}</span></div>`).join('')
     : '<div class="lihat-empty">Belum ada catatan waktu.</div>';
@@ -487,12 +559,12 @@ function renderLihatHTML(catatan, catatanSerahTerima) {
 function bukaLihat(id) {
   const r = lsGet(STORAGE_KEY, []).find((x) => x.id === id); if (!r) return;
   $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
-  $('lihatIsi').innerHTML = renderLihatHTML(r.catatanKegiatan || [], r.catatanSerahTerima);
+  $('lihatIsi').innerHTML = renderLihatHTML(r.catatanKegiatan || [], r.catatanSerahTerima, r.kesiapanTugas);
   togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
 }
 function bukaLihatDraft() {
   $('lihatSub').textContent = `Regu ${$('regu').value || '-'} • ${($('shift').value || '').split(' (')[0]} • ${$('tanggal').value ? formatTanggalIndo($('tanggal').value) : '-'} • (draf belum disimpan)`;
-  $('lihatIsi').innerHTML = renderLihatHTML(catatanKegiatan, $('serahTerima').value);
+  $('lihatIsi').innerHTML = renderLihatHTML(catatanKegiatan, $('serahTerima').value, kesiapanTugas);
   togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
 }
 function tutupLihat() { $('drawerLihat').classList.remove('open'); }
@@ -510,6 +582,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderCatatan();
   refreshPenyusunDanKunci();
   renderRingkasanOtomatis();
+  renderKesiapanTugas();
 });
 window.adaPerubahanBelumTersimpan = () => dirty === true;
 AVS.daftarSW();
