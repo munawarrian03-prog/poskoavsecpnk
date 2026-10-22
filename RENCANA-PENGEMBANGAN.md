@@ -37,40 +37,28 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   utk Kejadian & BAST — berkaitan tapi punya kerumitan tersendiri).
 
 ### 2. Kolom keterisian Kejadian & BAST di tabel Pantau Posko (opsional, tampilkan "Nihil")
-- **Status:** Direncanakan — ADA PERTANYAAN TERBUKA, belum bisa dikerjakan
+- **Status:** Direncanakan
 - **Dicatat:** 2026-10-22
-- **Rencana dari pengguna:** di tabel Pantau Posko, di samping kolom Log Book, tambah
-  kolom Kejadian dan BAST — tidak wajib terisi (beda dari Personel/Fasilitas/Logbook).
-  Terisi → ikon mata (pratinjau + Unduh PDF, sama seperti #1). Tidak terisi → tulisan
-  "Nihil" (bukan badge "Belum Terisi" yang berkonotasi "seharusnya ada tapi belum").
-- **Keputusan BAST:** ditentukan dari jam `waktu` BAST itu sendiri — sebelum 20:00 =
-  masuk baris shift Pagi, 20:00 ke atas = baris shift Malam (pola sama seperti
-  pembagian shift Pagi/Malam yang sudah ada di tempat lain di app).
-- **Unduh PDF utk Kejadian/BAST — dicek, LEBIH SEDERHANA dari #1:** `kejadian-pdf.js`/
-  `kejadian-bast-pdf.js` memakai `pdfMake` (bukan `html2pdf` seperti Personel/Fasilitas/
-  Logbook) — `cetakPdf(r,'unduh')`/`bastCetakPdf(r,'unduh')` langsung memanggil
-  `pdf.download()` dari data record saja, TANPA perlu DOM container tersembunyi
-  (`#pdfContent`) seperti html2pdf. Dicek juga: tidak ada lookup silang ke Personel
-  (beda dari Fasilitas/Logbook) — jadi TIDAK kena masalah "Disusun Oleh kosong" seperti
-  di #1. Jadi: ya, memungkinkan dan tidak rumit — tinggal muat
-  `lib/pdfmake.min.js`+`kejadian-pdf.js`+`kejadian-bast-pdf.js` di `pantau-posko.html`
-  dan panggil fungsi yang sudah ada.
-- **MASALAH BARU yang ditemukan, PERLU KEPUTUSAN ANDA sebelum dikerjakan:** fitur ini
-  minta kolom Kejadian/BAST di Pantau Posko (halaman monitor LINTAS PERANGKAT), tapi
-  sinkronisasi Kejadian/BAST sudah **Dibatalkan** (lihat entri di atas). Tanpa
-  sinkronisasi, Admin di Pantau Posko HANYA akan melihat Kejadian/BAST yang ada di
-  browsernya SENDIRI — bukan yang dilaporkan Posko di komputer lain. Kolom ini jadi
-  nyaris tidak berguna lintas perangkat (beda dari kolom Personel/Fasilitas/Logbook
-  yang memang sudah tersinkron). Pilihan:
-  (a) batalkan lagi pembatalan sync Kejadian/BAST — minimal utk **BAST** (aman, tanpa
-  foto) dan Kejadian versi **teks saja tanpa foto** (Opsi A yang dulu dibahas), supaya
-  kolom ini sungguh-sungguh lintas perangkat; atau
-  (b) tetap kerjakan kolom ini TAPI sadar konsekuensinya: hanya mencerminkan data lokal
-  Admin sendiri (berguna kalau kebetulan Admin & Posko kadang berbagi 1 perangkat,
-  tapi tidak untuk pemantauan jarak jauh yang sebenarnya).
-- **Rencana perbaikan (setelah keputusan di atas diambil):** perluas
-  `D.statusPantauPosko()` (`data.js`) menerima daftar kejadian juga, tambah kolom di
-  `pantau-posko.html`.
+- **Keputusan final:** di tabel Pantau Posko, di samping kolom Log Book, tambah kolom
+  Kejadian dan BAST — tidak wajib terisi. Terisi → ikon mata (**pratinjau drawer SAJA,
+  TANPA tombol Unduh PDF** — dibatalkan oleh pengguna, lihat alasan di bawah). Tidak
+  terisi → tulisan "Nihil".
+- **Kenapa Unduh PDF dibatalkan utk Kejadian/BAST di sini (meski secara teknis
+  memungkinkan & sederhana — lihat catatan teknis di bawah):** karena sinkronisasi
+  Kejadian hanya membawa TEKS (lihat entri sinkronisasi di bawah — foto/tanda tangan
+  SENGAJA dibuang sebelum dikirim, demi batas 50.000 karakter/sel Google Sheets), PDF
+  yang dibangun dari data gabungan di Pantau Posko tidak akan identik dengan PDF asli
+  dari akun Posko (hilang bagian foto lampiran & tanda tangan). Pengguna memutuskan
+  lebih baik TIDAK ada tombol Unduh PDF sama sekali di sini daripada ada tombol yang
+  hasilnya berbeda/kurang dari yang diharapkan — drawer pratinjau teks saja sudah cukup.
+- **Keputusan BAST:** baris shift ditentukan dari jam `waktu` BAST itu sendiri — sebelum
+  20:00 = baris shift Pagi, 20:00 ke atas = baris shift Malam.
+- **Rencana perbaikan:** perluas `D.statusPantauPosko()` (`data.js`) menerima daftar
+  kejadian juga (hasil gabungan `AVS_SYNC.gabung()`, sama pola seperti Personel/
+  Fasilitas/Logbook), tambah 2 kolom di `pantau-posko.html`, drawer pratinjau pakai
+  render yang sudah ada di `kejadian.html` (disederhanakan utk web, bukan PDF).
+- **Prasyarat:** entri "Sinkronisasi Kejadian & BAST" di bawah harus dikerjakan dulu
+  (reaktivasi, Opsi A) — tanpa itu kolom ini cuma mencerminkan data lokal Admin sendiri.
 
 ### 3. Hilangkan menu "Laporan Kejadian" dari navigasi akun Admin
 - **Status:** Direncanakan
@@ -234,18 +222,39 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   yang sebelumnya cuma bisa dilihat Admin) sekaligus Cadangkan/Pulihkan; Admin kehilangan
   tombol Cadangkan/Pulihkan di Rekap miliknya (tapi tetap bisa lihat data).
 
-### (Dibatalkan) Sinkronisasi Laporan Kejadian & BAST lintas perangkat
-- **Status:** Dibatalkan
-- **Dicatat:** 2026-10-20
-- **Dibatalkan:** 2026-10-22
-- **Masalah (konteks sebelum dibatalkan):** Laporan Kejadian bisa membawa foto lampiran &
-  tanda tangan sebagai base64 — berisiko melebihi batas 50.000 karakter per sel Google
-  Sheets yang dipakai backend sync saat ini. BAST (tanpa foto) aman memakai pola yang sama
-  seperti Personel/Fasilitas/Logbook, tapi Kejadian tetap jadi ganjalan karena foto.
-- **Keputusan:** dibatalkan atas permintaan pengguna — tidak dilanjutkan baik Opsi A
-  (teks saja) maupun Opsi B (redesain backend ke Google Drive untuk foto). Laporan
-  Kejadian & BAST tetap bersifat lokal-per-perangkat seperti sebelum fitur sinkronisasi
-  dibangun, tidak ikut digabung lintas posko.
+### Sinkronisasi Laporan Kejadian & BAST lintas perangkat (Opsi A — teks saja)
+- **Status:** Direncanakan
+- **Dicatat:** 2026-10-20 (dibatalkan 2026-10-22, DIAKTIFKAN KEMBALI 2026-10-22 demi #2)
+- **Masalah:** Laporan Kejadian bisa membawa foto lampiran & tanda tangan sebagai
+  base64 — berisiko melebihi batas 50.000 karakter per sel Google Sheets yang dipakai
+  backend sync. BAST (tanpa foto) aman memakai pola yang sama seperti Personel/
+  Fasilitas/Logbook.
+- **Riwayat keputusan:** sempat dibatalkan total, lalu diaktifkan kembali karena
+  dibutuhkan sebagai prasyarat kolom keterisian Kejadian/BAST di Pantau Posko (lihat
+  entri #2 di atas). Lingkupnya dipersempit: **Opsi A saja** (teks, tanpa foto) — Opsi
+  B (Google Drive utk foto) TETAP tidak dikerjakan, sudah dikonfirmasi tidak diperlukan
+  karena Unduh PDF utk Kejadian/BAST di Pantau Posko juga dibatalkan (lihat #2) — jadi
+  tidak ada kebutuhan PDF identik yang butuh foto di sisi Admin.
+- **Keputusan akhir:**
+  - **BAST:** disinkronkan APA ADANYA (tidak ada foto di model BAST, aman).
+  - **Kejadian:** disinkronkan TEKS SAJA — field `fotos` (array foto lampiran) dan
+    gambar tanda tangan (`ttd`) **dibuang dari record SEBELUM dikirim** ke GAS, sisanya
+    (kronologi, lokasi, dasar hukum, nomor, tindak lanjut, dll) dikirim penuh.
+- **Yang perlu dikerjakan di Google Sheet & Code.gs (di luar repo, dikerjakan
+  pengguna + saya siapkan teks Code.gs-nya):**
+  1. Tambah 2 tab baru di spreadsheet yang SUDAH ADA (bukan spreadsheet baru):
+     `Kejadian` dan `BAST`, header sama seperti 3 tab lain
+     (`id | tanggal | shift | regu | dataJson | dibuatPada | diperbaruiPada`; kolom
+     `shift` boleh kosong utk BAST).
+  2. `Code.gs`: tambah `kejadian`/`bast` ke pemetaan `SHEETS` yang sudah ada — logika
+     `doGet`/`doPost`/upsert tidak perlu ditulis ulang (sudah generik).
+  3. **Redeploy** lewat *Manage deployments → Edit → New version* — URL & TOKEN tidak
+     berubah.
+- **Rencana perbaikan di kode (repo):** di `kejadian.html`/`kejadian-bast.js`, setelah
+  simpan lokal (`simpan()`/BAST-nya) sukses, panggil `AVS_SYNC.kirim('kejadian'|'bast',
+  record)` — utk Kejadian, kirim SALINAN record dgn `fotos`/`ttd` dihapus dulu (bukan
+  record aslinya, supaya data lokal Kejadian di perangkat itu sendiri tetap lengkap
+  dgn foto). Hapus juga disinkronkan (`AVS_SYNC.hapus()`) sama seperti 3 jenis lain.
 
 ### Tombol "Muat Ulang" manual di Rekap & Beranda
 - **Status:** Direncanakan
