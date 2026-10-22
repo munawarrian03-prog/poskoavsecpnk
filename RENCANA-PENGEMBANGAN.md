@@ -43,26 +43,34 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   kolom Kejadian dan BAST — tidak wajib terisi (beda dari Personel/Fasilitas/Logbook).
   Terisi → ikon mata (pratinjau + Unduh PDF, sama seperti #1). Tidak terisi → tulisan
   "Nihil" (bukan badge "Belum Terisi" yang berkonotasi "seharusnya ada tapi belum").
-- **Kendala yang ditemukan saat audit:** tabel Pantau Posko disusun PER SHIFT (Pagi/
-  Malam per tanggal) — cocok untuk Personel/Fasilitas/Logbook/**Kejadian** karena
-  ketiganya (+Kejadian) punya field `shift`. **BAST tidak punya field `shift` sama
-  sekali** (`kejadian-bast.js`) — modelnya cuma `tanggal` + `waktu` (jam kejadian
-  serah-terima), bisa terjadi nol, satu, atau beberapa kali sehari, tidak terikat
-  batas Pagi/Malam. Jadi "keterisian BAST per baris shift" tidak punya definisi yang
-  jelas dari data yang ada sekarang.
-- **Pertanyaan untuk pengguna (perlu dijawab sebelum dikerjakan):**
-  1. Untuk kolom **BAST**, bagaimana menentukan "terisi" per baris shift? Pilihan:
-     (a) cocokkan hanya berdasar `tanggal` (BAST dgn tanggal itu, shift mana pun, muncul
-     di KEDUA baris Pagi & Malam hari itu), atau (b) tentukan "Pagi"/"Malam" dari jam
-     `waktu` BAST itu sendiri (mis. sebelum 20:00 = Pagi), atau (c) bentuk tabel/kolom
-     lain di luar struktur per-shift yang ada sekarang khusus utk BAST.
-  2. Kalau SATU shift punya LEBIH DARI SATU laporan Kejadian/BAST (mis. 2 BAST di
-     shift Pagi yang sama) — ikon mata membuka daftar/dropdown, atau langsung yang
-     pertama/terbaru?
-- **Rencana perbaikan (setelah pertanyaan di atas terjawab):** perluas
+- **Keputusan BAST:** ditentukan dari jam `waktu` BAST itu sendiri — sebelum 20:00 =
+  masuk baris shift Pagi, 20:00 ke atas = baris shift Malam (pola sama seperti
+  pembagian shift Pagi/Malam yang sudah ada di tempat lain di app).
+- **Unduh PDF utk Kejadian/BAST — dicek, LEBIH SEDERHANA dari #1:** `kejadian-pdf.js`/
+  `kejadian-bast-pdf.js` memakai `pdfMake` (bukan `html2pdf` seperti Personel/Fasilitas/
+  Logbook) — `cetakPdf(r,'unduh')`/`bastCetakPdf(r,'unduh')` langsung memanggil
+  `pdf.download()` dari data record saja, TANPA perlu DOM container tersembunyi
+  (`#pdfContent`) seperti html2pdf. Dicek juga: tidak ada lookup silang ke Personel
+  (beda dari Fasilitas/Logbook) — jadi TIDAK kena masalah "Disusun Oleh kosong" seperti
+  di #1. Jadi: ya, memungkinkan dan tidak rumit — tinggal muat
+  `lib/pdfmake.min.js`+`kejadian-pdf.js`+`kejadian-bast-pdf.js` di `pantau-posko.html`
+  dan panggil fungsi yang sudah ada.
+- **MASALAH BARU yang ditemukan, PERLU KEPUTUSAN ANDA sebelum dikerjakan:** fitur ini
+  minta kolom Kejadian/BAST di Pantau Posko (halaman monitor LINTAS PERANGKAT), tapi
+  sinkronisasi Kejadian/BAST sudah **Dibatalkan** (lihat entri di atas). Tanpa
+  sinkronisasi, Admin di Pantau Posko HANYA akan melihat Kejadian/BAST yang ada di
+  browsernya SENDIRI — bukan yang dilaporkan Posko di komputer lain. Kolom ini jadi
+  nyaris tidak berguna lintas perangkat (beda dari kolom Personel/Fasilitas/Logbook
+  yang memang sudah tersinkron). Pilihan:
+  (a) batalkan lagi pembatalan sync Kejadian/BAST — minimal utk **BAST** (aman, tanpa
+  foto) dan Kejadian versi **teks saja tanpa foto** (Opsi A yang dulu dibahas), supaya
+  kolom ini sungguh-sungguh lintas perangkat; atau
+  (b) tetap kerjakan kolom ini TAPI sadar konsekuensinya: hanya mencerminkan data lokal
+  Admin sendiri (berguna kalau kebetulan Admin & Posko kadang berbagi 1 perangkat,
+  tapi tidak untuk pemantauan jarak jauh yang sebenarnya).
+- **Rencana perbaikan (setelah keputusan di atas diambil):** perluas
   `D.statusPantauPosko()` (`data.js`) menerima daftar kejadian juga, tambah kolom di
-  `pantau-posko.html`; "Unduh PDF" memakai `kejadian-pdf.js`/`kejadian-bast-pdf.js`
-  yang sudah ada (pola sama seperti #1).
+  `pantau-posko.html`.
 
 ### 3. Hilangkan menu "Laporan Kejadian" dari navigasi akun Admin
 - **Status:** Direncanakan
@@ -77,35 +85,42 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   dari halaman itu (perlu gerbang baru, beda dari sekadar menyembunyikan menu).
 
 ### 4. Keterangan pada item "Alat Bermasalah" di Rekap
-- **Status:** Direncanakan — perlu klarifikasi kecil
+- **Status:** Direncanakan
 - **Dicatat:** 2026-10-22
 - **Rencana:** di kartu "Fasilitas Sering Bermasalah"/alat bermasalah pada Rekap, tambah
-  kolom/baris "Keterangan" di tabelnya.
-- **Perlu diperjelas:** keterangan yang dimaksud itu teks APA? Record Fasilitas memang
-  sudah punya field `keterangan` per-item (dipakai `ringkasBermasalahFasilitas` di
-  `beranda.js`: `it.keterangan || (Rusak/Tidak Digunakan)`) — kemungkinan besar ini
-  yang dimaksud (menampilkan isi keterangan asli dari laporan), tapi `D.statFasilitas()`
-  di `data.js` SAAT INI hanya mengagregasi `jumlah`/`jenis`, tidak menyimpan teks
-  keterangan per kemunculan (kalau sama 1 alat rusak 3x dgn keterangan beda-beda, perlu
-  diputuskan: tampilkan keterangan yang mana — yang terbaru? digabung semua?).
+  kolom "Keterangan" di tabelnya.
+- **Keputusan:** kalau alat yang sama muncul bermasalah lebih dari satu kali (jumlah >1)
+  dengan keterangan berbeda-beda per kemunculan, SEMUA keterangan itu **digabung** di
+  baris yang sama (nomor urut yang sama), masing-masing diberi **keterangan waktu**
+  (tanggal laporannya) supaya tetap bisa dibedakan mana keterangan dari laporan kapan.
+- **Rencana perbaikan:** kartu "Alat Bermasalah" di Rekap dipakai lewat
+  `D.statFasilitasRentang()` (`data.js`) + `tabelFasilitas()` (`rekap.js`) — BUKAN
+  fungsi `statFasilitas()`/`tabelFasilitasRingkas()` yang dipakai kartu serupa di
+  Beranda (beda fungsi, scope perbaikan ini hanya di Rekap sesuai permintaan).
+  `statFasilitasRentang()` saat ini hanya mengumpulkan `jumlah`/`jenis` per alat —
+  perlu ditambah array `catatan: [{ tanggal, keterangan }]` yang dikumpulkan dari tiap
+  kemunculan (field `keterangan` yang sudah ada di item Fasilitas), lalu `tabelFasilitas()`
+  dirender ulang untuk menampilkan kolom "Keterangan" itu (gabungan tanggal+keterangan
+  per baris, per alat).
 
-### 5. Kartu "Shift Belum Lengkap" di Beranda jadi "Kepatuhan Grup"
-- **Status:** Direncanakan — ADA PERTANYAAN TERBUKA, belum bisa dikerjakan
+### 5. Kartu "Shift Belum Lengkap" di Beranda jadi "Kepatuhan Grup" (breakdown per Regu)
+- **Status:** Direncanakan
 - **Dicatat:** 2026-10-22
-- **Rencana dari pengguna:** judul & isi kartu "Shift Belum Lengkap" di Beranda diubah
-  jadi "Kepatuhan Grup"; tapi saat ikon mata diklik, isi modalnya TETAP menampilkan
-  "shift belum lengkap" (tabel yang sudah ada, `tabelKepatuhanPenuh`). Pastikan
-  tampilan Beranda akun Posko & Admin tetap identik (sejauh pengecekan saya, SAAT INI
+- **Keputusan:** judul & ISI kartu "Shift Belum Lengkap" di Beranda diganti jadi
+  "Kepatuhan Grup" — isinya breakdown **per Regu (A/B/C/D)**, bukan lagi 3 baris per
+  jenis laporan (Personel/Fasilitas/Log Book) seperti sekarang. Saat ikon mata diklik,
+  modal yang terbuka TETAP menampilkan "Shift Belum Lengkap" apa adanya (tabel yang
+  sudah ada, `tabelKepatuhanPenuh`) — jadi hanya tampilan kartu ringkasnya yang berubah
+  sudut pandang, detail di modal tidak berubah.
+- **Syarat:** tampilan Beranda akun Posko & Admin harus tetap identik (dicek: SAAT INI
   memang sudah identik — `beranda.js` tidak punya percabangan berdasar peran sama
-  sekali; ini jadi syarat yang harus dijaga, bukan bug yang sudah ada).
-- **Pertanyaan untuk pengguna:** "Kepatuhan Grup" itu isinya seperti apa? Kartu yang
-  ada sekarang (`renderKepatuhanIndikator`) menunjukkan 3 baris progres PER JENIS
-  laporan (Personel/Fasilitas/Log Book) — bukan per Regu/Grup. Apakah maksudnya:
-  (a) isi kartu diganti jadi breakdown PER REGU (A/B/C/D — regu mana yang paling
-  rajin/lalai melapor), dengan 3 baris jenis yang sekarang dipindah/dihapus, atau
-  (b) sekadar ganti judul & kata-kata saja, isinya (3 baris per jenis) tetap sama?
-  Kalau (a), perlu data tambahan: `kepatuhanRentang()` di `data.js` saat ini
-  menghitung per JENIS, belum per REGU — perlu fungsi baru.
+  sekali; kartu baru ini juga tidak boleh beda antar peran).
+- **Rencana perbaikan:** `kepatuhanRentang()` (`data.js`) saat ini menghitung
+  kepatuhan per JENIS laporan (dipakai `renderKepatuhanIndikator`) — perlu fungsi
+  baru (atau perluasan) yang mengelompokkan hasil per REGU: dari shift-shift yang
+  jatuh tempo pada rentang terpilih, hitung per regu berapa yang lengkap vs belum
+  (gabungan 3 jenis laporan), lalu kartu baru menampilkan 4 baris progres (Regu
+  A/B/C/D) menggantikan 3 baris jenis yang ada sekarang.
 
 ### Bug: tanggal mundur/maju satu hari saat impor Jadwal Dinas dari Excel (sheet tipe GRUP)
 - **Status:** Selesai
