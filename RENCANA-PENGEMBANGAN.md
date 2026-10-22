@@ -427,3 +427,40 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
     sifatnya mobile/patroli, tidak punya checklist peralatan tetap tersendiri.
 - **Tidak diubah:** `fasilitas.html` dan `fasilitas-pdf.js` (sudah generik terhadap
   isi `POS_FASILITAS_BAWAAN`, sama seperti Laporan Personel).
+
+### Perkecil donat "Kepatuhan Grup" (Rekap & Beranda) + gabung baris "Alat Bermasalah" per rentang tanggal
+- **Status:** Selesai
+- **Diverifikasi:** Playwright —
+  (1) ukuran SVG donat Kepatuhan Grup kini maksimal 78x78px di Rekap & Beranda (sebelumnya
+  auto-membesar mengikuti kartu sebelahnya, bisa >150px kalau kartu "Daftar Shift Belum
+  Lengkap"-nya tinggi/kosong);
+  (2) tabel "Alat Bermasalah" di Rekap — data uji 6 laporan berurutan (1-4 Okt nilai sama,
+  5-6 Okt nilai lain, 1 Nov nilai sama persis dgn 5-6 Okt tapi beda bulan) menghasilkan TEPAT
+  3 baris catatan: "1-4 Okt 26", "5-6 Okt 26", dan "1 Nov 26" terpisah sendiri (tidak ikut
+  digabung ke 5-6 Okt meski nilainya identik — krn beda bulan, sesuai aturan tidak pernah
+  menggabung lintas bulan);
+  (3) regresi — tabel kosong (belum ada data) tetap tampil pesan "Belum ada masalah..." tanpa
+  error; kemunculan tunggal (cuma 1 laporan) tetap tampil tanggal tunggal (bukan format
+  rentang); item Bentuk B (checklist jumlah/rusak, tanpa konsep Status) tetap tampil normal.
+- **Dicatat:** 2026-10-22
+- **Konteks:** 2 permintaan pengguna sekaligus (sudah dikonfirmasi lewat mockup sebelum
+  dikerjakan):
+  1. Donat "Kepatuhan Grup" terlalu besar karena CSS-nya auto-fit penuh ke tinggi kartu
+     (`max-width:100%;max-height:100%`) — diubah jadi dibatasi tetap (`max-width:78px;
+     max-height:78px`), masih `width:auto;height:auto` di bawah batas itu jadi tetap menyusut
+     kalau ruang kartu sungguhan lebih kecil (layar sempit). Perubahan identik dilakukan di
+     `rekap.js` (`cincinKepatuhan`) dan `beranda.js` (`cincinKepatuhan`, duplikat fungsi yang
+     sama — lihat komentar "porting PERSIS dari rekap.js" di beranda.js).
+  2. Tabel "Alat Bermasalah" di Rekap sebelumnya membuat satu baris per LAPORAN (jadi kalau
+     satu alat rusak dgn keterangan sama dilaporkan 10 hari berturut-turut, tampil 10 baris
+     identik). Sekarang kemunculan BERURUTAN (diurutkan tanggal+shift naik) yang Kondisi/
+     Status/Keterangan-nya PERSIS SAMA digabung jadi satu baris rentang tanggal (mis.
+     "1-4 Okt 26"); begitu salah satu dari ketiganya berubah pada kemunculan berikutnya,
+     mulai baris baru. Penggabungan TIDAK PERNAH melewati batas bulan (supaya format label
+     rentang tanggal tetap benar — pola yang sama dgn `ringkasTanggalList` yang sudah ada).
+     Logika gabung (`gabungkanCatatan`) ditaruh di `data.js` (`statFasilitasRentang`, sumber
+     data), bukan di `rekap.js` (lapisan tampilan) — `tabelFasilitas` di rekap.js tinggal
+     pakai field `mulai`/`akhir` hasil gabungan utk membentuk label (reuse `labelTunggal`/
+     `labelRentang` yang sudah ada).
+- **Tidak diubah:** `rekap-pdf.js` (PDF Rekap menangkap DOM yang sudah dirender, jadi otomatis
+  ikut tabel yang sudah digabung tanpa perlu disentuh).

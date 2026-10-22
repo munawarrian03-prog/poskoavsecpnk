@@ -163,17 +163,18 @@
   // -> cincinnya 100%. Grup yang di rentang ini tidak kebagian shift sama sekali (data Jadwal
   // Dinas) ditandai "-" (abu-abu), bukan 0%, supaya tidak disalahartikan sbg "sama sekali tidak
   // patuh" padahal datanya memang belum ada.
-  // Ukuran cincin "auto-fit" mengikuti ruang yang tersedia (height:100%;width:auto, viewBox
-  // bujur sangkar jadi lebar ikut proporsional) -- BUKAN ukuran tetap lagi -- supaya donat
-  // membesar memenuhi luas kartu, tapi kartunya sendiri (c4 rauto) sudah dibatasi CSS Grid
-  // stretch supaya tingginya tidak pernah melebihi kartu "Daftar Shift Belum Lengkap" di
-  // sampingnya (rauto jg, baris grid yg sama) -- jadi otomatis tidak akan melebihi itu.
+  // Ukuran cincin dibatasi max-width/max-height 78px (bukan 100% lagi) -- sebelumnya
+  // donat membesar memenuhi seluruh kartu (bisa >150px kalau kartu "Daftar Shift Belum
+  // Lengkap" di sampingnya tinggi, mis. kosong/sedikit baris), jadi tidak proporsional
+  // dibanding kartu-kartu dcard lain. 78px dipilih supaya tetap jelas terbaca tapi tidak
+  // mendominasi. Tetap width:auto;height:auto di bawah batas itu, jadi masih menyusut kalau
+  // ruang kartu sungguhan lebih kecil dari 78px (mis. layar sempit).
   function cincinKepatuhan(grup, pct, warna, adaData) {
     const R = 30, lebar = 8, cx = 36, cy = 36, keliling = 2 * Math.PI * R;
     const dash = adaData ? Math.max(0, Math.min(1, pct / 100)) * keliling : 0;
     return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:0;height:100%;width:100%">
 <div style="flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center">
-<svg viewBox="0 0 72 72" style="width:auto;height:auto;max-width:100%;max-height:100%;display:block">
+<svg viewBox="0 0 72 72" style="width:auto;height:auto;max-width:78px;max-height:78px;display:block">
 <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#E9EDF4" stroke-width="${lebar}"/>
 <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${warna}" stroke-width="${lebar}" stroke-linecap="round" stroke-dasharray="${dash} ${keliling}" transform="rotate(-90 ${cx} ${cy})"/>
 <text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="15" font-weight="800" fill="#10243D">${adaData ? pct + '%' : '-'}</text>
@@ -262,11 +263,15 @@ ${catatanTak}
     const warnaK = (k) => k === 'Rusak' ? ['#FBE9E7', '#A82F24'] : ['#EEF5E7', '#3F6B2E'];
     const warnaS = (s) => s === 'Tidak Digunakan' ? ['#FCF1DF', '#9A5F12'] : ['#EEF1F6', '#475569'];
     const trs = rows.map((x, i) => {
-      const catatan = (x.catatan && x.catatan.length) ? x.catatan : [{ tanggal: (x.tanggal || [])[0] || '', kondisi: '-', status: '-', keterangan: '' }];
+      const catatan = (x.catatan && x.catatan.length) ? x.catatan : [{ mulai: '', akhir: '', kondisi: '-', status: '-', keterangan: '' }];
       return catatan.map((c, j) => {
         const [kBg, kFg] = warnaK(c.kondisi), [sBg, sFg] = warnaS(c.status);
         const depan = j === 0 ? `<td rowspan="${catatan.length}">${i + 1}</td><td rowspan="${catatan.length}" class="nm">${E(x.item)}</td><td rowspan="${catatan.length}">${E(x.pos)}</td><td rowspan="${catatan.length}"><b>${x.jumlah}</b></td>` : '';
-        return `<tr>${depan}<td><span class="tag" style="background:${kBg};color:${kFg}">${E(c.kondisi)}</span></td><td><span class="tag" style="background:${sBg};color:${sFg}">${E(c.status)}</span></td><td class="col-tgl">${E(c.keterangan) || '<span style="color:#8A94A6">-</span>'} <span class="tgi"><i style="background:#8A94A6"></i>${E(c.tanggal ? labelTunggal(c.tanggal) : '-')}</span></td></tr>`;
+        // Satu baris catatan bisa merentang beberapa laporan BERURUTAN yang Kondisi/Status/
+        // Keterangan-nya sama persis (digabung di data.js: gabungkanCatatan) -- "1-4 Okt 26"
+        // kalau rentang, atau tanggal tunggal kalau cuma satu kemunculan.
+        const labelTgl = !c.mulai ? '-' : c.mulai === c.akhir ? labelTunggal(c.mulai) : labelRentang(c.mulai, c.akhir);
+        return `<tr>${depan}<td><span class="tag" style="background:${kBg};color:${kFg}">${E(c.kondisi)}</span></td><td><span class="tag" style="background:${sBg};color:${sFg}">${E(c.status)}</span></td><td class="col-tgl">${E(c.keterangan) || '<span style="color:#8A94A6">-</span>'} <span class="tgi"><i style="background:#8A94A6"></i>${labelTgl}</span></td></tr>`;
       }).join('');
     }).join('');
     return `<table class="rtbl"><thead><tr><th>#</th><th>Item</th><th>Pos</th><th>Kali</th><th>Kondisi</th><th>Status</th><th>Keterangan</th></tr></thead><tbody>${trs}</tbody></table>`;

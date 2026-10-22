@@ -332,11 +332,14 @@
         if (!e) { e = { item: rapikan(it.name), pos: rapikan(namaPosTerkini(p)), jumlah: 0, jenis: {}, tanggal: [], catatan: [] }; bermasalah.set(key, e); }
         e.jumlah += jenisList.length; e.tanggal.push(tgl);
         jenisList.forEach((jenis) => { e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; if (jenis === 'Tidak Digunakan') tidakDigunakan++; });
-        // Satu KEMUNCULAN (satu laporan) = satu baris catatan, bukan dipecah per jenisList --
-        // Kondisi & Status ditampilkan berdampingan utk kemunculan yang sama (lihat tabelFasilitas
-        // di rekap.js). Bentuk B (hitungan unit) tidak punya konsep Status per-unit -> '-'.
+        // Satu KEMUNCULAN (satu laporan) = satu baris catatan mentah (sebelum digabung oleh
+        // gabungkanCatatan di bawah) -- Kondisi & Status ditampilkan berdampingan utk kemunculan
+        // yang sama (lihat tabelFasilitas di rekap.js). Bentuk B (hitungan unit) tidak punya
+        // konsep Status per-unit -> '-'. `urutanShift` dipakai cuma utk mengurutkan kemunculan
+        // Pagi sebelum Malam pada tanggal yang sama saat digabung, tidak ikut ditampilkan.
         e.catatan.push({
           tanggal: tgl,
+          urutanShift: shiftKey(r.shift) === 'P' ? 0 : 1,
           kondisi: it.bentuk === 'A' ? (it.kondisi || '-') : 'Rusak',
           status: it.bentuk === 'A' ? (it.status || '-') : '-',
           keterangan: rapikan(it.keterangan) || ''
@@ -344,7 +347,25 @@
       }));
     });
     const dominan = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0][0];
-    const daftar = Array.from(bermasalah.values()).map((e) => ({ item: e.item, pos: e.pos, jumlah: e.jumlah, jenis: dominan(e.jenis), tanggal: e.tanggal.sort().reverse(), catatan: e.catatan.sort((a, b) => b.tanggal.localeCompare(a.tanggal)) })).sort((a, b) => b.jumlah - a.jumlah || a.item.localeCompare(b.item, 'id'));
+    // Gabungkan catatan BERURUTAN (hasil urut tanggal+shift naik) yang Kondisi/Status/
+    // Keterangan-nya PERSIS SAMA jadi satu baris rentang tanggal (mis. "1-4 Okt 26"), bukan
+    // satu baris per laporan -- begitu salah satu dari ketiganya berubah pada kemunculan
+    // berikutnya, mulai baris baru. Tidak pernah menggabung lintas bulan (biar label rentang
+    // tanggalnya tetap benar -- lihat labelRentang di rekap.js yang mengasumsikan satu bulan).
+    // Hasil akhir diurutkan terbaru dulu, konsisten dgn urutan sebelum ada penggabungan ini.
+    function gabungkanCatatan(list) {
+      const urut = list.slice().sort((a, b) => (a.tanggal + a.urutanShift).localeCompare(b.tanggal + b.urutanShift));
+      const grup = [];
+      urut.forEach((c) => {
+        const last = grup[grup.length - 1];
+        const bulanSama = last && last.akhir.slice(0, 7) === c.tanggal.slice(0, 7);
+        const nilaiSama = last && last.kondisi === c.kondisi && last.status === c.status && last.keterangan === c.keterangan;
+        if (last && bulanSama && nilaiSama) { last.akhir = c.tanggal; last.kali++; }
+        else grup.push({ mulai: c.tanggal, akhir: c.tanggal, kondisi: c.kondisi, status: c.status, keterangan: c.keterangan, kali: 1 });
+      });
+      return grup.reverse();
+    }
+    const daftar = Array.from(bermasalah.values()).map((e) => ({ item: e.item, pos: e.pos, jumlah: e.jumlah, jenis: dominan(e.jenis), tanggal: e.tanggal.sort().reverse(), catatan: gabungkanCatatan(e.catatan) })).sort((a, b) => b.jumlah - a.jumlah || a.item.localeCompare(b.item, 'id'));
     const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, tanggalMasalah);
     return { totalMasalah, tidakDigunakan, dokTotal, dokLengkap, dokPct: dokTotal > 0 ? Math.round(dokLengkap / dokTotal * 100) : null, laporanTersimpan, shiftAda: shiftAda.size, daftar, tren, granularitas: bk.granularitas };
   }

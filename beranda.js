@@ -174,7 +174,7 @@
     const dash = adaData ? Math.max(0, Math.min(1, pct / 100)) * keliling : 0;
     return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:0;height:100%;width:100%">
 <div style="flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center">
-<svg viewBox="0 0 72 72" style="width:auto;height:auto;max-width:100%;max-height:100%;display:block">
+<svg viewBox="0 0 72 72" style="width:auto;height:auto;max-width:78px;max-height:78px;display:block">
 <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#E9EDF4" stroke-width="${lebar}"/>
 <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${warna}" stroke-width="${lebar}" stroke-linecap="round" stroke-dasharray="${dash} ${keliling}" transform="rotate(-90 ${cx} ${cy})"/>
 <text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="15" font-weight="800" fill="#10243D">${adaData ? pct + '%' : '-'}</text>
