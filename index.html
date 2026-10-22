@@ -74,6 +74,24 @@
 </div>
 </div>
 
+<!-- MODAL: DAFTAR KEJADIAN (SEMUA, bulan terpilih) -->
+<div class="modal-overlay" id="kejadianPenuhOverlay">
+<div class="modal-container" style="max-width:520px">
+<div class="modal-header"><span class="modal-title" id="kejadianPenuhTitle">DAFTAR KEJADIAN</span><button type="button" class="modal-close" onclick="Beranda.tutupKejadianPenuh()">✕</button></div>
+<div class="modal-body" id="kejadianPenuhBody"></div>
+<div class="modal-footer"><button type="button" class="btn-cancel" onclick="Beranda.tutupKejadianPenuh()">Tutup</button></div>
+</div>
+</div>
+
+<!-- MODAL: DAFTAR BAST (SEMUA, bulan terpilih) -->
+<div class="modal-overlay" id="bastPenuhOverlay">
+<div class="modal-container" style="max-width:520px">
+<div class="modal-header"><span class="modal-title" id="bastPenuhTitle">DAFTAR BAST</span><button type="button" class="modal-close" onclick="Beranda.tutupBastPenuh()">✕</button></div>
+<div class="modal-body" id="bastPenuhBody"></div>
+<div class="modal-footer"><button type="button" class="btn-cancel" onclick="Beranda.tutupBastPenuh()">Tutup</button></div>
+</div>
+</div>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="akses.js"></script>

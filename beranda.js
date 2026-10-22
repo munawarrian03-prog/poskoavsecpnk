@@ -16,6 +16,7 @@
   let personel = [], fasilitas = [], logbook = [], kejadian = [];
   let bulanTerpilih = { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() };
   let kepatuhanCache = { total: 0, personelBelum: 0, fasilitasBelum: 0, logbookBelum: 0, daftar: [] };
+  let kejadianCache = { lk: { daftar: [] }, bast: { daftar: [] } }; // dipakai lagi oleh bukaKejadianPenuh/bukaBastPenuh
   const SVG_MATA = '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
 
   function toast(msg, tipe, ms) { const t = $('toast'); t.textContent = msg; t.className = 'show ' + (tipe || 'ok'); clearTimeout(toast.t); toast.t = setTimeout(() => { t.className = ''; }, ms || 4200); }
@@ -135,13 +136,13 @@
     return `<table class="tp"><thead><tr><th>#</th><th>Item</th><th>Pos</th><th>Kali</th></tr></thead><tbody>${top.map((x, i) => `<tr><td class="rk">${i + 1}</td><td class="nm">${E(x.item)}</td><td>${E(x.pos)}</td><td><b>${x.jumlah}</b></td></tr>`).join('')}</tbody></table>`;
   }
 
-  function daftarKejadianLK(daftar) {
+  function daftarKejadianLK(daftar, limit) {
     if (!daftar.length) return '<div class="empty">Belum ada laporan kejadian<br>pada bulan ini.</div>';
-    return `<div class="evlist">${daftar.slice(0, 5).map((x) => { const t = x.tanggal.split('-'); return `<a class="ev evmain" href="kejadian.html#ubah=${encodeURIComponent(x.id)}" title="Buka laporan"><div class="dt"><b>${t[2]}</b><span>${BULAN_PENDEK[+t[1] - 1].toUpperCase()}</span></div><div class="tx"><b>${E(x.judul)}</b><span>${E(x.lokasiKejadian || '-')}</span></div></a>`; }).join('')}</div>`;
+    return `<div class="evlist">${daftar.slice(0, limit || 5).map((x) => { const t = x.tanggal.split('-'); return `<a class="ev evmain" href="kejadian.html#ubah=${encodeURIComponent(x.id)}" title="Buka laporan"><div class="dt"><b>${t[2]}</b><span>${BULAN_PENDEK[+t[1] - 1].toUpperCase()}</span></div><div class="tx"><b>${E(x.judul)}</b><span>${E(x.lokasiKejadian || '-')}</span></div></a>`; }).join('')}</div>`;
   }
-  function daftarBAST(daftar) {
+  function daftarBAST(daftar, limit) {
     if (!daftar.length) return '<div class="empty">Belum ada BAST<br>pada bulan ini.</div>';
-    return `<div class="evlist">${daftar.slice(0, 5).map((x) => { const t = x.tanggal.split('-'); return `<a class="ev bast evmain" href="kejadian.html#ubah=${encodeURIComponent(x.id)}" title="Buka laporan"><div class="dt"><b>${t[2]}</b><span>${BULAN_PENDEK[+t[1] - 1].toUpperCase()}</span></div><div class="tx"><b>${E(x.pihakSatu || '-')} → ${E(x.pihakDua || '-')}</b><span>${E(x.nomorBast || '-')}</span></div></a>`; }).join('')}</div>`;
+    return `<div class="evlist">${daftar.slice(0, limit || 5).map((x) => { const t = x.tanggal.split('-'); return `<a class="ev bast evmain" href="kejadian.html#ubah=${encodeURIComponent(x.id)}" title="Buka laporan"><div class="dt"><b>${t[2]}</b><span>${BULAN_PENDEK[+t[1] - 1].toUpperCase()}</span></div><div class="tx"><b>${E(x.pihakSatu || '-')} → ${E(x.pihakDua || '-')}</b><span>${E(x.nomorBast || '-')}</span></div></a>`; }).join('')}</div>`;
   }
 
   // Kartu "Kepatuhan Grup" -- porting PERSIS dari widget sejenis di rekap.js (cincinKepatuhan/
@@ -215,7 +216,7 @@ ${catatanTak}
     const { y, m } = bulanTerpilih, { start, end } = monthISORange(y, m);
     const p = D.statPersonel(personel, y, m, 'all', HARI_INI, 'orang-hari');   // Tahap 0.1: selalu per-hari
     const f = D.statFasilitas(fasilitas, y, m);
-    const kj = D.statKejadianRentang(kejadian, start, end);
+    const kj = kejadianCache = D.statKejadianRentang(kejadian, start, end);
     kepatuhanCache = D.kepatuhanRentang(personel, fasilitas, logbook, start, end, HARI_INI);
     kepatuhanCache.daftar.forEach((x) => { x.regu = reguBertugasJadwal(x.tanggal, x.shift); });
     kepatuhanCache.semuaShift.forEach((x) => { x.regu = reguBertugasJadwal(x.tanggal, x.shift); });
@@ -226,8 +227,8 @@ ${catatanTak}
 <div class="dcard c4 rauto"><div class="h"><div><h3>Fasilitas Sering Bermasalah</h3><div class="sub">${f.laporan ? `dari ${f.laporan} laporan` : 'Belum ada laporan'}</div></div></div>${tabelFasilitasRingkas(f.top)}</div>`;
 
     $('rowBulanan2').innerHTML = `
-<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar Kejadian Terbaru</h3><div class="sub">5 terbaru • ${BULAN[m]} ${y}</div></div><a class="mata-btn" href="kejadian.html#tersimpan" title="Lihat semua di Laporan Tersimpan">${SVG_MATA}</a></div>${daftarKejadianLK(kj.lk.daftar)}</div>
-<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar BAST Terbaru</h3><div class="sub">5 terbaru • ${BULAN[m]} ${y}</div></div><a class="mata-btn" href="kejadian.html#tersimpan" title="Lihat semua di Laporan Tersimpan">${SVG_MATA}</a></div>${daftarBAST(kj.bast.daftar)}</div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar Kejadian Terbaru</h3><div class="sub">5 terbaru • ${BULAN[m]} ${y}</div></div><button type="button" class="mata-btn" onclick="Beranda.bukaKejadianPenuh()" title="Lihat semua kejadian bulan ini">${SVG_MATA}</button></div>${daftarKejadianLK(kj.lk.daftar)}</div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar BAST Terbaru</h3><div class="sub">5 terbaru • ${BULAN[m]} ${y}</div></div><button type="button" class="mata-btn" onclick="Beranda.bukaBastPenuh()" title="Lihat semua BAST bulan ini">${SVG_MATA}</button></div>${daftarBAST(kj.bast.daftar)}</div>
 <div class="dcard c4 rauto"><div class="h"><div><h3>Kepatuhan Grup</h3><div class="sub">${BULAN[m]} ${y} • per grup dihitung sendiri-sendiri</div></div><button type="button" class="mata-btn" onclick="Beranda.bukaKepatuhan()" title="Lihat shift belum lengkap">${SVG_MATA}</button></div>${renderKepatuhanGrup(kepatuhanCache)}</div>`;
 
     renderCatatan();
@@ -245,6 +246,23 @@ ${catatanTak}
     $('kepatuhanOverlay').style.display = 'flex';
   }
   function tutupKepatuhan() { $('kepatuhanOverlay').style.display = 'none'; }
+
+  // Modal "Daftar Kejadian"/"Daftar BAST" (SEMUA laporan bulan terpilih, bukan cuma 5 teratas
+  // spt pratinjau di kartu) -- dipicu tombol mata, pola identik dgn bukaKepatuhan() di atas.
+  // .evlist-modal (beranda.css) membungkus daftar dgn kartu putih krn .ev/.evlist aslinya
+  // didesain utk latar kartu putih (dcard), sedangkan modal-body berlatar gelap (--console-bg).
+  function bukaKejadianPenuh() {
+    $('kejadianPenuhTitle').textContent = `DAFTAR KEJADIAN — ${BULAN[bulanTerpilih.m].toUpperCase()} ${bulanTerpilih.y}`;
+    $('kejadianPenuhBody').innerHTML = `<div class="evlist-modal">${daftarKejadianLK(kejadianCache.lk.daftar, Infinity)}</div>`;
+    $('kejadianPenuhOverlay').style.display = 'flex';
+  }
+  function tutupKejadianPenuh() { $('kejadianPenuhOverlay').style.display = 'none'; }
+  function bukaBastPenuh() {
+    $('bastPenuhTitle').textContent = `DAFTAR BAST — ${BULAN[bulanTerpilih.m].toUpperCase()} ${bulanTerpilih.y}`;
+    $('bastPenuhBody').innerHTML = `<div class="evlist-modal">${daftarBAST(kejadianCache.bast.daftar, Infinity)}</div>`;
+    $('bastPenuhOverlay').style.display = 'flex';
+  }
+  function tutupBastPenuh() { $('bastPenuhOverlay').style.display = 'none'; }
 
   function pasangPemilihBulan() {
     A.pemilihBulan($('pilihBulanBulanan'), {
@@ -351,7 +369,7 @@ ${catatanTak}
     toast('Data diperbarui.');
   }
 
-  window.Beranda = { bukaShiftKosong, tutupShiftKosong, salinPengingatKosong, salinTeks, bukaKepatuhan, tutupKepatuhan, muatUlang };
+  window.Beranda = { bukaShiftKosong, tutupShiftKosong, salinPengingatKosong, salinTeks, bukaKepatuhan, tutupKepatuhan, bukaKejadianPenuh, tutupKejadianPenuh, bukaBastPenuh, tutupBastPenuh, muatUlang };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mulai); else mulai();
 
   window.adaPerubahanBelumTersimpan = () => false;

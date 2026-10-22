@@ -110,6 +110,13 @@ svg .col { cursor: default; }
 #kepatuhanBody table.tp th { color: #8DA0C2; border-bottom-color: var(--console-border); }
 #kepatuhanBody table.tp td { color: #F2F5FA; border-bottom-color: var(--console-border); }
 #kepatuhanBody table.tp .nm { color: #ffffff; }
+
+/* Modal "Daftar Kejadian"/"Daftar BAST" (SEMUA, bukan cuma 5 teratas) -- sama spt di atas,
+   .evlist/.ev aslinya didesain utk kartu putih (dcard). Di sini dibungkus kartu putih sendiri
+   drpd menimpa tiap warna teks satu-satu spt table.tp -- lebih simpel krn item .ev cuma dipakai
+   di konteks kartu putih di tempat lain, jadi tidak ada CSS var(--console-bg)-aware yg perlu
+   dijaga kompatibel. */
+.evlist-modal { background: #fff; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px 14px; }
 #kepatuhanBody table.tp tr:hover td { background: rgba(255,255,255,.04); }
 
 #isi { display: flex; flex-direction: column; gap: 12px; }

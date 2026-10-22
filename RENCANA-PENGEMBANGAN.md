@@ -522,3 +522,28 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   sinkronisasi memang AKTIF — `sync.js` yang di-deploy ke Netlify sudah berisi GAS_URL/TOKEN
   ASLI (bukan placeholder), DAN tab `Kejadian`/`BAST` + pemetaannya di `Code.gs` sudah
   dikerjakan (lihat entri "Sinkronisasi Laporan Kejadian & BAST lintas perangkat" di atas).
+
+### Ikon mata Kejadian/BAST di Beranda Admin buka modal "lihat semua" (bukan pindah halaman)
+- **Status:** Selesai
+- **Diverifikasi:** Playwright — klik ikon mata di kartu "Daftar Kejadian Terbaru" membuka
+  modal "DAFTAR KEJADIAN — OKTOBER 2026" berisi 8 item (bukan cuma 5 teratas spt pratinjau
+  kartu); klik ikon mata di "Daftar BAST Terbaru" membuka modal serupa berisi 6 item; kedua
+  modal bisa ditutup lewat tombol X maupun "Tutup"; item di modal tetap bisa diklik (href ke
+  `kejadian.html#ubah=<id>`, sama seperti item di kartu pratinjau); tidak ada error.
+- **Dicatat:** 2026-10-22 (mockup disetujui sebelum dikerjakan)
+- **Konteks:** Sebelumnya ikon mata di kedua kartu itu cuma `<a href="kejadian.html#tersimpan">`
+  — pindah halaman ke Laporan Kejadian, bukan menampilkan rangkuman di Beranda itu sendiri.
+  Pengguna minta diganti jadi modal "lihat semua" yang menampilkan SELURUH Kejadian/BAST bulan
+  terpilih (bukan dibatasi 5 seperti pratinjau kartu), tanpa pindah halaman.
+- **Implementasi:** Pola disamakan PERSIS dgn modal "Daftar Shift Belum Lengkap" yang sudah ada
+  (`bukaKepatuhan`/`tutupKepatuhan`) — 2 modal baru `kejadianPenuhOverlay`/`bastPenuhOverlay`
+  (markup di `index.html`), fungsi `bukaKejadianPenuh`/`tutupKejadianPenuh`/`bukaBastPenuh`/
+  `tutupBastPenuh` di `beranda.js`. `daftarKejadianLK`/`daftarBAST` ditambah parameter `limit`
+  opsional (default 5, dipakai di kartu pratinjau; `Infinity` dipakai di modal). Hasil
+  `D.statKejadianRentang` dari `renderBulanan()` kini disimpan ke `kejadianCache` module-level
+  (pola sama spt `kepatuhanCache`) supaya bisa dipakai lagi oleh fungsi buka-modal tanpa
+  menghitung ulang.
+- **Styling:** `.evlist/.ev` (item daftar) aslinya didesain utk kartu putih (dcard), sedangkan
+  latar `modal-body` gelap (`--console-bg`) — ditambah kelas `.evlist-modal` (beranda.css) yang
+  membungkus daftar dgn kartu putih, pola yang sama spt override `#kepatuhanBody table.tp`
+  yang sudah ada utk masalah kontras serupa.
