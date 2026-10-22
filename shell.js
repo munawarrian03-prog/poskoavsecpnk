@@ -18,7 +18,8 @@
     chart: 'M4 20h3v-9H4v9zm6.5 0h3V4h-3v16zM17 20h3v-6h-3v6z',
     caret: 'M7 10l5 5 5-5z',
     user: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
-    keluar: 'M14 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2h-2v2H5V5h7v2h2zm1 2v3h-7v2h7v3l5-4-5-4z'
+    keluar: 'M14 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2h-2v2H5V5h7v2h2zm1 2v3h-7v2h7v3l5-4-5-4z',
+    kunci: 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm3 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z'
   };
   AVS.IC = IC;
   AVS.svg = (p) => `<svg viewBox="0 0 24 24"><path d="${p}"/></svg>`;
@@ -118,9 +119,12 @@
     const peran = root.AVS_PERAN();
     if (!peran) return '';
     const label = peran.charAt(0).toUpperCase() + peran.slice(1);
+    // Tombol "Ganti PIN" khusus Admin (lihat akses.js: AVS_bukaGantiPin/AVS_gantiPin) --
+    // Posko tidak melihat tombol ini.
+    const btnGantiPin = peran === 'admin' ? `<button type="button" class="prof-ganti-pin" onclick="AVS_bukaGantiPin()">${AVS.svg(IC.kunci)}Ganti PIN</button>` : '';
     return `<div class="prof-wrap"><button type="button" class="prof-btn" title="Akun">${AVS.svg(IC.user)}</button>
 <div class="prof-dd"><div class="prof-info"><div class="prof-peran">${AVS.esc(label)}</div><div class="prof-ket">Sedang login</div></div>
-<button type="button" class="prof-keluar" onclick="AVS_KELUAR()">${AVS.svg(IC.keluar)}Keluar</button></div></div>`;
+${btnGantiPin}<button type="button" class="prof-keluar" onclick="AVS_KELUAR()">${AVS.svg(IC.keluar)}Keluar</button></div></div>`;
   }
   AVS.nav = function (aktif, el) {
     el = el || document.getElementById('topBar') || document.getElementById('mainNav');

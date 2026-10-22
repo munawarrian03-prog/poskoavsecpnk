@@ -547,3 +547,61 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   latar `modal-body` gelap (`--console-bg`) — ditambah kelas `.evlist-modal` (beranda.css) yang
   membungkus daftar dgn kartu putih, pola yang sama spt override `#kepatuhanBody table.tp`
   yang sudah ada utk masalah kontras serupa.
+
+### Ganti PIN Posko/Admin oleh Admin, tersimpan ke backend Spreadsheet (GAS)
+- **Status:** Selesai (kode repo) — LANGKAH GOOGLE SHEET/CODE.GS BELUM DIKERJAKAN PENGGUNA
+- **Diverifikasi (kode repo):** Playwright dgn AVS_SYNC di-mock sbg "server" —
+  (1) Admin ganti PIN Posko saja (Admin dikosongkan) → record di "server" berisi posko baru
+  & admin tetap fallback lama, cache lokal (`avsPinCache`) ikut diperbarui, modal tampil
+  pesan sukses & bisa ditutup;
+  (2) logout lalu login ulang sbg Posko: PIN LAMA (hardcoded) ditolak, PIN BARU hasil ganti
+  diterima — membuktikan `pinAktif()` benar-benar dipakai gerbang login, bukan cuma UI;
+  (3) sinkronisasi nonaktif (placeholder, keadaan default repo) → Simpan ditolak dgn pesan
+  "Perlu koneksi ke server...", cache lokal TIDAK berubah sama sekali (sesuai keputusan:
+  tidak boleh cuma berlaku di satu perangkat utk sementara);
+  (4) kedua field dikosongkan (sinkronisasi aktif) → validasi "Isi minimal salah satu PIN
+  baru." tanpa memanggil server; tidak ada error console/halaman di semua skenario.
+- **Dicatat:** 2026-10-22 (mockup disetujui sebelum dikerjakan)
+- **Konteks:** PIN Posko/Admin sebelumnya hardcoded di `akses.js` (`const PIN = {...}`) —
+  mengubahnya perlu edit kode & redeploy Netlify. Pengguna minta Admin bisa mengganti PIN
+  langsung dari aplikasi, tersimpan ke backend Spreadsheet (GAS) yang sudah dipakai utk
+  sinkronisasi 5 jenis laporan, supaya berlaku di semua perangkat tanpa redeploy.
+- **Keputusan desain (dari pertanyaan sebelum coding):** cukup Admin yang sedang login,
+  TANPA konfirmasi ulang PIN lama; DITOLAK TOTAL kalau offline (tidak ada simpan-lokal-
+  dulu-kirim-nanti, supaya PIN baru tidak pernah "beda-beda" antar perangkat utk sementara);
+  TIDAK ada riwayat/log perubahan — PIN lama langsung ditimpa.
+- **Implementasi:**
+  - `sync.js`: tambah `kirimLangsung(jenis, record)` — POST langsung (bypass antrian retry
+    `kirim()`/`flush()` yang fire-and-forget) & `await` hasil sukses/gagal sesungguhnya,
+    reuse `kirimSatu()` yang sudah ada.
+  - `akses.js`: PIN login sekarang dicek lewat `pinAktif(peran)` (cache lokal `avsPinCache`
+    hasil sinkronisasi, jatuh ke `PIN` hardcoded sbg fallback) — bukan `PIN[peran]` langsung
+    lagi. `segarkanPinCache()` dipanggil di `AVS_gerbangUtama`/`AVS_gerbangAdminSaja` (latar
+    belakang, tidak memblokir form login) utk menyegarkan cache dari Sheet (jenis
+    `'pengaturan'`) tiap gerbang dibuka. `root.AVS_gantiPin(poskoBaru, adminBaru)` — fungsi
+    inti: tolak kalau `!AVS_SYNC.aktif()`, validasi minimal satu field, ambil record
+    `pengaturan` TERBARU dulu (hindari menimpa perubahan yang belum sempat disinkron),
+    gabung dgn field yang diisi, `kirimLangsung`, baru perbarui cache lokal kalau sukses.
+    `formGantiPin()`/`root.AVS_bukaGantiPin` — modal dibangun dinamis (bukan markup statis
+    per halaman) pakai class `.modal-overlay`/`.modal-container` yang sudah ada di
+    `style.css` (dimuat di semua halaman) — jadi tombolnya otomatis berfungsi di halaman
+    manapun tanpa perlu nambah markup ke 8 file HTML satu-satu.
+  - `shell.js`: `renderProfil()` — tombol "Ganti PIN" (ikon gembok, `IC.kunci` baru) di
+    dropdown profil, HANYA utk peran admin, di atas "Keluar".
+  - `layout.css`: `.prof-ganti-pin` (styling tombol, mengikuti pola `.prof-keluar`).
+  - `Code.gs` (diserahkan sbg teks ke pengguna, bukan bagian repo): tambah
+    `pengaturan: 'Pengaturan'` ke pemetaan `SHEETS` yang sudah ada — `doGet`/`doPost`/upsert
+    generik, tidak perlu endpoint baru.
+- **Yang perlu dikerjakan di Google Sheet & Code.gs (di luar repo, dikerjakan pengguna +
+  saya siapkan teks Code.gs-nya):**
+  1. Tambah 1 tab baru di spreadsheet yang SUDAH ADA: `Pengaturan`, header sama seperti tab
+     lain (`id | tanggal | shift | regu | dataJson | dibuatPada | diperbaruiPada`; tanggal/
+     shift/regu boleh kosong, sama seperti BAST).
+  2. `Code.gs`: tambah `pengaturan` ke pemetaan `SHEETS` yang sudah ada.
+  3. **Redeploy** lewat *Manage deployments → Edit → New version* — URL & TOKEN tidak
+     berubah.
+- **Catatan keamanan (sama seperti fitur sinkronisasi lain):** level keamanan PIN TETAP
+  SAMA seperti sebelumnya (deteren UI) — cuma tempat penyimpanan yang pindah dari hardcoded
+  ke Sheet, bukan ditingkatkan jadi autentikasi kriptografis. Siapa pun yang tahu TOKEN
+  sinkronisasi secara teknis bisa memanggil endpoint `pengaturan` yang sama — konsisten
+  dgn level proteksi seluruh sistem saat ini, bukan celah baru.

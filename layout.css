@@ -53,6 +53,9 @@ body.focus #topBar { display: none; }
 #topBar .prof-keluar { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 7px; border: none; background: none; color: #A82F24; font-weight: 700; font-size: 12.5px; cursor: pointer; text-align: left; }
 #topBar .prof-keluar svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
 #topBar .prof-keluar:hover { background: #FBE9E7; }
+#topBar .prof-ganti-pin { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 7px; border: none; background: none; color: #10243D; font-weight: 700; font-size: 12.5px; cursor: pointer; text-align: left; margin-bottom: 2px; }
+#topBar .prof-ganti-pin svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
+#topBar .prof-ganti-pin:hover { background: #F4F6FA; }
 #fokusExit { display: none; position: fixed; right: 16px; top: 10px; z-index: 300; background: var(--ink); color: #fff; border: none; border-radius: 9px; padding: 8px 14px; font: 700 11.5px 'Montserrat', 'Inter', sans-serif; cursor: pointer; box-shadow: 0 4px 14px rgba(16,36,61,.35); }
 
 /* ---- toolbar ---- */

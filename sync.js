@@ -87,6 +87,16 @@
   function kirim(jenis, record) { if (!aktif()) return; antrikan(jenis, 'simpan', record); flush(); }
   function hapus(jenis, id) { if (!aktif()) return; antrikan(jenis, 'hapus', { id }); flush(); }
 
+  // Kirim LANGSUNG (tanpa lewat antrian retry) dan TUNGGU hasilnya -- dipakai utk perubahan yang
+  // tidak boleh "diam-diam tertunda" kalau sedang offline (mis. AVS_gantiPin di akses.js): kirim()
+  // biasa selalu berhasil secara UI (masuk antrian) walau sedang offline, baru benar-benar
+  // terkirim nanti -- untuk Ganti PIN itu berisiko PIN baru cuma berlaku di satu perangkat utk
+  // sementara. kirimLangsung mengembalikan Promise<boolean> sukses/gagal sesungguhnya.
+  function kirimLangsung(jenis, record) {
+    if (!aktif()) return Promise.resolve(false);
+    return kirimSatu({ jenis, aksi: 'simpan', data: record });
+  }
+
   function ambilSemua(jenis) {
     if (!aktif()) return Promise.resolve([]);
     return fetch(`${GAS_URL}?token=${encodeURIComponent(TOKEN)}&jenis=${encodeURIComponent(jenis)}`, { cache: 'no-store' })
@@ -116,5 +126,5 @@
   setInterval(flush, FLUSH_MS);
   flush(); // coba kirim sisa antrian dari sesi sebelumnya begitu halaman dibuka
 
-  root.AVS_SYNC = { kirim, hapus, ambilSemua, gabung, aktif };
+  root.AVS_SYNC = { kirim, hapus, kirimLangsung, ambilSemua, gabung, aktif };
 })(window);
