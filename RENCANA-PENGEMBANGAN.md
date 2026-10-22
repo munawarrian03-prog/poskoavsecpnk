@@ -358,3 +358,44 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   (Di Rekap otomatis Admin-saja secara praktik, tapi sejak Rekap juga dimunculkan di
   menu Posko — lihat entri di atas — pengecekan peran ini jadi WAJIB, bukan cuma
   kebetulan karena menu tersembunyi.)
+
+### Update daftar "Pos Penempatan" di Laporan Personel (19 pos baru)
+- **Status:** Selesai
+- **Diverifikasi:** Playwright —
+  (1) form baru menampilkan ke-19 pos sesuai urutan & nama baru, simpan ke
+  localStorage menyimpan ke-19 entri, PDF memuat ke-19 nama baru lengkap dengan data
+  personel yang diisi;
+  (2) regresi data lama: record tersimpan yang merujuk id `scp_transit` (dihapus dari
+  daftar baru) tetap tampil dengan nama tersimpan "SSCP + (Dep & Arr)" tanpa error;
+  record yang merujuk id `scp_vip` (masih ada, namanya diganti) otomatis tampil nama
+  baru "PSCP VIP" di PDF; nama-nama personel lama tetap muncul; tidak ada error
+  console/halaman di kedua skenario.
+- **Dicatat:** 2026-10-22
+- **Konteks:** Permintaan pengguna — daftar `POS_BAWAAN` di `kategori.js` diganti dari
+  9 pos menjadi 19 pos (beberapa di-rename: `scp_int` "PSCP LAGs" → "LAGs INSPECTION",
+  `scp_vip` "SCP VIP" → "PSCP VIP"; `scp_transit` "SSCP + (Dep & Arr)" dihapus total,
+  dipecah jadi 5 pos baru yang lebih rinci: `sscp`, `sscp_ci`, `sscp_ad`, `sscp_ai`,
+  `sscp_remote`; ditambah 9 pos baru lain: `ph_dz`, `ph_pz`, `walking_P`, `vp_r4`,
+  `P_15`, `P_33`).
+- **Analisis sebelum ubah kode:** `laporan-personel.html` dan `personel-pdf.js`
+  terbukti 100% generik terhadap isi `POS_BAWAAN` (dibangun lewat `.map()`, hanya satu
+  id yang hardcode yaitu `'posko'` untuk kolom "Disusun Oleh" — id ini tidak berubah).
+  Jadi **satu-satunya perubahan kode yang diperlukan adalah array `POS_BAWAAN` di
+  `kategori.js`** — tidak ada baris lain yang perlu disentuh di kedua berkas tsb.
+  `kejadian.html` (daftar pos jaga) juga generik, otomatis ikut ke-19 nama baru.
+- **Mekanisme graceful fallback (sudah ada, tidak diubah):** `AVS.namaPosPersonelTerbaru`
+  di `shell.js` membuat laporan LAMA otomatis ikut nama BARU kalau id-nya masih ada di
+  `POS_BAWAAN` (contoh: `scp_vip`), dan tetap tampil dengan nama yang tersimpan dulu
+  (tanpa error) kalau id-nya sudah dihapus dari daftar (contoh: `scp_transit`).
+- **Belum dikerjakan / perlu konfirmasi pengguna:** `fasilitas-data.js` punya daftar
+  `POS_FASILITAS_BAWAAN` TERPISAH (nama/id ditulis sendiri, bukan diturunkan otomatis
+  dari `POS_BAWAAN`) yang sengaja disamakan id-nya dengan sebagian pos di
+  `POS_BAWAAN` untuk rujukan silang (mis. kolom "Dibuat oleh" di Fasilitas mengambil
+  nama orang pertama di pos POSKO dari Laporan Personel). Perubahan di atas TIDAK
+  merambat ke `fasilitas-data.js` — saat ini nama pos di Fasilitas untuk `scp_int`
+  masih "PSCP LAGs" (belum "LAGs INSPECTION") dan `scp_transit` masih ada sebagai satu
+  pos checklist peralatan (padahal di Personel sudah dipecah jadi 5 pos). `scp_vip` di
+  Fasilitas juga masih belum punya checklist peralatan sama sekali (TODO lama, lihat
+  Tahap 1). Pengguna perlu memutuskan apakah/bagaimana checklist Fasilitas ingin
+  disesuaikan menyusul perubahan ini — lingkupnya sengaja dibatasi hanya ke Laporan
+  Personel sesuai permintaan, tidak menyentuh Fasilitas tanpa konfirmasi.
