@@ -608,7 +608,7 @@ function addPersonelPos(i) { posPenempatan[i].personel.push({ nama: '', peran: '
 function removePersonelPos(i, p) { posPenempatan[i].personel.splice(p, 1); markDirty(); renderPenempatan(); }
 function updateNamaPos(i, p, val) { posPenempatan[i].personel[p].nama = val; markDirty(); calculateTotals(); }
 // Pilih Kategori -> isi `jam` otomatis dari mulai/selesai kategori itu (kalau kategori tsb
-// punya jam tetap -- mis. "ORGANIK (SHIFT PAGI/MALAM)" tidak punya, jam dibiarkan kosong,
+// punya jam tetap -- mis. "ORGANIK" tidak punya, jam dibiarkan kosong,
 // Posko isi manual kalau perlu). `jam` TETAP teks biasa yang bisa diedit bebas sesudahnya --
 // bukan field terkunci -- krn jam dinas sungguhan kadang beda dari jam baku kategori.
 function updateKategoriPos(i, p, kategoriId) {

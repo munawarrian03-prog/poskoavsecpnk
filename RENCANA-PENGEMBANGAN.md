@@ -653,3 +653,18 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   - `personel-pdf.js`: `tabelPenempatan()` menambahkan `(jam)` di belakang nama kalau
     field `jam` terisi — otomatis berlaku jg utk record lama tanpa field ini (kosong ->
     tidak nambah apa-apa, tidak error).
+
+### Rename kategori "ORGANIK (SHIFT PAGI/MALAM)" menjadi "ORGANIK"
+- **Status:** Selesai
+- **Diverifikasi:** Playwright — kategori pertama di `kategoriKekuatan` (laporan baru) kini
+  "ORGANIK" (bukan lagi "ORGANIK (SHIFT PAGI/MALAM)"); dropdown Kategori di tiap nama pos
+  (fitur Jam + Kategori) ikut menampilkan nama baru; tidak ada error.
+- **Dicatat:** 2026-10-23
+- **Konteks:** Permintaan pengguna — nama kategori disederhanakan.
+- **Implementasi:** `kategori.js` — field `nama` kategori id `org_pagi` diubah dari
+  "ORGANIK (SHIFT PAGI/MALAM)" jadi "ORGANIK" (mulai/selesai tetap kosong, kategori ini
+  tetap tidak punya jam tetap). Komentar contoh terkait di `laporan-personel.html`
+  (`updateKategoriPos`) disesuaikan. Tidak ada mekanisme live-rename utk nama kategori
+  (beda dari POS_BAWAAN) — laporan LAMA yang sudah tersimpan tetap menyimpan nama lamanya
+  sendiri (`kategoriKekuatan` disalin ke tiap laporan saat disimpan, bukan dirujuk live by
+  id), konsisten dengan desain yang sudah ada sebelumnya untuk Kekuatan Personel.

@@ -9,7 +9,7 @@
 // id harus unik dan tidak diubah-ubah (huruf kecil, angka, _).
 // =====================================================
 const KATEGORI_BAWAAN = [
-  { id: 'org_pagi',   nama: 'ORGANIK (SHIFT PAGI/MALAM)', mulai: '',      selesai: ''      },
+  { id: 'org_pagi',   nama: 'ORGANIK',                    mulai: '',      selesai: ''      },
   { id: 'sec_org',    nama: 'SECWAN ORGANIK',             mulai: '05:00', selesai: '17:00' },
   { id: 'org_pjd',    nama: 'ORGANIK PJD',                mulai: '06:00', selesai: '18:00' },
   { id: 'iass_pagi',  nama: 'IASS PAGI',                  mulai: '08:00', selesai: '20:00' },
