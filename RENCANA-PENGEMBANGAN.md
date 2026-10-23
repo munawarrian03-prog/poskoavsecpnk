@@ -668,3 +668,27 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   (beda dari POS_BAWAAN) — laporan LAMA yang sudah tersimpan tetap menyimpan nama lamanya
   sendiri (`kategoriKekuatan` disalin ke tiap laporan saat disimpan, bukan dirujuk live by
   id), konsisten dengan desain yang sudah ada sebelumnya untuk Kekuatan Personel.
+
+### Update daftar Pos Penempatan Laporan Personel (22 pos)
+- **Status:** Selesai
+- **Diverifikasi:** Playwright — 22 pos tampil, semua id unik (tidak ada duplikat);
+  `sscp_remote_dom`/`sscp_remote_int`, `vp_r4_ls`/`vp_r4_as`, `rdo` ada; `walking_p`
+  (huruf kecil) ada, `walking_P` lama tidak lagi di daftar aktif; regresi — record lama yang
+  memakai id yang sudah dihapus/diganti (`sscp_remote`, `walking_P`, `vp_r4`) tetap tampil
+  dengan nama tersimpannya sendiri di PDF tanpa error (graceful fallback yang sudah ada).
+- **Dicatat:** 2026-10-23
+- **Konteks:** Permintaan pengguna — update lanjutan daftar `POS_BAWAAN`:
+  - `REMOTE ARR` dipecah jadi 2 pos: `REMOTE ARR DOM` & `REMOTE ARR INT`.
+  - `PATROLI R.4` dipecah jadi 2 pos: `PATROLI R.4 Landside` & `PATROLI R.4 Airside/
+    Perimeter`.
+  - Pos baru ditambahkan: `RUMAH DINAS (RDO)`.
+  - Id `walking_P` → `walking_p` (huruf kecil) — **perubahan ID, bukan cuma nama tampilan**
+    (dikonfirmasi disengaja oleh pengguna); laporan lama yang masih pakai `walking_P` tetap
+    aman (fallback), tapi sejak ini dianggap pos yang sudah dihapus dari daftar aktif.
+- **Masalah di permintaan awal pengguna, sudah dikonfirmasi & diperbaiki sebelum
+  diterapkan:**
+  1. `REMOTE ARR DOM` dan `REMOTE ARR INT` sama-sama diberi id `sscp_remote` (dobel) di
+     permintaan awal — kalau dibiarkan, pos kedua akan menimpa/mengganggu yang pertama.
+     Dipisah jadi `sscp_remote_dom`/`sscp_remote_int`.
+  2. Id `vp_r4-as` pakai tanda hubung (beda dari konvensi id pos lain, huruf kecil +
+     underscore) — disamakan jadi `vp_r4_as`.
