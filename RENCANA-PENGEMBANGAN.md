@@ -14,6 +14,82 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Penggantian/Penambahan personel per pos + rincian Total per rentang waktu (PDF/WA/Lihat)
+- **Status:** Selesai
+- **Dicatat:** 2026-10-23 (didiskusikan & mockup disetujui sebelum dikerjakan, lanjutan
+  langsung dari entri "Riwayat pergantian personel per pos" di bawah)
+- **Diverifikasi:** Playwright — skenario gabungan: pos SSCP diisi Andi (kategori ORGANIK
+  PJD 06:00–18:00, entri pertama — tanpa selektor) lalu Budi (kategori IASS PAGI
+  08:00–20:00, entri ke-2, ditandai **Penggantian**); pos WALKING PATROL diisi Dedi (tanpa
+  kategori, entri pertama) lalu Eko (kategori IASS PP 05:00–17:00, entri ke-2, ditandai
+  **Penambahan**). Hasil: status bar "TOTAL PENEMPATAN: 3 PERSONEL (1 pergantian tidak
+  dihitung)" (Budi dikecualikan dari hitungan total sederhana, Andi+Dedi+Eko = 3); field
+  `jenis` tersimpan benar per entri. Rincian waktu (dihitung dari `hitungData`/
+  `AVS_rincianWaktu` langsung, angka dicocokkan manual): Total Hadir 30 Personel
+  (08:00–17:00) → 25 (17:00–18:00, IASS PP 5 org selesai) → 15 (18:00–20:00, ORGANIK PJD 10
+  org selesai); Total Penempatan 4 Personel (08:00–17:00, Andi+Budi+Dedi+Eko tumpang
+  tindih) → 3 (17:00–18:00, Eko selesai) → 2 (18:00–20:00, Andi selesai) — baris-baris ini
+  identik persis di tiga tempat: PDF (tabel "I. Kekuatan Personel" & "II. Penempatan
+  Personel"), teks WA (`generateReportTextFromData`), dan drawer "Lihat"
+  (`renderLihatHTML`, kini menerima parameter `shift`). PDF: kolom "Jam" pada "II.
+  Penempatan Personel" terpisah dari kolom "Personel"; lebar kolom kedua tabel (W1=34%,
+  W2=11%, W3=11%, W4=11%, W5=33%, `table-layout:fixed`) sama persis shg batas kolom kedua
+  tabel sejajar saat ditumpuk; label "Total Hadir"/"Total Penempatan" rata kanan, angka
+  Hadir segaris kolom "Hadir", angka Penempatan segaris kolom "Personel", waktu di kolom
+  Keterangan/Jam. Regresi: rekaman LAMA (tanpa field `jenis`/`kategoriId`/`jam` sama
+  sekali) tidak error di `hitungData`/WA/Lihat/PDF — jatuh balik ke baris Total tunggal
+  (tanpa rincian waktu) krn kategori tanpa `mulai`/`selesai` diperlakukan sebagai
+  "sepanjang shift" oleh `AVS_rincianWaktu`.
+- **Konteks:** Dua masalah terkait dari diskusi yang sama dengan entri "Riwayat
+  pergantian personel" di bawah: (1) saat satu pos diisi 2+ nama krn pergantian jam dinas
+  (bukan penambahan personel sungguhan), "Total Penempatan" jadi lebih besar dari "Total
+  Hadir" shg status balance keliru tampil "Kelebihan Penempatan"; (2) satu angka Total
+  Hadir/Penempatan di akhir laporan tidak mencerminkan bahwa jumlah personel yang
+  sebenarnya bertugas BERUBAH sepanjang shift mengikuti jam kategori masing-masing (mis.
+  pola umum: shift malam ada penambahan jam 05:00 & 07:00; shift pagi ada
+  penambahan/pengurangan jam 09:00 & 17:00/19:00).
+- **Keputusan:**
+  - Selektor **"Penambahan" / "Penggantian"** (radio, default Penambahan) ditambahkan di
+    bawah baris Kategori/Jam, HANYA untuk entri ke-2 dst per pos (entri pertama tidak
+    punya selektor — selalu dihitung). "Penggantian" dikecualikan dari "Total Penempatan"
+    pada status bar (supaya tidak salah tampil "Kelebihan Penempatan" saat satu orang
+    digantikan orang lain di jam berbeda dalam pos yang sama); "Penambahan" dihitung
+    normal. Riwayat (nama+jam) tetap tampil LENGKAP di semua tempat (web/WA/Lihat/PDF)
+    terlepas dari status ini — selektor ini HANYA memengaruhi satu angka ringkasan.
+  - Selektor ini SENGAJA tidak memengaruhi perhitungan rincian per rentang waktu — sebuah
+    pergantian sungguhan (jam kategori berurutan, tidak tumpang tindih) otomatis TIDAK
+    dobel-hitung oleh algoritma irisan waktu apa pun nilai `jenis`-nya, sedang sebuah
+    penambahan sungguhan (jam tumpang tindih) otomatis MEMANG dihitung ekstra — kedua
+    mekanisme ini saling melengkapi, bukan kontradiktif.
+  - Algoritma **rincian waktu** (`segmentasiWaktu`/`AVS_rincianWaktu`, satu-satunya sumber
+    dipakai bersama oleh PDF/WA/Lihat lewat `personel-pdf.js`, dimuat lebih dulu di
+    `laporan-personel.html`): kumpulkan semua titik waktu mulai/selesai (jam kategori utk
+    Kekuatan berbobot jumlah hadir per kategori, jam kategori personel utk Penempatan
+    berbobot 1 per orang), potong jadi sub-interval, jumlahkan bobot tiap sub-interval,
+    gabung sub-interval berdampingan yang jumlahnya sama. Kategori yang mulai sebelum awal
+    shift (mis. 05:00 pada shift 08:00–20:00) dicocokkan lewat percobaan offset
+    `[0, -1440, +1440]` menit dipilih irisan terbesar dgn jendela shift — benar menangani
+    kategori yang mulai lebih awal, lebih larut, atau melewati tengah malam. Entri tanpa
+    kategori/jam tetap (field kosong) diperlakukan sebagai **sepanjang shift**
+    (keputusan eksplisit, bukan ambigu). **Penting:** perhitungan ini SELALU pakai jam
+    BAKU kategori (`mulai`/`selesai` terstruktur), BUKAN field "Jam" bebas-teks yang
+    mungkin sudah diedit manual oleh pengisi laporan.
+  - PDF "I. Kekuatan Personel": baris "Total Hadir" tunggal diganti beberapa baris sesuai
+    rentang waktu (dari rincian di atas, berbobot headcount per kategori). PDF "II.
+    Penempatan Personel": field "Jam" dipindah ke kolom tersendiri (bukan inline dgn
+    nama); baris "Total Penempatan" tunggal diganti beberapa baris rentang waktu serupa.
+- **Implementasi:** `personel-pdf.js` (`segmentasiWaktu`/`overlapDenganShift`/
+  `parseJamShift`/`waktuKeMenit`/`keJamWallclock`, diekspos `root.AVS_rincianWaktu`;
+  `tabelKekuatan`/`tabelPenempatan` dirombak dgn lebar kolom W1–W5 bersama); 
+  `laporan-personel.html` (field `jenis` di `normReport`, markup selektor Penggantian/
+  Penambahan di `renderPenempatan` utk entri ke-2 dst, `updateJenisPos`, `hitungData`
+  mengecualikan `jenis==='penggantian'` dari `totalPenempatan` & mengembalikan
+  `pergantianCount`, `calculateTotals` menampilkan catatan "(N pergantian tidak
+  dihitung)", `rincianHadirWaktu`/`rincianPenempatanWaktu` memanggil `AVS_rincianWaktu`,
+  `generateReportTextFromData` & `renderLihatHTML` (kini menerima parameter `shift`)
+  menampilkan baris rincian multi-waktu dgn fallback ke baris tunggal lama); 
+  `laporan-personel.css` (`.pos-jenis-wrap` utk selektor radio).
+
 ### Catatan Kesiapan Tugas (Apel/Briefing) di Log Book + waktu manual + rapikan PDF
 - **Status:** Selesai
 - **Dicatat:** 2026-10-23

@@ -42,6 +42,12 @@
 #penempatanContainer .pos-kat { flex: 1; min-width: 0; height: 24px; padding: 0 6px; font-size: 10px; color: #475569; border: 1px solid #E3E8F0; border-radius: 6px; background: #fff; }
 #penempatanContainer .pos-jam { width: 84px; flex: none; height: 24px; padding: 0 7px; font-size: 10.5px; font-weight: 700; color: #5C6675; border: 1px solid #E3E8F0; border-radius: 6px; background: #FAFBFD; }
 #penempatanContainer .pos-jam:not(:placeholder-shown) { color: #157A82; border-color: #BEE3E3; background: #F2FAFA; }
+/* Selektor Penggantian/Penambahan -- baris ke-3 per nama (entri ke-2 dst saja), grid-column
+   2/4 spy sejajar dgn baris nama/peran & kategori/jam di atasnya. */
+#penempatanContainer .pos-jenis-wrap { grid-column: 2 / 4; display: flex; gap: 10px; margin-top: 1px; }
+#penempatanContainer .pos-jenis-wrap label { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: #8A94A6; cursor: pointer; }
+#penempatanContainer .pos-jenis-wrap label.aktif { color: #157A82; font-weight: 700; }
+#penempatanContainer .pos-jenis-wrap input[type="radio"] { width: 11px; height: 11px; accent-color: #157A82; margin: 0; }
 #penempatanContainer .btn-add { margin: 4px 8px 8px; padding: 4px 10px; font-size: 10.5px; }
 #penempatanContainer .status-nihil { margin: 6px 8px 0; }
 

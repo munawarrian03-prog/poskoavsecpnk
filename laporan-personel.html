@@ -265,7 +265,7 @@ function normReport(r) {
     id: r.id, tanggal: r.tanggal, shift: r.shift, regu: r.regu, savedAt: r.savedAt,
     dibuatPada: r.dibuatPada, diperbaruiPada: r.diperbaruiPada, riwayat: r.riwayat, jumlahUbah: r.jumlahUbah,
     kategoriKekuatan: (r.kategoriKekuatan || []).map(normKategori),
-    posPenempatan: (r.posPenempatan || []).map((p) => ({ id: p.id, name: p.name, personel: (p.personel || []).map((x) => ({ nama: x.nama || '', peran: x.peran || '', kategoriId: x.kategoriId || '', jam: x.jam || '' })) }))
+    posPenempatan: (r.posPenempatan || []).map((p) => ({ id: p.id, name: p.name, personel: (p.personel || []).map((x) => ({ nama: x.nama || '', peran: x.peran || '', kategoriId: x.kategoriId || '', jam: x.jam || '', jenis: x.jenis || '' })) }))
   };
 }
 function kategoriAwal() {
@@ -311,10 +311,17 @@ function hitungData(kat, pos) {
   const gAbs = daftarGanda(rows.flatMap((r) => r.valid.map((p) => p.nama)));
   if (gAbs.tampil.length) issues.push(`Nama ganda pada daftar tidak hadir: ${gAbs.tampil.join(', ')}.`);
 
+  // "Penggantian" (lihat updateJenisPos) dikecualikan dari totalPenempatan -- dianggap
+  // meneruskan SLOT yang sama dgn entri sebelumnya di pos itu (bukan tambahan personel
+  // sungguhan), supaya tidak memicu "Kelebihan Penempatan" palsu dibanding Total Hadir.
+  // Tetap dihitung di `valid` (tampil penuh di web/PDF/WA/Lihat) -- riwayatnya tdk hilang.
+  let pergantianCount = 0;
   const posRows = (pos || []).map((p) => {
     const semua = p.personel || [];
     const valid = semua.filter(adaNama);
-    totalPenempatan += valid.length;
+    const bersih = valid.filter((x) => x.jenis !== 'penggantian');
+    pergantianCount += valid.length - bersih.length;
+    totalPenempatan += bersih.length;
     return { p, valid, kosong: semua.length - valid.length };
   });
   const kosongPos = posRows.reduce((a, r) => a + r.kosong, 0);
@@ -328,14 +335,38 @@ function hitungData(kat, pos) {
     balanceIssue = totalPenempatan < totalHadir ? `Penempatan kurang ${selisih} orang dari total hadir.` : `Penempatan kelebihan ${selisih} orang dari total hadir.`;
     issues.push(balanceIssue);
   }
-  return { rows, posRows, totalHadir, totalPenempatan, issues, balanceIssue, dupAbs: gAbs.set, dupPos: gPos.set };
+  return { rows, posRows, totalHadir, totalPenempatan, pergantianCount, issues, balanceIssue, dupAbs: gAbs.set, dupPos: gPos.set };
 }
 const hitung = () => hitungData(kategoriKekuatan, posPenempatan);
+
+// Rincian "Total per rentang waktu" (dipakai teks WA & drawer Lihat) -- logika SAMA PERSIS
+// dgn PDF (personel-pdf.js: AVS_rincianWaktu), supaya ketiganya selalu menampilkan angka
+// yang sama. Waktu dihitung dari jam KATEGORI (bukan teks `jam` bebas per orang -- lihat
+// catatan di personel-pdf.js). Kosong (mis. format shift tidak bisa diparse) -> fallback
+// satu baris tanpa rentang waktu, dipakai pemanggilnya.
+function rincianHadirWaktu(kat, shift) {
+  if (typeof AVS_rincianWaktu !== 'function') return [];
+  const items = (kat || []).map((k) => {
+    const v = (k.absen || []).filter(adaNama);
+    return { mulai: k.mulai, selesai: k.selesai, bobot: Math.max(0, (Math.max(0, parseInt(k.jml, 10) || 0)) - v.length) };
+  });
+  return AVS_rincianWaktu(items, shift);
+}
+function rincianPenempatanWaktu(pos, kat, shift) {
+  if (typeof AVS_rincianWaktu !== 'function') return [];
+  const byId = {}; (kat || []).forEach((k) => { byId[k.id] = k; });
+  const items = [];
+  (pos || []).forEach((p) => (p.personel || []).filter(adaNama).forEach((x) => {
+    const k = x.kategoriId ? byId[x.kategoriId] : null;
+    items.push({ mulai: k ? k.mulai : null, selesai: k ? k.selesai : null, bobot: 1 });
+  }));
+  return AVS_rincianWaktu(items, shift);
+}
 
 function calculateTotals() {
   const info = hitung();
   $('totalDisplay').innerText = `TOTAL HADIR: ${info.totalHadir} PERSONEL`;
-  $('totalPenempatanDisplay').innerText = `TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL`;
+  $('totalPenempatanDisplay').innerHTML = `TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL` + (info.pergantianCount ? ` <span style="font-weight:600;color:#8A94A6;font-size:9.5px">(${info.pergantianCount} pergantian tidak dihitung)</span>` : '');
 
   const st = $('compStatus');
   if (info.balanceIssue) {
@@ -582,6 +613,15 @@ function renderPenempatan() {
     let rows = '';
     pos.personel.forEach((p, pIdx) => {
       const opts = opsiPeran.map((pr) => `<option value="${esc(pr)}" ${p.peran === pr ? 'selected' : ''}>${pr ? esc(pr) : 'Biasa'}</option>`).join('');
+      // Selektor Penggantian/Penambahan HANYA utk entri ke-2 dst di satu pos -- entri
+      // pertama tidak menggantikan/menambahi siapa pun, jadi tidak relevan. Lihat
+      // hitungData(): "penggantian" dikecualikan dari Total Penempatan (dianggap 1 slot yg
+      // sama dgn entri sebelumnya), "penambahan" (default) tetap dihitung penuh.
+      const jenisHtml = pIdx === 0 ? '' : `
+<div class="pos-jenis-wrap">
+<label class="${p.jenis !== 'penggantian' ? 'aktif' : ''}"><input type="radio" name="jenis_${posIdx}_${pIdx}" ${p.jenis !== 'penggantian' ? 'checked' : ''} onchange="updateJenisPos(${posIdx},${pIdx},'penambahan')"> Penambahan</label>
+<label class="${p.jenis === 'penggantian' ? 'aktif' : ''}"><input type="radio" name="jenis_${posIdx}_${pIdx}" ${p.jenis === 'penggantian' ? 'checked' : ''} onchange="updateJenisPos(${posIdx},${pIdx},'penggantian')"> Penggantian</label>
+</div>`;
       rows += `
 <div class="dynamic-row" data-kind="pos">
 <span class="no">${pIdx + 1}</span>
@@ -592,6 +632,7 @@ function renderPenempatan() {
 <select class="pos-kat" onchange="updateKategoriPos(${posIdx},${pIdx},this.value)">${opsiKategoriPos(p.kategoriId)}</select>
 <input type="text" class="pos-jam" placeholder="Jam" value="${esc(p.jam)}" title="Jam bertugas (opsional) -- terisi otomatis saat pilih Kategori, tetap bisa diedit manual" oninput="updateJamPos(${posIdx},${pIdx},this.value)">
 </div>
+${jenisHtml}
 </div>`;
     });
     return `
@@ -604,7 +645,14 @@ ${rows}
   container.scrollTop = st;
   calculateTotals();
 }
-function addPersonelPos(i) { posPenempatan[i].personel.push({ nama: '', peran: '', kategoriId: '', jam: '' }); markDirty(); renderPenempatan(); }
+// Entri pertama di satu pos: jenis '' (tak relevan, tak ada yg digantikan/ditambahi).
+// Entri ke-2 dst: default 'penambahan' (lebih aman drpd 'penggantian' -- kalau Posko lupa
+// pilih, orangnya tetap terhitung sbg personel nyata, bukan diam-diam dikecualikan).
+function addPersonelPos(i) {
+  const jenis = posPenempatan[i].personel.length ? 'penambahan' : '';
+  posPenempatan[i].personel.push({ nama: '', peran: '', kategoriId: '', jam: '', jenis });
+  markDirty(); renderPenempatan();
+}
 function removePersonelPos(i, p) { posPenempatan[i].personel.splice(p, 1); markDirty(); renderPenempatan(); }
 function updateNamaPos(i, p, val) { posPenempatan[i].personel[p].nama = val; markDirty(); calculateTotals(); }
 // Pilih Kategori -> isi `jam` otomatis dari mulai/selesai kategori itu (kalau kategori tsb
@@ -619,6 +667,7 @@ function updateKategoriPos(i, p, kategoriId) {
   markDirty(); renderPenempatan();
 }
 function updateJamPos(i, p, val) { posPenempatan[i].personel[p].jam = val; markDirty(); }
+function updateJenisPos(i, p, val) { posPenempatan[i].personel[p].jenis = val; markDirty(); calculateTotals(); }
 function updatePeranPos(i, p, val) { posPenempatan[i].personel[p].peran = val; markDirty(); generateReportText(); }
 
 /* ---------- Teks laporan (WA) ---------- */
@@ -647,13 +696,19 @@ function generateReportTextFromData(tanggal, shift, regu, kat, pos) {
     else if (r.jml > 0) ket = 'Lengkap';
     t += `${labelKategori(r.k)}\nJumlah : ${r.jml}\nHadir : ${r.hdr}\nKurang : ${r.krg || '-'}\nKeterangan :\n${ket}\n\n`;
   });
-  t += `*TOTAL HADIR: ${info.totalHadir} PERSONEL*\n\n------------------------------------\n\n*PENEMPATAN PERSONEL:*\n\n`;
+  const rHadir = rincianHadirWaktu(kat, shift);
+  if (rHadir.length) rHadir.forEach((r) => { t += `*TOTAL HADIR ${r.jumlah} PERSONEL (${r.mulai} - ${r.selesai})*\n`; });
+  else t += `*TOTAL HADIR: ${info.totalHadir} PERSONEL*\n`;
+  t += `\n------------------------------------\n\n*PENEMPATAN PERSONEL:*\n\n`;
   info.posRows.forEach((r) => {
     t += `*${AVS.namaPosPersonelTerbaru(r.p.id, r.p.name)}*\n`;
     if (!r.valid.length) t += `- Nihil\n\n`;
     else { r.valid.forEach((p, i) => { t += `${i + 1}. ${rapikan(p.nama)}${p.peran ? ' ' + p.peran : ''}${p.jam ? ' (' + p.jam + ')' : ''}\n`; }); t += `\n`; }
   });
-  t += `*TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL*\n\n`;
+  const rPenempatan = rincianPenempatanWaktu(pos, kat, shift);
+  if (rPenempatan.length) rPenempatan.forEach((r) => { t += `*TOTAL PENEMPATAN ${r.jumlah} PERSONEL (${r.mulai} - ${r.selesai})*\n`; });
+  else t += `*TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL*\n`;
+  t += `\n`;
   const pb = getPembuatLaporanInfo(pos, 'text');
   t += `Dibuat oleh,\n${pb.jabatanLabel},\n\n\n( ${pb.nama} )`;
   return t;
@@ -741,7 +796,7 @@ function togglePratinjau(force) {
 }
 
 /* ---------- Laci "Lihat" (tampilan web hanya-baca, tidak dapat diubah) ---------- */
-function renderLihatHTML(kat, pos) {
+function renderLihatHTML(kat, pos, shift) {
   const info = hitungData(kat, pos);
   const pb = getPembuatLaporanInfo(pos, 'text');
   let html = info.rows.map((row) => {
@@ -751,26 +806,32 @@ function renderLihatHTML(kat, pos) {
       : '<div class="lihat-empty">Lengkap, tidak ada yang tidak hadir.</div>';
     return `<div class="lb-auto"><div class="t"><i></i>${judul}</div>${isi}</div>`;
   }).join('') || '<div class="lihat-empty">Belum ada kategori kekuatan.</div>';
-  html += `<div class="lihat-total">TOTAL HADIR: <b>${info.totalHadir}</b> PERSONEL</div>`;
+  const rHadir = rincianHadirWaktu(kat, shift);
+  html += rHadir.length
+    ? rHadir.map((r) => `<div class="lihat-total">TOTAL HADIR ${r.jumlah} PERSONEL (${r.mulai} - ${r.selesai})</div>`).join('')
+    : `<div class="lihat-total">TOTAL HADIR: <b>${info.totalHadir}</b> PERSONEL</div>`;
   html += info.posRows.map((row) => {
     const isi = row.valid.length
       ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}${p.peran ? ` <small style="color:#8A94A6;font-weight:600">${esc(p.peran)}</small>` : ''}${p.jam ? ` <small style="color:#157A82;font-weight:700">${esc(p.jam)}</small>` : ''}</span></div>`).join('')
       : '<div class="lihat-empty">Nihil.</div>';
     return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosPersonelTerbaru(row.p.id, row.p.name))} &mdash; ${row.valid.length} orang</div>${isi}</div>`;
   }).join('') || '<div class="lihat-empty">Belum ada pos penempatan.</div>';
-  html += `<div class="lihat-total">TOTAL PENEMPATAN: <b>${info.totalPenempatan}</b> PERSONEL</div>`;
+  const rPenempatan = rincianPenempatanWaktu(pos, kat, shift);
+  html += rPenempatan.length
+    ? rPenempatan.map((r) => `<div class="lihat-total">TOTAL PENEMPATAN ${r.jumlah} PERSONEL (${r.mulai} - ${r.selesai})</div>`).join('')
+    : `<div class="lihat-total">TOTAL PENEMPATAN: <b>${info.totalPenempatan}</b> PERSONEL</div>`;
   html += `<div class="lihat-footer">Dibuat oleh, ${esc(pb.jabatanLabel.replace(/\n/g, ' '))} &mdash; ${esc(pb.nama)}</div>`;
   return html;
 }
 function bukaLihat(id) {
   const r = getReports().find((x) => x.id === id); if (!r) return;
   $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
-  $('lihatIsi').innerHTML = renderLihatHTML(r.kategoriKekuatan, r.posPenempatan);
+  $('lihatIsi').innerHTML = renderLihatHTML(r.kategoriKekuatan, r.posPenempatan, r.shift);
   togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
 }
 function bukaLihatDraft() {
   $('lihatSub').textContent = `Regu ${$('regu').value || '-'} • ${($('shift').value || '').split(' (')[0]} • ${$('tanggal').value ? formatTanggalIndo($('tanggal').value) : '-'} • (draf belum disimpan)`;
-  $('lihatIsi').innerHTML = renderLihatHTML(kategoriKekuatan, posPenempatan);
+  $('lihatIsi').innerHTML = renderLihatHTML(kategoriKekuatan, posPenempatan, $('shift').value);
   togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
 }
 function tutupLihat() { $('drawerLihat').classList.remove('open'); }
