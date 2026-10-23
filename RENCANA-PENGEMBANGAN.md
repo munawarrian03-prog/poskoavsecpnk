@@ -692,3 +692,22 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
      Dipisah jadi `sscp_remote_dom`/`sscp_remote_int`.
   2. Id `vp_r4-as` pakai tanda hubung (beda dari konvensi id pos lain, huruf kecil +
      underscore) — disamakan jadi `vp_r4_as`.
+
+### Update daftar Kategori Kekuatan Personel (10 kategori)
+- **Status:** Selesai
+- **Diverifikasi:** Playwright — 10 kategori tampil, id unik semua; "SECWAN ORGANIK" sudah
+  tidak ada di daftar baru (dikonfirmasi sengaja dihapus); `rdo_pagi`/`rdo_malam` ada;
+  `iass_ojt` sekarang bernama "IASS NEW PP" dgn jam 05:00-17:00; regresi — laporan LAMA
+  yang menyimpan kategori lama ("SECWAN ORGANIK", "PERSONEL RDO") tetap tampil normal di
+  PDF tanpa error (kategoriKekuatan disalin ke tiap laporan saat disimpan, bukan rujukan
+  live by id, jadi aman dari perubahan daftar baku ini — beda mekanismenya dari
+  POS_BAWAAN).
+- **Dicatat:** 2026-10-23
+- **Konteks:** Permintaan pengguna — update lanjutan daftar `KATEGORI_BAWAAN`:
+  - **"SECWAN ORGANIK" dihapus** (dikonfirmasi sengaja sebelum diterapkan — sempat
+    ditanyakan krn tidak ada di daftar baru yang dikirim, padahal ada di daftar lama).
+  - `iass_ojt`/`iass_ojt1`/`iass_ojt2` (dulu semua bernama "IASS OJT" dgn jam beda-beda)
+    diganti nama & jamnya: "IASS NEW PP" (05:00-17:00), "IASS NEW PS" (07:00-19:00),
+    "IASS NEW PM" (09:30-21:00).
+  - `rdo` ("PERSONEL RDO") dipecah jadi 2: `rdo_pagi` ("IASS RDO PAGI", 07:00-19:00) &
+    `rdo_malam` ("IASS RDO MALAM", 19:00-07:00, lewat tengah malam).

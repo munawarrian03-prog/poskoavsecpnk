@@ -10,15 +10,15 @@
 // =====================================================
 const KATEGORI_BAWAAN = [
   { id: 'org_pagi',   nama: 'ORGANIK',                    mulai: '',      selesai: ''      },
-  { id: 'sec_org',    nama: 'SECWAN ORGANIK',             mulai: '05:00', selesai: '17:00' },
   { id: 'org_pjd',    nama: 'ORGANIK PJD',                mulai: '06:00', selesai: '18:00' },
   { id: 'iass_pagi',  nama: 'IASS PAGI',                  mulai: '08:00', selesai: '20:00' },
   { id: 'iass_malam', nama: 'IASS MALAM',                 mulai: '20:00', selesai: '08:00' },
   { id: 'iass_pp',    nama: 'IASS PP',                    mulai: '05:00', selesai: '17:00' },
-  { id: 'iass_ojt',   nama: 'IASS OJT',                   mulai: '05:00', selesai: '15:00' },
-  { id: 'iass_ojt1',  nama: 'IASS OJT',                   mulai: '13:00', selesai: '21:00' },
-  { id: 'iass_ojt2',  nama: 'IASS OJT',                   mulai: '07:30', selesai: '16:30' },
-  { id: 'rdo',        nama: 'PERSONEL RDO',               mulai: '07:00', selesai: '19:00' }
+  { id: 'iass_ojt',   nama: 'IASS NEW PP',                mulai: '05:00', selesai: '17:00' },
+  { id: 'iass_ojt1',  nama: 'IASS NEW PS',                mulai: '07:00', selesai: '19:00' },
+  { id: 'iass_ojt2',  nama: 'IASS NEW PM',                mulai: '09:30', selesai: '21:00' },
+  { id: 'rdo_pagi',   nama: 'IASS RDO PAGI',              mulai: '07:00', selesai: '19:00' },
+  { id: 'rdo_malam',  nama: 'IASS RDO MALAM',             mulai: '19:00', selesai: '07:00' }
 ];
 
 // Pos penempatan (tidak berubah-ubah, jadi tetap di sini)
