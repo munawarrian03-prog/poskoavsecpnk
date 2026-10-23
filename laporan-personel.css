@@ -36,6 +36,12 @@
 #penempatanContainer .dynamic-row .no { font-size: 9.5px; font-weight: 800; color: #8A94A6; }
 #penempatanContainer .dynamic-row input, #penempatanContainer .dynamic-row select { height: 26px; padding: 0 7px; font-size: 11px; }
 #penempatanContainer .btn-remove { width: 24px; height: 24px; padding: 0; font-size: 10px; }
+/* Baris ke-2 per nama: Kategori (sumber auto-isi jam) + Jam -- di bawah nama & peran,
+   grid-column 2/4 supaya sejajar dgn lebar nama+peran gabungan (bukan ikut kolom no/hapus). */
+#penempatanContainer .pos-jam-wrap { grid-column: 2 / 4; display: flex; gap: 5px; }
+#penempatanContainer .pos-kat { flex: 1; min-width: 0; height: 24px; padding: 0 6px; font-size: 10px; color: #475569; border: 1px solid #E3E8F0; border-radius: 6px; background: #fff; }
+#penempatanContainer .pos-jam { width: 84px; flex: none; height: 24px; padding: 0 7px; font-size: 10.5px; font-weight: 700; color: #5C6675; border: 1px solid #E3E8F0; border-radius: 6px; background: #FAFBFD; }
+#penempatanContainer .pos-jam:not(:placeholder-shown) { color: #157A82; border-color: #BEE3E3; background: #F2FAFA; }
 #penempatanContainer .btn-add { margin: 4px 8px 8px; padding: 4px 10px; font-size: 10.5px; }
 #penempatanContainer .status-nihil { margin: 6px 8px 0; }
 

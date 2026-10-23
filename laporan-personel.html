@@ -265,7 +265,7 @@ function normReport(r) {
     id: r.id, tanggal: r.tanggal, shift: r.shift, regu: r.regu, savedAt: r.savedAt,
     dibuatPada: r.dibuatPada, diperbaruiPada: r.diperbaruiPada, riwayat: r.riwayat, jumlahUbah: r.jumlahUbah,
     kategoriKekuatan: (r.kategoriKekuatan || []).map(normKategori),
-    posPenempatan: (r.posPenempatan || []).map((p) => ({ id: p.id, name: p.name, personel: (p.personel || []).map((x) => ({ nama: x.nama || '', peran: x.peran || '' })) }))
+    posPenempatan: (r.posPenempatan || []).map((p) => ({ id: p.id, name: p.name, personel: (p.personel || []).map((x) => ({ nama: x.nama || '', peran: x.peran || '', kategoriId: x.kategoriId || '', jam: x.jam || '' })) }))
   };
 }
 function kategoriAwal() {
@@ -559,6 +559,22 @@ function tambahKategori() {
 }
 
 /* ---------- Render: Penempatan ---------- */
+// Dropdown "Kategori" per nama -- opsi diambil dari kategoriKekuatan LAPORAN INI (bukan
+// KAT_BAWAAN), supaya cuma kategori yang memang dipakai di laporan ini yang muncul. Kalau
+// kategori yang sudah dipilih sebelumnya ternyata sudah dihapus dari daftar Kekuatan
+// Personel, tetap ditampilkan sbg opsi tersendiri (ditandai) -- supaya pilihan tidak hilang
+// diam-diam dan `jam` yang sudah terisi (beku, teks biasa) tidak ikut berubah.
+function opsiKategoriPos(kategoriIdTerpilih) {
+  let opsi = '<option value="">— Kategori (opsional) —</option>';
+  kategoriKekuatan.forEach((k) => {
+    const label = (k.mulai && k.selesai) ? `${k.nama} (${k.mulai}–${k.selesai})` : k.nama;
+    opsi += `<option value="${esc(k.id)}" ${k.id === kategoriIdTerpilih ? 'selected' : ''}>${esc(label)}</option>`;
+  });
+  if (kategoriIdTerpilih && !kategoriKekuatan.some((k) => k.id === kategoriIdTerpilih)) {
+    opsi += `<option value="${esc(kategoriIdTerpilih)}" selected>(kategori sudah dihapus dari laporan ini)</option>`;
+  }
+  return opsi;
+}
 function renderPenempatan() {
   const container = $('penempatanContainer');
   const st = container.scrollTop;
@@ -572,6 +588,10 @@ function renderPenempatan() {
 <input type="text" class="nm" list="listPersonel" placeholder="Nama personel" value="${esc(p.nama)}" oninput="updateNamaPos(${posIdx},${pIdx},this.value)">
 <select onchange="updatePeranPos(${posIdx},${pIdx},this.value)">${opts}</select>
 <button type="button" class="btn-remove" onclick="removePersonelPos(${posIdx},${pIdx})">✕</button>
+<div class="pos-jam-wrap">
+<select class="pos-kat" onchange="updateKategoriPos(${posIdx},${pIdx},this.value)">${opsiKategoriPos(p.kategoriId)}</select>
+<input type="text" class="pos-jam" placeholder="Jam" value="${esc(p.jam)}" title="Jam bertugas (opsional) -- terisi otomatis saat pilih Kategori, tetap bisa diedit manual" oninput="updateJamPos(${posIdx},${pIdx},this.value)">
+</div>
 </div>`;
     });
     return `
@@ -584,9 +604,21 @@ ${rows}
   container.scrollTop = st;
   calculateTotals();
 }
-function addPersonelPos(i) { posPenempatan[i].personel.push({ nama: '', peran: '' }); markDirty(); renderPenempatan(); }
+function addPersonelPos(i) { posPenempatan[i].personel.push({ nama: '', peran: '', kategoriId: '', jam: '' }); markDirty(); renderPenempatan(); }
 function removePersonelPos(i, p) { posPenempatan[i].personel.splice(p, 1); markDirty(); renderPenempatan(); }
 function updateNamaPos(i, p, val) { posPenempatan[i].personel[p].nama = val; markDirty(); calculateTotals(); }
+// Pilih Kategori -> isi `jam` otomatis dari mulai/selesai kategori itu (kalau kategori tsb
+// punya jam tetap -- mis. "ORGANIK (SHIFT PAGI/MALAM)" tidak punya, jam dibiarkan kosong,
+// Posko isi manual kalau perlu). `jam` TETAP teks biasa yang bisa diedit bebas sesudahnya --
+// bukan field terkunci -- krn jam dinas sungguhan kadang beda dari jam baku kategori.
+function updateKategoriPos(i, p, kategoriId) {
+  const entri = posPenempatan[i].personel[p];
+  entri.kategoriId = kategoriId;
+  const k = kategoriKekuatan.find((x) => x.id === kategoriId);
+  if (k && k.mulai && k.selesai) entri.jam = `${k.mulai}–${k.selesai}`;
+  markDirty(); renderPenempatan();
+}
+function updateJamPos(i, p, val) { posPenempatan[i].personel[p].jam = val; markDirty(); }
 function updatePeranPos(i, p, val) { posPenempatan[i].personel[p].peran = val; markDirty(); generateReportText(); }
 
 /* ---------- Teks laporan (WA) ---------- */
@@ -619,7 +651,7 @@ function generateReportTextFromData(tanggal, shift, regu, kat, pos) {
   info.posRows.forEach((r) => {
     t += `*${AVS.namaPosPersonelTerbaru(r.p.id, r.p.name)}*\n`;
     if (!r.valid.length) t += `- Nihil\n\n`;
-    else { r.valid.forEach((p, i) => { t += `${i + 1}. ${rapikan(p.nama)}${p.peran ? ' ' + p.peran : ''}\n`; }); t += `\n`; }
+    else { r.valid.forEach((p, i) => { t += `${i + 1}. ${rapikan(p.nama)}${p.peran ? ' ' + p.peran : ''}${p.jam ? ' (' + p.jam + ')' : ''}\n`; }); t += `\n`; }
   });
   t += `*TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL*\n\n`;
   const pb = getPembuatLaporanInfo(pos, 'text');
@@ -722,7 +754,7 @@ function renderLihatHTML(kat, pos) {
   html += `<div class="lihat-total">TOTAL HADIR: <b>${info.totalHadir}</b> PERSONEL</div>`;
   html += info.posRows.map((row) => {
     const isi = row.valid.length
-      ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}${p.peran ? ` <small style="color:#8A94A6;font-weight:600">${esc(p.peran)}</small>` : ''}</span></div>`).join('')
+      ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}${p.peran ? ` <small style="color:#8A94A6;font-weight:600">${esc(p.peran)}</small>` : ''}${p.jam ? ` <small style="color:#157A82;font-weight:700">${esc(p.jam)}</small>` : ''}</span></div>`).join('')
       : '<div class="lihat-empty">Nihil.</div>';
     return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosPersonelTerbaru(row.p.id, row.p.name))} &mdash; ${row.valid.length} orang</div>${isi}</div>`;
   }).join('') || '<div class="lihat-empty">Belum ada pos penempatan.</div>';

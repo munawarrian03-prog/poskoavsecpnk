@@ -605,3 +605,51 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
   ke Sheet, bukan ditingkatkan jadi autentikasi kriptografis. Siapa pun yang tahu TOKEN
   sinkronisasi secara teknis bisa memanggil endpoint `pengaturan` yang sama — konsisten
   dgn level proteksi seluruh sistem saat ini, bukan celah baru.
+
+### Riwayat pergantian personel per pos (field "Jam" + Kategori, auto-isi dari jam kategori)
+- **Status:** Selesai
+- **Diverifikasi:** Playwright —
+  (1) pilih kategori "SECWAN ORGANIK (05:00–17:00)" di satu nama di pos SSCP -> field Jam
+  otomatis terisi "05:00–17:00"; diedit manual jadi "05:00–17:30" -> tersimpan sesuai
+  editan manual (bukan ketimpa balik ke jam baku kategori), `kategoriId` tersimpan benar;
+  orang ke-2 di pos yang sama (kategori IASS PAGI, 08:00–20:00) tersimpan dgn jam berbeda ->
+  kedua jam tampil berurutan di PDF ("1. Andi Saputra (05:00–17:00) 2. Budi Santoso
+  (17:00–20:00)" versi contoh lain), drawer "Lihat", dan tabel web;
+  (2) kategori TANPA jam tetap (ORGANIK SHIFT PAGI/MALAM, mulai/selesai kosong di
+  kategori.js) -> field Jam TETAP KOSONG saat kategori itu dipilih, tidak error;
+  (3) regresi -- record LAMA (sebelum fitur ini ada, field `kategoriId`/`jam` tidak ada
+  sama sekali di data tersimpan) dibuka utk diedit -> dropdown Kategori & field Jam
+  tampil kosong wajar, tidak ada error console/halaman.
+- **Dicatat:** 2026-10-23 (didiskusikan & mockup disetujui sebelum dikerjakan)
+- **Konteks:** Laporan Personel dibuat SEKALI per shift (Pagi 08:00–20:00 / Malam
+  20:00–08:00, satu laporan per tanggal+shift+regu — tidak boleh duplikat). Tapi kategori
+  "Kekuatan Personel" di `kategori.js` punya jam dinas yang LEBIH PENDEK & beda-beda dari
+  jendela 12 jam itu (mis. SECWAN ORGANIK 05:00–17:00, ORGANIK PJD 06:00–18:00, IASS PP
+  05:00–17:00, PERSONEL RDO 07:00–19:00) — jadi personel yang jam dinasnya berakhir di
+  tengah shift lalu digantikan orang lain untuk sisa waktu TIDAK tercatat riwayat
+  pergantiannya, krn laporan cuma snapshot sekali (siapa yang ada SAAT laporan diisi/
+  disimpan), bukan sepanjang shift.
+- **Solusi dipilih (dari beberapa opsi yang didiskusikan):** memanfaatkan satu pos yang
+  SUDAH BISA diisi lebih dari satu nama ("+ Tambah personel") — tambah field "Jam" per
+  nama (teks bebas, mis. "05:00–17:00"), PLUS dropdown "Kategori" (opsional, diambil dari
+  `kategoriKekuatan` LAPORAN INI, bukan daftar baku global) yang kalau dipilih OTOMATIS
+  mengisi field Jam dari `mulai`/`selesai` kategori itu. Field Jam TETAP bisa diedit manual
+  stlh terisi otomatis (keputusan: jam dinas sungguhan kadang beda dari jam baku kategori).
+  Kategori tanpa jam tetap (mis. "ORGANIK SHIFT PAGI/MALAM") sengaja membiarkan Jam kosong
+  (keputusan: tidak ada jam baku yg relevan utk diisi).
+- **Implementasi:**
+  - `laporan-personel.html`: `posPenempatan[].personel[]` dapat 2 field baru opsional:
+    `kategoriId` (referensi ke id di `kategoriKekuatan` LAPORAN INI, bukan id global) &
+    `jam` (teks bebas, snapshot beku — TIDAK berubah otomatis lagi kalau kategori yang
+    dirujuk nanti diedit/dihapus, konsisten dgn pola graceful-fallback yang sudah ada di
+    app ini). `opsiKategoriPos()` (baru) membangun opsi dropdown + menjaga kategori yang
+    sudah dihapus dari laporan tetap tampil sbg opsi tersendiri (ditandai), biar pilihan
+    tidak hilang diam-diam. `updateKategoriPos()`/`updateJamPos()` (baru) menangani
+    perubahan. `normReport()`, teks WA (`generateReportTextFromData`), dan drawer "Lihat"
+    (`renderLihatHTML`) semuanya disesuaikan ikut menampilkan `jam`.
+  - `laporan-personel.css`: baris ke-2 per nama (`.pos-jam-wrap`, grid-column 2/4, sejajar
+    di bawah nama+peran) berisi dropdown Kategori + field Jam; field Jam berubah warna
+    (teal) saat terisi, menandakan ada catatan jam.
+  - `personel-pdf.js`: `tabelPenempatan()` menambahkan `(jam)` di belakang nama kalau
+    field `jam` terisi — otomatis berlaku jg utk record lama tanpa field ini (kosong ->
+    tidak nambah apa-apa, tidak error).
