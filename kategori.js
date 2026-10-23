@@ -16,7 +16,7 @@ const KATEGORI_BAWAAN = [
   { id: 'iass_pp',    nama: 'IASS PP',                    mulai: '05:00', selesai: '17:00' },
   { id: 'iass_ojt',   nama: 'IASS NEW PP',                mulai: '05:00', selesai: '17:00' },
   { id: 'iass_ojt1',  nama: 'IASS NEW PS',                mulai: '07:00', selesai: '19:00' },
-  { id: 'iass_ojt2',  nama: 'IASS NEW PM',                mulai: '09:30', selesai: '21:00' },
+  { id: 'iass_ojt2',  nama: 'IASS NEW PM',                mulai: '09:00', selesai: '21:00' },
   { id: 'rdo_pagi',   nama: 'IASS RDO PAGI',              mulai: '07:00', selesai: '19:00' },
   { id: 'rdo_malam',  nama: 'IASS RDO MALAM',             mulai: '19:00', selesai: '07:00' }
 ];

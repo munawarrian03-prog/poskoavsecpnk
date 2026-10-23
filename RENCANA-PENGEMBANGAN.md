@@ -708,6 +708,7 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
     ditanyakan krn tidak ada di daftar baru yang dikirim, padahal ada di daftar lama).
   - `iass_ojt`/`iass_ojt1`/`iass_ojt2` (dulu semua bernama "IASS OJT" dgn jam beda-beda)
     diganti nama & jamnya: "IASS NEW PP" (05:00-17:00), "IASS NEW PS" (07:00-19:00),
-    "IASS NEW PM" (09:30-21:00).
+    "IASS NEW PM" (09:00-21:00 — sempat tertulis 09:30, dikoreksi pengguna jadi 09:00
+    pada 2026-10-23).
   - `rdo` ("PERSONEL RDO") dipecah jadi 2: `rdo_pagi` ("IASS RDO PAGI", 07:00-19:00) &
     `rdo_malam` ("IASS RDO MALAM", 19:00-07:00, lewat tengah malam).
