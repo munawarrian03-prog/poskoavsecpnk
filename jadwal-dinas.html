@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jadwal Dinas - Sistem Pelaporan AVSEC Bandara Supadio</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10243D">
+<link rel="icon" type="image/png" href="Logo/AVS-192.png">
+<link rel="apple-touch-icon" href="Logo/AVS-192.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="layout.css">
+<link rel="stylesheet" href="beranda.css">
+<link rel="stylesheet" href="kejadian.css">
+<style>
+.jd-btn { height: 34px; padding: 0 14px; border-radius: 8px; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.jd-btn.teal { background: var(--secondary); color: #fff; }
+.jd-btn.danger { background: #FBE9E7; color: #A82F24; }
+#jdToolbar .monthpick { height: 30px; border-radius: 7px; }
+#jdToolbar .monthpick .cur { min-width: 148px; padding: 0 10px; font-size: 12px; }
+#jdToolbar .monthpick .arr { width: 28px; font-size: 13px; }
+#jdToolbar .monthpick .cur svg { width: 13px; height: 13px; }
+#jdToolbar .monthpick .cur small { display: none; }
+#jdToolbar .jd-search { height: 30px; padding: 0 9px; border: 1px solid #D0D8E3; border-radius: 7px; background: #fff; font-size: 12px; font-weight: 600; color: var(--text-main); width: 148px; }
+.jd-unit-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.jd-unit-tabs button { border: 1px solid #D7DEE8; background: #fff; color: #475569; font-weight: 700; font-size: 12px; padding: 7px 14px; border-radius: 20px; cursor: pointer; }
+.jd-unit-tabs button.on { background: #10243D; color: #fff; border-color: #10243D; }
+.jd-legenda { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+.jd-legenda span { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 700; color: #475569; background: #F3F5F8; border-radius: 20px; padding: 4px 10px 4px 6px; }
+.jd-legenda i { width: 14px; height: 14px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(16,36,61,.08); }
+.jd-tbl-wrap { overflow: auto; border: 1px solid var(--border-color); border-radius: 10px; background: #fff; max-height: 62vh; }
+table.jdtbl { border-collapse: collapse; font-size: 11px; white-space: nowrap; }
+table.jdtbl th, table.jdtbl td { border-bottom: 1px solid #EEF1F6; border-right: 1px solid #F3F5F8; padding: 5px 6px; text-align: center; }
+table.jdtbl thead th { position: sticky; top: 0; background: #F7F9FC; color: #8A94A6; font-size: 9.5px; font-weight: 800; text-transform: uppercase; z-index: 2; }
+table.jdtbl td.nm, table.jdtbl th.nm { position: sticky; left: 0; background: #fff; text-align: left; font-weight: 700; color: var(--ink); z-index: 1; min-width: 200px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+table.jdtbl thead th.nm { background: #F7F9FC; z-index: 3; }
+table.jdtbl td.jb { position: sticky; left: 200px; background: #fff; text-align: left; color: #8A94A6; font-weight: 600; font-size: 10px; min-width: 130px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; z-index: 1; }
+table.jdtbl thead th.jb { background: #F7F9FC; left: 200px; z-index: 3; }
+table.jdtbl tr.grp td { background: #EEF1F6; color: #10243D; font-weight: 800; text-align: left; padding: 6px 10px; }
+table.jdtbl tr.grp td.nm { min-width: 0; max-width: none; }
+table.jdtbl td.kd { min-width: 34px; padding: 4px 3px; }
+.kd-chip { display: inline-block; min-width: 28px; font-size: 10.5px; font-weight: 800; letter-spacing: .2px; border-radius: 6px; padding: 3px 0; box-shadow: inset 0 0 0 1px rgba(16,36,61,.06); }
+.jd-empty-cta { text-align: center; padding: 70px 20px; color: #8A94A6; }
+.jd-empty-cta .jd-btn { margin: 16px auto 0; }
+</style>
+</head>
+<body class="locked">
+
+<div id="lockScreen"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"><p>Desktop Only</p></div>
+
+<div class="main-wrapper">
+<div id="topBar"></div>
+
+<div class="toolbar" id="jdToolbar">
+<div class="fld"><label>Bulan</label><div id="bulanPicker"></div></div>
+<div class="fld"><label>Cari</label><input type="text" class="jd-search" id="jdCari" placeholder="Cari nama…" oninput="JD.renderTabelUnit()"></div>
+<span class="tsp"></span>
+<button type="button" class="tbtn" onclick="JD.bukaUpload()">⬆ Unggah Jadwal (.xlsx)</button>
+<button type="button" class="tbtn" id="btnHapusBulan" style="display:none" onclick="JD.hapusBulanIni()">🗑 Hapus Jadwal Bulan Ini</button>
+</div>
+
+<div class="d-wrap" id="dash">
+
+<div id="isiJadwal"><div class="empty" style="padding:60px 0">Memuat…</div></div>
+
+</div>
+</div>
+
+<!-- MODAL: UNGGAH JADWAL DINAS -->
+<div class="modal-overlay" id="uploadOverlay">
+<div class="modal-container" style="max-width:640px">
+<div class="modal-header"><span class="modal-title">UNGGAH JADWAL DINAS (.XLSX)</span><button type="button" class="modal-close" onclick="JD.tutupUpload()">✕</button></div>
+<div class="modal-body" id="uploadBody">
+<div class="privacy-note">Pilih bulan sesuai isi berkas, lalu pilih berkas Excel jadwal dinas. Sheet yang bukan berbentuk jadwal harian (mis. rekap jumlah jam, daftar nama tanpa tanggal) akan dilewati otomatis dan ditampilkan di bawah.</div>
+<div style="display:flex;gap:10px;margin-bottom:14px">
+<div class="fld2" style="flex:1"><label>Bulan</label><select id="upBulan" style="width:100%;height:34px;border:1px solid #D7DEE8;border-radius:8px;padding:0 9px;font:700 12px 'Montserrat','Inter'"></select></div>
+<div class="fld2" style="width:110px"><label>Tahun</label><select id="upTahun" style="width:100%;height:34px;border:1px solid #D7DEE8;border-radius:8px;padding:0 9px;font:700 12px 'Montserrat','Inter'"></select></div>
+</div>
+<label style="display:block;background:#E4F3F4;color:#0F5F65;font-weight:700;font-size:12.5px;text-align:center;padding:14px;border-radius:8px;cursor:pointer">⬆ Pilih Berkas Excel (.xlsx)
+<input type="file" accept=".xlsx" id="fileJadwal" style="display:none" onchange="JD.prosesBerkas(this)">
+</label>
+<div id="hasilProses" style="margin-top:14px"></div>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn-cancel" onclick="JD.tutupUpload()">Batal</button>
+<button type="button" class="btn-info" id="btnSimpanJadwal" style="display:none" onclick="JD.simpanHasil()">Simpan Jadwal Bulan Ini</button>
+</div>
+</div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="akses.js"></script>
+<script src="shell.js"></script>
+<script>AVS_gerbangUtama();</script>
+<script src="lib/xlsx.core.min.js"></script>
+<script src="jadwal-dinas-import.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const E = (s) => AVS.esc(s);
+  function toast(msg, tipe, ms) { const t = $('toast'); t.textContent = msg; t.className = 'show ' + (tipe || 'ok'); clearTimeout(toast.t); toast.t = setTimeout(() => { t.className = ''; }, ms || 4200); }
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const KUNCI = (y, m) => `${y}-${pad2(m + 1)}`;
+  const HARI_INI = new Date();
+
+  const MAKS_BULAN = { y: HARI_INI.getFullYear() + 1, m: HARI_INI.getMonth() }; // jadwal dinas wajar diunggah untuk bulan mendatang
+  let bulanAktif = { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() };
+  let unitAktifKey = null;
+  let pending = null; // hasil parsing yang menunggu disimpan
+
+  function semuaData() { try { return JSON.parse(localStorage.getItem('savedJadwalDinas') || '{}'); } catch (e) { return {}; } }
+  function simpanSemua(obj) { localStorage.setItem('savedJadwalDinas', JSON.stringify(obj)); }
+  function dataBulan(y, m) { return semuaData()[KUNCI(y, m)] || null; }
+
+  /* ---------- Klasifikasi warna kode shift (heuristik umum, bukan per-unit) ---------- */
+  function warnaKode(kode) {
+    const k = String(kode || '').toUpperCase();
+    if (k === 'L') return { bg: '#D9ECFB', fg: '#0B6BB8' };           // Libur (biru cerah)
+    if (k.startsWith('PJD')) return { bg: '#FDEBCF', fg: '#B4650C' }; // Dinas luar (amber)
+    if (k.startsWith('M')) return { bg: '#1D3A5C', fg: '#fff' };      // Malam (navy pekat)
+    if (!k) return { bg: 'transparent', fg: '#C7CDD6' };
+    return { bg: '#D9F0EE', fg: '#0B6B66' };                          // Pagi/OH/lainnya (teal)
+  }
+
+  /* ---------- Pemilih bulan (dipakai lintas halaman lain, lihat shell.js) ---------- */
+  let pickerCtrl = null;
+  function pasangPemilihBulan() {
+    pickerCtrl = AVS.pemilihBulan($('bulanPicker'), {
+      get: () => bulanAktif,
+      set: (y, m) => { bulanAktif = { y, m }; unitAktifKey = null; render(); },
+      info: (y, m) => { const d = dataBulan(y, m); return { teks: d ? `${d.units.length} unit` : '—' }; },
+      maks: MAKS_BULAN
+    });
+  }
+
+  /* ---------- Tabel jadwal per unit ---------- */
+  function jumlahHari(y, m) { return new Date(y, m + 1, 0).getDate(); }
+  function renderTabelUnit() {
+    const data = dataBulan(bulanAktif.y, bulanAktif.m);
+    const wrap = $('isiJadwal');
+    if (!data || !data.units.length) return;
+    const unit = data.units.find((u) => u.key === unitAktifKey) || data.units[0];
+    unitAktifKey = unit.key;
+    const nHari = jumlahHari(bulanAktif.y, bulanAktif.m);
+    const cari = ($('jdCari').value || '').trim().toLowerCase();
+
+    const legenda = unit.legenda.length ? `<div class="jd-legenda">${unit.legenda.map((l) => { const w = warnaKode(l.kode); return `<span><i style="background:${w.bg}"></i>${E(l.kode)} — ${E(l.label)}</span>`; }).join('')}</div>` : '';
+
+    const thHari = Array.from({ length: nHari }, (_, i) => `<th>${i + 1}</th>`).join('');
+    let baris = '';
+    unit.grup.forEach((g) => {
+      const orang = g.orang.filter((o) => !cari || o.nama.toLowerCase().includes(cari));
+      if (!orang.length) return;
+      if (unit.punyaGrup) baris += `<tr class="grp"><td class="nm" colspan="2">${E(g.nama)} <span style="font-weight:600;color:#8A94A6">(${orang.length} orang)</span></td><td colspan="${nHari}"></td></tr>`;
+      orang.forEach((o) => {
+        const sel = Array.from({ length: nHari }, (_, i) => {
+          const iso = `${bulanAktif.y}-${pad2(bulanAktif.m + 1)}-${pad2(i + 1)}`;
+          const kode = o.jadwal[iso] || '';
+          const w = warnaKode(kode);
+          const isi = kode ? `<span class="kd-chip" style="background:${w.bg};color:${w.fg}">${E(kode)}</span>` : `<span style="color:${w.fg}">–</span>`;
+          return `<td class="kd" title="${E(iso)}">${isi}</td>`;
+        }).join('');
+        baris += `<tr><td class="nm" title="${E(o.nama)}">${E(o.nama)}</td><td class="jb" title="${E(o.jabatan)}">${E(o.jabatan)}</td>${sel}</tr>`;
+      });
+    });
+    if (!baris) baris = `<tr><td class="nm" colspan="${2 + nHari}" style="color:#8A94A6;font-weight:600">Tidak ada nama yang cocok.</td></tr>`;
+
+    wrap.innerHTML = `
+<div class="jd-unit-tabs">${data.units.map((u) => `<button type="button" class="${u.key === unitAktifKey ? 'on' : ''}" onclick="JD.pilihUnit('${u.key.replace(/'/g, "\\'")}')">${E(u.nama)}</button>`).join('')}</div>
+${legenda}
+<div class="jd-tbl-wrap" style="margin-top:10px"><table class="jdtbl"><thead><tr><th class="nm">Nama</th><th class="jb">Jabatan</th>${thHari}</tr></thead><tbody>${baris}</tbody></table></div>
+${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8A94A6;font-weight:600;margin-top:8px">Dilewati saat impor: ${data.dilewati.map((d) => `${E(d.sheet)} (${E(d.alasan)})`).join(', ')}.</div>` : ''}`;
+  }
+
+  function pilihUnit(key) { unitAktifKey = key; renderTabelUnit(); }
+
+  function render() {
+    if (pickerCtrl) pickerCtrl.refresh();
+    const data = dataBulan(bulanAktif.y, bulanAktif.m);
+    $('btnHapusBulan').style.display = data ? '' : 'none';
+    if (!data || !data.units.length) {
+      $('isiJadwal').innerHTML = `<div class="jd-empty-cta"><div style="font-size:15px;font-weight:800;color:var(--ink)">Belum ada jadwal dinas untuk ${AVS.BULAN[bulanAktif.m]} ${bulanAktif.y}</div><div style="margin-top:6px">Unggah berkas Excel jadwal dinas bulan ini untuk mulai menampilkannya di sini.</div><button type="button" class="jd-btn teal" onclick="JD.bukaUpload()">⬆ Unggah Jadwal (.xlsx)</button></div>`;
+      return;
+    }
+    renderTabelUnit();
+  }
+
+  /* ---------- Modal unggah ---------- */
+  function renderOpsiBulanUpload() {
+    const selB = $('upBulan'), thn = +$('upTahun').value;
+    const maksBulanTahunIni = thn >= MAKS_BULAN.y ? MAKS_BULAN.m : 11;
+    const terpilihSebelumnya = selB.value !== '' ? +selB.value : bulanAktif.m;
+    const bulanAwal = Math.min(terpilihSebelumnya, maksBulanTahunIni);
+    selB.innerHTML = AVS.BULAN.map((n, i) => `<option value="${i}" ${i > maksBulanTahunIni ? 'disabled' : ''} ${i === bulanAwal ? 'selected' : ''}>${n}</option>`).join('');
+  }
+  function bukaUpload() {
+    const selT = $('upTahun'), thn = bulanAktif.y;
+    const opsiT = []; for (let y = thn - 1; y <= MAKS_BULAN.y; y++) opsiT.push(y);
+    selT.innerHTML = opsiT.map((y) => `<option value="${y}" ${y === thn ? 'selected' : ''}>${y}</option>`).join('');
+    selT.onchange = renderOpsiBulanUpload;
+    $('upBulan').innerHTML = ''; // reset supaya ikut bulan yang sedang aktif di halaman, bukan sisa pilihan modal sebelumnya
+    renderOpsiBulanUpload();
+    $('fileJadwal').value = '';
+    $('hasilProses').innerHTML = '';
+    $('btnSimpanJadwal').style.display = 'none';
+    pending = null;
+    $('uploadOverlay').style.display = 'flex';
+  }
+  function tutupUpload() { $('uploadOverlay').style.display = 'none'; }
+
+  function prosesBerkas(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (typeof XLSX === 'undefined') { toast('Pustaka Excel (lib/xlsx.core.min.js) tidak termuat.', 'err'); return; }
+    const tahun = +$('upTahun').value, bulan = +$('upBulan').value;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const wb = XLSX.read(reader.result, { type: 'array', cellDates: true });
+        const sheetToRows = (nama) => XLSX.utils.sheet_to_json(wb.Sheets[nama], { header: 1, raw: true, defval: null });
+        const hasil = AVS.JadwalImport.praProsesWorkbook(wb.SheetNames, sheetToRows, { tahun, bulan });
+        if (!hasil.units.length) {
+          const alasanLewat = hasil.dilewati.map((d) => `${E(d.sheet)} — ${E(d.alasan)}`).join('<br>');
+          $('hasilProses').innerHTML = `<div class="empty" style="padding:20px 0">Tidak ada sheet yang dikenali sebagai jadwal harian di berkas ini.${alasanLewat ? '<br><br>' + alasanLewat : ''}</div>`;
+          $('btnSimpanJadwal').style.display = 'none'; pending = null; return;
+        }
+        pending = { diimporPada: new Date().toISOString(), namaBerkas: file.name, units: hasil.units, dilewati: hasil.dilewati, bulan: { tahun, bulan } };
+        const ringkasUnit = hasil.units.map((u) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #EEF1F6"><span><b>${E(u.nama)}</b>${u.punyaGrup ? ` <span style="color:#8A94A6;font-weight:600">(${u.grup.length} grup)</span>` : ''}</span><span style="color:#8A94A6;font-weight:700">${u.grup.reduce((n, g) => n + g.orang.length, 0)} orang</span></div>`).join('');
+        const ringkasLewat = hasil.dilewati.length ? `<div style="margin-top:10px;font-size:11px;color:#8A94A6;font-weight:600">Dilewati: ${hasil.dilewati.map((d) => `${E(d.sheet)} — ${E(d.alasan)}`).join('; ')}</div>` : '';
+        $('hasilProses').innerHTML = `<div style="font-size:11.5px;font-weight:800;color:#8A94A6;text-transform:uppercase;margin-bottom:4px">Ditemukan ${hasil.units.length} unit</div>${ringkasUnit}${ringkasLewat}`;
+        $('btnSimpanJadwal').style.display = '';
+      } catch (e) {
+        console.error(e);
+        $('hasilProses').innerHTML = `<div class="empty" style="padding:20px 0;color:#A82F24">Gagal membaca berkas: ${E(e.message || e)}</div>`;
+        $('btnSimpanJadwal').style.display = 'none'; pending = null;
+      }
+    };
+    reader.onerror = () => toast('Gagal membaca berkas.', 'err');
+    reader.readAsArrayBuffer(file);
+  }
+
+  function simpanHasil() {
+    if (!pending) return;
+    const kunci = KUNCI(pending.bulan.tahun, pending.bulan.bulan);
+    const semua = semuaData();
+    if (semua[kunci] && !confirm(`Jadwal untuk ${AVS.BULAN[pending.bulan.bulan]} ${pending.bulan.tahun} sudah ada. Timpa dengan berkas ini?`)) return;
+    semua[kunci] = { diimporPada: pending.diimporPada, namaBerkas: pending.namaBerkas, units: pending.units, dilewati: pending.dilewati };
+    simpanSemua(semua);
+    bulanAktif = { y: pending.bulan.tahun, m: pending.bulan.bulan };
+    unitAktifKey = null;
+    tutupUpload();
+    render();
+    toast('Jadwal dinas tersimpan.');
+  }
+
+  function hapusBulanIni() {
+    if (!confirm(`Hapus jadwal dinas untuk ${AVS.BULAN[bulanAktif.m]} ${bulanAktif.y}?`)) return;
+    const semua = semuaData();
+    delete semua[KUNCI(bulanAktif.y, bulanAktif.m)];
+    simpanSemua(semua);
+    render();
+    toast('Jadwal dinas bulan ini dihapus.');
+  }
+
+  window.JD = { pilihUnit, renderTabelUnit, bukaUpload, tutupUpload, prosesBerkas, simpanHasil, hapusBulanIni };
+
+  AVS.pasangKunci();
+  AVS.nav('jadwal');
+  pasangPemilihBulan();
+  render();
+})();
+</script>
+</body>
+</html>

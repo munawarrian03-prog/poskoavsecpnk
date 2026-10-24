@@ -15,9 +15,13 @@
 // untuk laporan yang sedang dibuat; file ini adalah nilai awalnya.
 // id item harus unik dalam satu pos, huruf kecil + underscore.
 //
-// CATATAN PENTING: pos "SCP VIP" (id: scp_vip di kategori.js) BELUM
+// CATATAN PENTING: pos "PSCP VIP" (id: scp_vip di kategori.js) BELUM
 // dimasukkan ke sini. Isinya menunggu konfirmasi pengguna — lihat
 // RENCANA-PENGEMBANGAN.md, Tahap 1, sebelum melengkapi pos ini.
+//
+// Pos patroli/baru di kategori.js (ph_dz, ph_pz, walking_P, vp_r4, P_15,
+// P_33) SENGAJA TIDAK dimasukkan ke sini — sifatnya mobile/patroli, tidak
+// punya checklist peralatan tetap tersendiri (sudah dikonfirmasi pengguna).
 // =====================================================
 
 const POS_FASILITAS_BAWAAN = [
@@ -26,8 +30,8 @@ const POS_FASILITAS_BAWAAN = [
     name: 'POSKO',
     items: [
       { id: 'posko_pc',   name: 'Komputer/PC',  bentuk: 'A' },
-      { id: 'posko_pabx', name: 'PABX/Telepon', bentuk: 'A' }
-      // Tanpa item Kelengkapan (C) — POSKO tidak punya dokumen yang dicek di sini.
+      { id: 'posko_pabx', name: 'PABX/Telepon', bentuk: 'A' },
+      { id: 'posko_dok',  name: 'Dokumen',      bentuk: 'C' }
     ]
   },
   {
@@ -67,8 +71,8 @@ const POS_FASILITAS_BAWAAN = [
     ]
   },
   {
-    id: 'scp_int', // = "PSCP LAGs" di kategori.js
-    name: 'PSCP LAGs',
+    id: 'scp_int', // = "LAGs INSPECTION" di kategori.js
+    name: 'LAGs INSPECTION',
     items: [
       { id: 'lags_xray', name: 'Mesin X-Ray', bentuk: 'A' },
       { id: 'lags_lock', name: 'Locker',       bentuk: 'A' },
@@ -77,8 +81,10 @@ const POS_FASILITAS_BAWAAN = [
     ]
   },
   {
-    id: 'scp_transit', // = "SSCP + KEDATANGAN" di kategori.js (nama tampil beda, lihat catatan di bawah)
-    name: 'SSCP (Dep & Arr)',
+    id: 'sscp', // = "SSCP" di kategori.js (dulu 'scp_transit'/"SSCP + (Dep & Arr)", kini pos
+                // SSCP dipecah jadi 5 di Laporan Personel: sscp/sscp_ci/sscp_ad/sscp_ai/
+                // sscp_remote, tapi tetap satu checklist peralatan fisik di sini)
+    name: 'SSCP',
     items: [
       { id: 'sscp_xray', name: 'Mesin X-Ray', bentuk: 'A' },
       { id: 'sscp_wtmd', name: 'WTMD',         bentuk: 'A' },
@@ -100,8 +106,8 @@ const POS_FASILITAS_BAWAAN = [
       { id: 'cctv_mon',    name: 'Monitor',      bentuk: 'B', jumlahBawaan: 8 },
       { id: 'cctv_ups',    name: 'UPS',          bentuk: 'B', jumlahBawaan: 2 },
       { id: 'cctv_charger',name: 'Charger HT',   bentuk: 'B', jumlahBawaan: 2 },
-      { id: 'cctv_ht',     name: 'Handy Talky',  bentuk: 'B', jumlahBawaan: 10 }
-      // Tanpa item Kelengkapan (C) — belum disepakati CCTV punya dokumen yang dicek.
+      { id: 'cctv_ht',     name: 'Handy Talky',  bentuk: 'B', jumlahBawaan: 10 },
+      { id: 'cctv_dok',    name: 'Dokumen',      bentuk: 'C' }
     ]
   },
   {
@@ -114,16 +120,16 @@ const POS_FASILITAS_BAWAAN = [
       { id: 'ascp_lock',    name: 'Locker',              bentuk: 'A' },
       { id: 'ascp_mirror',  name: 'Mirror Detector',     bentuk: 'A' },
       { id: 'ascp_charger', name: 'Charger HT',          bentuk: 'A' },
-      { id: 'ascp_ht',      name: 'Handy Talky', bentuk: 'B', jumlahBawaan: 4 }
-      // Tanpa item Kelengkapan (C).
+      { id: 'ascp_ht',      name: 'Handy Talky', bentuk: 'B', jumlahBawaan: 4 },
+      { id: 'ascp_dok',     name: 'Dokumen',     bentuk: 'C' }
     ]
   },
   {
     id: 'ph_protection', // = "PUBLIC HALL" di kategori.js
-    name: 'Public Hall',
+    name: 'PUBLIC HALL',
     items: [
-      { id: 'ph_patroli', name: 'Mobil Patroli-03', bentuk: 'A' }
-      // Tanpa item Kelengkapan (C).
+      { id: 'ph_patroli', name: 'Mobil Patroli-03', bentuk: 'A' },
+      { id: 'ph_dok',     name: 'Dokumen',          bentuk: 'C' }
     ]
   }
 

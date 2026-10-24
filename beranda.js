@@ -14,6 +14,10 @@
   const BULAN_PENDEK = A.BULAN_PENDEK, BULAN = A.BULAN;
 
   let personel = [], fasilitas = [], logbook = [], kejadian = [];
+  let bulanTerpilih = { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() };
+  let kepatuhanCache = { total: 0, personelBelum: 0, fasilitasBelum: 0, logbookBelum: 0, daftar: [] };
+  let kejadianCache = { lk: { daftar: [] }, bast: { daftar: [] } }; // dipakai lagi oleh bukaKejadianPenuh/bukaBastPenuh
+  const SVG_MATA = '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
 
   function toast(msg, tipe, ms) { const t = $('toast'); t.textContent = msg; t.className = 'show ' + (tipe || 'ok'); clearTimeout(toast.t); toast.t = setTimeout(() => { t.className = ''; }, ms || 4200); }
 
@@ -42,8 +46,8 @@
   function ringkasBermasalahFasilitas(rec) {
     const out = [];
     (rec.posFasilitas || []).forEach((p) => (p.items || []).forEach((it) => {
-      if (it.bentuk === 'A' && (it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan')) out.push({ nama: `${it.name} — ${it.keterangan || (it.kondisi === 'Rusak' ? 'Rusak' : 'Tidak Digunakan')}`, jenis: it.kondisi === 'Rusak' ? 'Rusak' : 'Tidak Digunakan', pos: p.name });
-      if (it.bentuk === 'B' && (it.rusak || 0) > 0) out.push({ nama: `${it.name} (${it.rusak} unit)`, jenis: 'Rusak', pos: p.name });
+      if (it.bentuk === 'A' && (it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan')) out.push({ nama: `${it.name} — ${it.keterangan || (it.kondisi === 'Rusak' ? 'Rusak' : 'Tidak Digunakan')}`, jenis: it.kondisi === 'Rusak' ? 'Rusak' : 'Tidak Digunakan', pos: A.namaPosFasilitasTerbaru(p.id, p.name) });
+      if (it.bentuk === 'B' && (it.rusak || 0) > 0) out.push({ nama: `${it.name} (${it.rusak} unit)`, jenis: 'Rusak', pos: A.namaPosFasilitasTerbaru(p.id, p.name) });
     }));
     return out;
   }
@@ -85,9 +89,14 @@
   }
 
   /* =========================================================
-     BAGIAN 2 — BULAN INI
+     BAGIAN 2 — BULANAN (pengganti "Bulan Ini"): dipilih lewat pemilih bulan,
+     bukan selalu bulan berjalan. 2 baris x 3 kartu, semua tinggi dinamis (rauto).
      ========================================================= */
-  function skalaY(maxVal) { const mv = Math.max(4, maxVal), step = mv <= 6 ? 2 : mv <= 12 ? 4 : Math.ceil(mv / 3 / 2) * 2; return { step, max: Math.ceil(mv / step) * step }; }
+  function monthISORange(y, m) {
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const akhir = new Date(y, m + 1, 0).getDate();
+    return { start: `${y}-${pad2(m + 1)}-01`, end: `${y}-${pad2(m + 1)}-${pad2(akhir)}` };
+  }
 
   function grafikDonat(alasanList, unit) {
     if (!alasanList.length) return null;
@@ -104,60 +113,164 @@
     return `<div class="donutwrap">${svgD}<div class="dl">${leg}</div></div>`;
   }
 
-  function tabelTerbanyak(top) {
-    if (!top.length) return '<div class="empty">Belum ada data ketidakhadiran<br>pada bulan ini.</div>';
-    const mx = Math.max(...top.map((x) => x.jumlah)), tag = { 'Sakit': ['#FBE9E7', '#A82F24'], 'Cuti Tahunan': ['#E4F3F4', '#0F5F65'], 'Izin': ['#FCF1DF', '#9A5F12'], 'Dinas Luar': ['#E6ECF4', '#1D3A5C'] };
-    return `<table class="tp"><thead><tr><th>#</th><th>Nama</th><th>Regu</th><th>Hari</th><th></th><th>Alasan utama</th></tr></thead><tbody>${top.map((x, i) => { const c = tag[x.alasan] || ['#EEF1F6', '#5C6675']; return `<tr><td class="rk">${i + 1}</td><td class="nm">${E(x.nama.toUpperCase())}</td><td>${E(x.regu)}</td><td><b>${x.jumlah}</b></td><td class="mb"><i style="width:${x.jumlah / mx * 100}%"></i></td><td><span class="tag" style="background:${c[0]};color:${c[1]}">${E(x.alasan)}</span></td></tr>`; }).join('')}</tbody></table>`;
-  }
-
-  function tabelFasilitasSering(top) {
-    if (!top.length) return '<div class="empty">Belum ada masalah fasilitas<br>dilaporkan bulan ini.</div>';
-    const mx = Math.max(...top.map((x) => x.jumlah));
-    const warna = (j) => j === 'Rusak' ? ['#FBE9E7', '#A82F24'] : ['#FCF1DF', '#9A5F12'];
-    return `<table class="tp tpf"><thead><tr><th>#</th><th>Item</th><th>Pos</th><th>Kali</th><th></th><th>Jenis terbanyak</th></tr></thead><tbody>${top.map((x, i) => { const c = warna(x.jenis); return `<tr><td class="rk">${i + 1}</td><td class="nm">${E(x.item)}</td><td class="ps">${E(x.pos)}</td><td><b>${x.jumlah}</b></td><td class="mb"><i style="width:${x.jumlah / mx * 100}%;background:#9A5F12"></i></td><td><span class="jn" style="background:${c[0]};color:${c[1]}">${E(x.jenis)}</span></td></tr>`; }).join('')}</tbody></table>`;
-  }
-
-  function grafikMinggu(k, m) {
-    const d = k.perMinggu, W = 420, H = 150, base = 118, top = 16, sk = skalaY(Math.max(0, ...d.map((x) => x.jumlah))); let s = '';
-    for (let g = 0; g <= sk.max; g += sk.step) { const yy = base - g / sk.max * (base - top); s += `<line x1="26" x2="${W}" y1="${yy}" y2="${yy}" stroke="#E9EDF4"/><text x="18" y="${yy + 3.5}" text-anchor="end" font-size="9.5" fill="#8A94A6" font-weight="600">${g}</text>`; }
-    const mxv = Math.max(0, ...d.map((x) => x.jumlah));
-    d.forEach((w, i) => {
-      const x = 52 + i * 96, h = w.jumlah / sk.max * (base - top);
-      s += w.masaDepan ? `<rect x="${x}" y="${base - 4}" width="44" height="4" rx="2" fill="#E1E6EF"/>`
-        : w.jumlah === 0 ? `<rect x="${x}" y="${base - 3}" width="44" height="3" rx="1.5" fill="#D5DCE7"/><text x="${x + 22}" y="${base - 9}" text-anchor="middle" font-size="12" font-weight="800" fill="#8A94A6">0</text>`
-        : `<rect x="${x}" y="${base - h}" width="44" height="${h}" rx="6" fill="${w.jumlah === mxv ? '#C93B2E' : '#E58A80'}"/><text x="${x + 22}" y="${base - h - 6}" text-anchor="middle" font-size="12" font-weight="800" fill="#10243D">${w.jumlah}</text>`;
-      s += `<text x="${x + 22}" y="${base + 15}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#1A2233">${w.label}</text><text x="${x + 22}" y="${base + 28}" text-anchor="middle" font-size="9.5" font-weight="600" fill="#8A94A6">${w.rentang} ${BULAN_PENDEK[m]}</text>`;
+  // Grafik batang horizontal satu seri (satu warna tetap) -- nama personel di sumbu Y,
+  // jumlah hari tidak hadir di sumbu X. Tinggi SVG mengikuti jumlah baris (dynamic height).
+  function grafikBatangNama(items, warna) {
+    // Tebal batang (9px, rx 5) disamakan dengan .kr-track di kartu "Shift Belum Lengkap" (beranda.css).
+    const w = 420, rh = 28, tebal = 9, gap = 10, laby = 108, mx = Math.max(...items.map((x) => x.jumlah)) || 1;
+    const potong = (s) => s.length > 15 ? s.slice(0, 14) + '…' : s;
+    const h = items.length * (rh + gap) - gap;
+    let s = `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">`;
+    items.forEach((it, i) => {
+      const y = i * (rh + gap) + (rh - tebal) / 2, bw = (it.jumlah / mx) * (w - laby - 34);
+      s += `<text x="0" y="${i * (rh + gap) + rh / 2 + 4}" font-size="11.5" font-weight="700" fill="#1A2233"><title>${E(it.nama)}</title>${E(potong(it.nama))}</text>`;
+      s += `<rect x="${laby}" y="${y}" width="${w - laby - 34}" height="${tebal}" rx="5" fill="#EAEFF5"/>`;
+      s += `<rect x="${laby}" y="${y}" width="${Math.max(bw, 3)}" height="${tebal}" rx="5" fill="${warna}"/>`;
+      s += `<text x="${w - 2}" y="${i * (rh + gap) + rh / 2 + 4}" text-anchor="end" font-size="12.5" font-weight="800" fill="${warna}">${it.jumlah}</text>`;
     });
-    return `<svg width="${W}" height="${H + 12}" viewBox="0 0 ${W} ${H + 12}">${s}</svg>`;
-  }
-  function daftarKejadian(k, m) {
-    const t = k.terbaru;
-    if (!t.length) return '<div class="empty">Belum ada laporan kejadian<br>pada bulan ini.</div>';
-    return `<div class="evlist">${t.map((x) => `<div class="ev"><a class="evmain" href="kejadian.html#ubah=${encodeURIComponent(x.id)}" title="Buka laporan"><div class="dt"><b>${String(x.hari).padStart(2, '0')}</b><span>${BULAN_PENDEK[m].toUpperCase()}</span></div><div class="tx"><b>${E(x.judul)}</b><span>${[x.penyusun, x.jam ? x.jam + ' WIB' : ''].filter(Boolean).map(E).join(' • ') || '&nbsp;'}</span></div></a><a class="pill" href="kejadian.html#pdf=${encodeURIComponent(x.id)}" title="Unduh PDF">PDF</a></div>`).join('')}</div>`;
+    return s + '</svg>';
   }
 
-  function renderBulanIni() {
-    const y = HARI_INI.getFullYear(), m = HARI_INI.getMonth();
-    $('bulanIniLabel').textContent = `${BULAN[m]} ${y}`;
+  function tabelFasilitasRingkas(top) {
+    if (!top.length) return '<div class="empty">Belum ada masalah fasilitas<br>dilaporkan bulan ini.</div>';
+    return `<table class="tp"><thead><tr><th>#</th><th>Item</th><th>Pos</th><th>Kali</th></tr></thead><tbody>${top.map((x, i) => `<tr><td class="rk">${i + 1}</td><td class="nm">${E(x.item)}</td><td>${E(x.pos)}</td><td><b>${x.jumlah}</b></td></tr>`).join('')}</tbody></table>`;
+  }
+
+  function daftarKejadianLK(daftar, limit) {
+    if (!daftar.length) return '<div class="empty">Belum ada laporan kejadian<br>pada bulan ini.</div>';
+    return `<div class="evlist">${daftar.slice(0, limit || 5).map((x) => { const t = x.tanggal.split('-'); return `<a class="ev evmain" href="kejadian.html#ubah=${encodeURIComponent(x.id)}" title="Buka laporan"><div class="dt"><b>${t[2]}</b><span>${BULAN_PENDEK[+t[1] - 1].toUpperCase()}</span></div><div class="tx"><b>${E(x.judul)}</b><span>${E(x.lokasiKejadian || '-')}</span></div></a>`; }).join('')}</div>`;
+  }
+  function daftarBAST(daftar, limit) {
+    if (!daftar.length) return '<div class="empty">Belum ada BAST<br>pada bulan ini.</div>';
+    return `<div class="evlist">${daftar.slice(0, limit || 5).map((x) => { const t = x.tanggal.split('-'); return `<a class="ev bast evmain" href="kejadian.html#ubah=${encodeURIComponent(x.id)}" title="Buka laporan"><div class="dt"><b>${t[2]}</b><span>${BULAN_PENDEK[+t[1] - 1].toUpperCase()}</span></div><div class="tx"><b>${E(x.pihakSatu || '-')} → ${E(x.pihakDua || '-')}</b><span>${E(x.nomorBast || '-')}</span></div></a>`; }).join('')}</div>`;
+  }
+
+  // Kartu "Kepatuhan Grup" -- porting PERSIS dari widget sejenis di rekap.js (cincinKepatuhan/
+  // grafikKepatuhanPerGrup/reguBertugasJadwal), bukan bikin cara hitung baru. Regu tiap shift
+  // dipetakan dari Jadwal Dinas yang sudah diunggah (localStorage['savedJadwalDinas']), BUKAN
+  // dari field `regu` di laporan -- lebih akurat krn memakai roster piket sungguhan, bukan
+  // sekadar laporan yang kebetulan ada. Shift yang bulan jadwalnya belum diunggah dihitung
+  // terpisah sbg "tak terpetakan", tidak masuk grup manapun (lihat cincinKepatuhan: ditandai
+  // "-" abu-abu, bukan 0%, supaya tidak disalahartikan sbg "sama sekali tidak patuh").
+  const WARNA_GRUP = { A: '#2a78d6', B: '#eb6834', C: '#1baf7a', D: '#eda100' };
+  function reguBertugasJadwal(tanggalISO, shiftLabel) {
+    const kode = shiftLabel === 'Pagi' ? 'P' : shiftLabel === 'Malam' ? 'M' : null;
+    if (!kode) return null;
+    let semua; try { semua = JSON.parse(localStorage.getItem('savedJadwalDinas') || '{}'); } catch (e) { return null; }
+    const data = semua[tanggalISO.slice(0, 7)]; if (!data || !data.units) return null;
+    const unit = data.units.find((u) => u.punyaGrup && /ORGANIK/i.test(u.nama)) || data.units.find((u) => u.punyaGrup);
+    if (!unit) return null;
+    const PETA = { ALPHA: 'A', BRAVO: 'B', CHARLIE: 'C', DELTA: 'D' };
+    for (const g of unit.grup) {
+      if (!g.orang.length) continue;
+      const cnt = {};
+      g.orang.forEach((o) => { const k = (o.jadwal && o.jadwal[tanggalISO]) || '-'; cnt[k] = (cnt[k] || 0) + 1; });
+      const kodeUtama = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+      if (kodeUtama === kode) { const nama = String(g.nama || '').toUpperCase(); return PETA[nama] || nama.slice(0, 1) || null; }
+    }
+    return null;
+  }
+  function cincinKepatuhan(grup, pct, warna, adaData) {
+    const R = 30, lebar = 8, cx = 36, cy = 36, keliling = 2 * Math.PI * R;
+    const dash = adaData ? Math.max(0, Math.min(1, pct / 100)) * keliling : 0;
+    return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:0;height:100%;width:100%">
+<div style="flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center">
+<svg viewBox="0 0 72 72" style="width:auto;height:auto;max-width:78px;max-height:78px;display:block">
+<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#E9EDF4" stroke-width="${lebar}"/>
+<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${warna}" stroke-width="${lebar}" stroke-linecap="round" stroke-dasharray="${dash} ${keliling}" transform="rotate(-90 ${cx} ${cy})"/>
+<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="15" font-weight="800" fill="#10243D">${adaData ? pct + '%' : '-'}</text>
+</svg>
+</div>
+<div style="font-size:11px;font-weight:700;color:#1A2233;display:flex;align-items:center;gap:5px;white-space:nowrap;flex:none"><i style="width:8px;height:8px;border-radius:2px;background:${warna};flex:none"></i>Grup ${E(grup)}</div>
+</div>`;
+  }
+  function grafikKepatuhanPerGrup(totalPerGrup, belumPerGrup, takTerpetakan) {
+    const cincin = D.REGU.map((g) => {
+      const total = totalPerGrup[g], blm = belumPerGrup[g], adaData = total > 0;
+      const pct = adaData ? Math.round((total - blm) / total * 100) : 0;
+      return cincinKepatuhan(g, pct, WARNA_GRUP[g], adaData);
+    }).join('');
+    const catatanTak = takTerpetakan > 0 ? `<div style="font-size:10px;color:#8A94A6;font-weight:600;text-align:center;flex:none">${takTerpetakan} shift belum lengkap regu-nya tak terpetakan</div>` : '';
+    return `<div style="display:flex;flex-direction:column;flex:1;min-height:0;gap:8px">
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px 8px">${cincin}</div>
+${catatanTak}
+</div>`;
+  }
+  function renderKepatuhanGrup(r) {
+    if (!r.total) return '<div class="empty">Belum ada shift yang jatuh tempo<br>pada bulan ini.</div>';
+    const belumPerGrup = { A: 0, B: 0, C: 0, D: 0 }, totalPerGrup = { A: 0, B: 0, C: 0, D: 0 };
+    let takTerpetakan = 0;
+    r.daftar.forEach((x) => { if (belumPerGrup[x.regu] !== undefined) belumPerGrup[x.regu]++; else takTerpetakan++; });
+    r.semuaShift.forEach((x) => { if (totalPerGrup[x.regu] !== undefined) totalPerGrup[x.regu]++; });
+    return grafikKepatuhanPerGrup(totalPerGrup, belumPerGrup, takTerpetakan);
+  }
+
+  function tabelKepatuhanPenuh(daftar) {
+    if (!daftar.length) return '<div class="empty">Semua shift pada bulan ini<br>sudah lengkap dilaporkan.</div>';
+    const tagW = (j) => j === 'Personel' ? ['#E6ECF4', '#1D3A5C'] : j === 'Fasilitas' ? ['#FCF1DF', '#9A5F12'] : ['#FBE9E7', '#A82F24'];
+    const trs = daftar.map((x) => { const t = x.tanggal.split('-'); return `<tr><td class="nm">${t[2]}/${t[1]}</td><td>${E(x.shift)}</td><td>${x.kurang.map((j) => { const c = tagW(j); return `<span class="tag" style="background:${c[0]};color:${c[1]};margin-right:4px">${E(j)}</span>`; }).join('')}</td></tr>`; }).join('');
+    return `<table class="tp"><thead><tr><th>Tanggal</th><th>Shift</th><th>Belum Diisi</th></tr></thead><tbody>${trs}</tbody></table>`;
+  }
+
+  function renderBulanan() {
+    const { y, m } = bulanTerpilih, { start, end } = monthISORange(y, m);
     const p = D.statPersonel(personel, y, m, 'all', HARI_INI, 'orang-hari');   // Tahap 0.1: selalu per-hari
     const f = D.statFasilitas(fasilitas, y, m);
-    const k = D.statKejadian(kejadian, y, m, HARI_INI);
+    const kj = kejadianCache = D.statKejadianRentang(kejadian, start, end);
+    kepatuhanCache = D.kepatuhanRentang(personel, fasilitas, logbook, start, end, HARI_INI);
+    kepatuhanCache.daftar.forEach((x) => { x.regu = reguBertugasJadwal(x.tanggal, x.shift); });
+    kepatuhanCache.semuaShift.forEach((x) => { x.regu = reguBertugasJadwal(x.tanggal, x.shift); });
 
-    $('rowBulanIni1').innerHTML = `
-<div class="dcard c6 r250"><div class="h"><div><h3>Ketidakhadiran Terbanyak</h3><div class="sub">5 teratas bulan ini • dihitung per orang per hari</div></div></div>${tabelTerbanyak(p.top)}</div>
-<div class="dcard c6 r250"><div class="h"><div><h3>Alasan Ketidakhadiran</h3><div class="sub">Komposisi bulan ini • per hari</div></div></div>${grafikDonat(p.alasan, 'hari') || '<div class="empty">Belum ada personel tidak hadir<br>pada bulan ini.</div>'}</div>`;
+    $('rowBulanan1').innerHTML = `
+<div class="dcard c4 rauto"><div class="h"><div><h3>Ketidakhadiran Terbanyak</h3><div class="sub">${BULAN[m]} ${y} • per orang per hari</div></div></div>${p.top.length ? grafikBatangNama(p.top, '#C93B2E') : '<div class="empty">Belum ada data ketidakhadiran<br>pada bulan ini.</div>'}</div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Alasan Ketidakhadiran</h3><div class="sub">Komposisi ${BULAN[m]} ${y}</div></div></div>${grafikDonat(p.alasan, 'hari') || '<div class="empty">Belum ada personel tidak hadir<br>pada bulan ini.</div>'}</div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Fasilitas Sering Bermasalah</h3><div class="sub">${f.laporan ? `dari ${f.laporan} laporan` : 'Belum ada laporan'}</div></div></div>${tabelFasilitasRingkas(f.top)}</div>`;
 
-    $('rowFasilitas').innerHTML = `<div class="dcard c12 rauto"><div class="h"><div><h3>Fasilitas Sering Bermasalah</h3><div class="sub">5 teratas bulan ini${f.laporan ? ` • dari ${f.laporan} laporan` : ''}</div></div></div>${tabelFasilitasSering(f.top)}</div>`;
+    $('rowBulanan2').innerHTML = `
+<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar Kejadian Terbaru</h3><div class="sub">5 terbaru • ${BULAN[m]} ${y}</div></div><button type="button" class="mata-btn" onclick="Beranda.bukaKejadianPenuh()" title="Lihat semua kejadian bulan ini">${SVG_MATA}</button></div>${daftarKejadianLK(kj.lk.daftar)}</div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Daftar BAST Terbaru</h3><div class="sub">5 terbaru • ${BULAN[m]} ${y}</div></div><button type="button" class="mata-btn" onclick="Beranda.bukaBastPenuh()" title="Lihat semua BAST bulan ini">${SVG_MATA}</button></div>${daftarBAST(kj.bast.daftar)}</div>
+<div class="dcard c4 rauto"><div class="h"><div><h3>Kepatuhan Grup</h3><div class="sub">${BULAN[m]} ${y} • per grup dihitung sendiri-sendiri</div></div><button type="button" class="mata-btn" onclick="Beranda.bukaKepatuhan()" title="Lihat shift belum lengkap">${SVG_MATA}</button></div>${renderKepatuhanGrup(kepatuhanCache)}</div>`;
 
-    $('rowKejadian').innerHTML = `
-<div class="dcard c4 r274"><div class="h"><div><h3>Jumlah Kejadian</h3><div class="sub">${BULAN[m]} ${y}</div></div></div><div style="display:flex;align-items:baseline;gap:8px;padding:10px 2px"><div style="font-size:40px;font-weight:800;color:#10243D;line-height:1">${k.jumlah}</div><div style="font-size:12px;font-weight:700;color:#8A94A6">kejadian</div></div></div>
-<div class="dcard c4 r274"><div class="h"><div><h3>Kejadian per Minggu</h3><div class="sub">Berdasarkan tanggal laporan kejadian</div></div></div>${grafikMinggu(k, m)}</div>
-<div class="dcard c4 r274"><div class="h"><div><h3>Kejadian Terbaru</h3><div class="sub">Klik untuk membuka laporan</div></div><a class="pill" href="kejadian.html#tersimpan">LIHAT SEMUA</a></div>${daftarKejadian(k, m)}</div>`;
+    renderCatatan();
+  }
 
+  function renderCatatan() {
     const kosongData = !personel.length && !fasilitas.length && !logbook.length && !kejadian.length;
     $('noteBawah').innerHTML = kosongData
       ? `<div class="banner"><span>ℹ️</span><div><b>Belum ada laporan tersimpan.</b> Buat laporan Personel, Fasilitas, Log Book, atau Kejadian — Beranda akan terisi otomatis.</div><div class="go"><a href="laporan-personel.html">Laporan Personel</a><a href="fasilitas.html">Laporan Fasilitas</a><a href="logbook.html">Log Book</a><a href="kejadian.html">Laporan Kejadian</a></div></div>`
       : `Ketidakhadiran dihitung per orang per hari — satu orang yang tidak hadir di lebih dari satu shift pada hari yang sama dihitung satu kali (alasan diambil dari shift paling awal hari itu).`;
+  }
+
+  function bukaKepatuhan() {
+    $('kepatuhanBody').innerHTML = tabelKepatuhanPenuh(kepatuhanCache.daftar);
+    $('kepatuhanOverlay').style.display = 'flex';
+  }
+  function tutupKepatuhan() { $('kepatuhanOverlay').style.display = 'none'; }
+
+  // Modal "Daftar Kejadian"/"Daftar BAST" (SEMUA laporan bulan terpilih, bukan cuma 5 teratas
+  // spt pratinjau di kartu) -- dipicu tombol mata, pola identik dgn bukaKepatuhan() di atas.
+  // .evlist-modal (beranda.css) membungkus daftar dgn kartu putih krn .ev/.evlist aslinya
+  // didesain utk latar kartu putih (dcard), sedangkan modal-body berlatar gelap (--console-bg).
+  function bukaKejadianPenuh() {
+    $('kejadianPenuhTitle').textContent = `DAFTAR KEJADIAN — ${BULAN[bulanTerpilih.m].toUpperCase()} ${bulanTerpilih.y}`;
+    $('kejadianPenuhBody').innerHTML = `<div class="evlist-modal">${daftarKejadianLK(kejadianCache.lk.daftar, Infinity)}</div>`;
+    $('kejadianPenuhOverlay').style.display = 'flex';
+  }
+  function tutupKejadianPenuh() { $('kejadianPenuhOverlay').style.display = 'none'; }
+  function bukaBastPenuh() {
+    $('bastPenuhTitle').textContent = `DAFTAR BAST — ${BULAN[bulanTerpilih.m].toUpperCase()} ${bulanTerpilih.y}`;
+    $('bastPenuhBody').innerHTML = `<div class="evlist-modal">${daftarBAST(kejadianCache.bast.daftar, Infinity)}</div>`;
+    $('bastPenuhOverlay').style.display = 'flex';
+  }
+  function tutupBastPenuh() { $('bastPenuhOverlay').style.display = 'none'; }
+
+  function pasangPemilihBulan() {
+    A.pemilihBulan($('pilihBulanBulanan'), {
+      get: () => bulanTerpilih,
+      set: (y, m) => { if (y == null) return; bulanTerpilih = { y, m }; renderBulanan(); },
+      maks: { y: HARI_INI.getFullYear(), m: HARI_INI.getMonth() },
+      semua: false
+    });
   }
 
   /* =========================================================
@@ -204,18 +317,59 @@
     }
   }
 
+  // Muat ulang Personel/Fasilitas/Log Book/Kejadian/BAST dari penyimpanan LOKAL, lalu -- kalau
+  // sinkronisasi lintas perangkat aktif (lihat sync.js) -- gabung dgn salinan dari seluruh posko
+  // di server, supaya Beranda yg dibuka Admin ikut menghitung laporan yg disimpan Posko di
+  // komputer lain. Pola & alasan sama persis dgn rekap.js (muatData()) dan pantau-posko.html
+  // (render()/pollRemote()): sekali saat halaman dibuka, bukan tiap ganti bulan -- pemilih bulan
+  // cuma menyaring data yg sudah termuat.
+  // PENTING (bug diperbaiki 2026-10-22): sebelumnya `kejadian` HANYA dibaca dari IndexedDB lokal
+  // (D.bacaKejadian()) tanpa pernah digabung dgn salinan server spt 3 jenis lain -- jadi kartu
+  // "Daftar Kejadian Terbaru"/"Daftar BAST Terbaru" di Beranda Admin selalu kosong kalau laporan
+  // Kejadian/BAST itu dibuat di komputer LAIN (mis. Posko), meski sinkronisasi sudah aktif &
+  // laporannya sudah ada di server -- Pantau Posko sudah benar krn sudah menggabung kejadian/
+  // bast remote (lihat pantau-posko.html), Beranda belum. `kejadian` di sini berisi LK+BAST
+  // tercampur (sama spt hasil D.bacaKejadian()), dipisah oleh D.statKejadianRentang via field
+  // `jenis` -- jadi remote.kejadian & remote.bast digabung jadi satu sebelum di-gabung() dgn
+  // salinan lokal (AVS_SYNC.gabung cuma mencocokkan by id, tidak peduli jenis).
+  async function muatData() {
+    personel = D.bacaPersonel(); fasilitas = D.bacaFasilitas(); logbook = D.bacaLogbook();
+    const kejadianLokal = await D.bacaKejadian(); // IndexedDB, async -- LK + BAST tercampur
+    kejadian = kejadianLokal;
+    if (typeof AVS_SYNC !== 'undefined' && AVS_SYNC.aktif()) {
+      const [rp, rf, rl, rk, rb] = await Promise.all([AVS_SYNC.ambilSemua('personel'), AVS_SYNC.ambilSemua('fasilitas'), AVS_SYNC.ambilSemua('logbook'), AVS_SYNC.ambilSemua('kejadian'), AVS_SYNC.ambilSemua('bast')]);
+      personel = AVS_SYNC.gabung(personel, rp);
+      fasilitas = AVS_SYNC.gabung(fasilitas, rf);
+      logbook = AVS_SYNC.gabung(logbook, rl);
+      kejadian = AVS_SYNC.gabung(kejadianLokal, rk.concat(rb));
+    }
+  }
+
   /* ---------- Mulai ---------- */
   async function mulai() {
     A.pasangKunci(); A.nav('beranda');
     personel = D.bacaPersonel();
     fasilitas = D.bacaFasilitas();
     logbook = D.bacaLogbook();
-    renderShiftSebelumnya(); renderBulanIni(); hitungKosongBulanIni();
-    kejadian = await D.bacaKejadian();           // lengkapi dengan data kejadian (IndexedDB, async)
-    renderBulanIni();
+    pasangPemilihBulan();
+    renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni(); // tampil cepat dgn data lokal dulu, Kejadian/BAST menyusul
+    await muatData(); // lengkapi Kejadian/BAST (IndexedDB) + tarik salinan dari posko lain (kalau sinkronisasi aktif)
+    renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni();
+    // Tombol "Muat Ulang" khusus Admin -- Beranda cuma menarik data sinkronisasi SEKALI saat
+    // halaman dimuat (tidak polling spt Pantau Posko), jadi Admin perlu cara menyegarkan
+    // tanpa reload penuh halaman. Posko tidak melihat tombol ini (lihat RENCANA-PENGEMBANGAN.md).
+    if (typeof AVS_PERAN === 'function' && AVS_PERAN() === 'admin') $('btnMuatUlang').style.display = '';
+  }
+  async function muatUlang() {
+    const btn = $('btnMuatUlang'); if (btn.disabled) return;
+    btn.disabled = true; btn.style.opacity = '.5';
+    await muatData();
+    renderShiftSebelumnya(); renderBulanan(); hitungKosongBulanIni();
+    btn.disabled = false; btn.style.opacity = '';
+    toast('Data diperbarui.');
   }
 
-  window.Beranda = { bukaShiftKosong, tutupShiftKosong, salinPengingatKosong, salinTeks };
+  window.Beranda = { bukaShiftKosong, tutupShiftKosong, salinPengingatKosong, salinTeks, bukaKepatuhan, tutupKepatuhan, bukaKejadianPenuh, tutupKejadianPenuh, bukaBastPenuh, tutupBastPenuh, muatUlang };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mulai); else mulai();
 
   window.adaPerubahanBelumTersimpan = () => false;

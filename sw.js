@@ -1,37 +1,60 @@
 // Naikkan versi ini setiap kali file aplikasi diubah agar browser memperbarui cache
-const CACHE_NAME = 'kekuatan-app-v12';
+const CACHE_NAME = 'kekuatan-app-v17';
 
 // Aset yang disimpan agar aplikasi tetap jalan saat offline
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './laporan-personel.html',
+  './fasilitas.html',
+  './logbook.html',
   './kejadian.html',
+  './rekap.html',
+  './jadwal-dinas.html',
   './style.css',
   './layout.css',
   './laporan-personel.css',
+  './fasilitas.css',
   './beranda.css',
   './kejadian.css',
   './shell.js',
   './data.js',
+  './sync.js',
   './beranda.js',
+  './rekap.js',
   './rekap-pdf.js',
   './personel.js',
+  './personel-pdf.js',
   './kategori.js',
+  './fasilitas-data.js',
+  './fasilitas-pdf.js',
+  './logbook-pdf.js',
   './kejadian-data.js',
   './kejadian-nomor.js',
   './kejadian-wa.js',
   './kejadian-pdf.js',
+  './kejadian-bast.js',
+  './kejadian-bast-data.js',
+  './kejadian-bast-nomor.js',
+  './kejadian-bast-pdf.js',
+  './jadwal-dinas-import.js',
   './manifest.json',
+  './fonts/montserrat-latin-400-normal.woff2',
+  './fonts/montserrat-latin-500-normal.woff2',
+  './fonts/montserrat-latin-600-normal.woff2',
+  './fonts/montserrat-latin-700-normal.woff2',
+  './fonts/montserrat-latin-800-normal.woff2',
   './fonts/inter-latin-400-normal.woff2',
   './fonts/inter-latin-500-normal.woff2',
   './fonts/inter-latin-600-normal.woff2',
   './fonts/inter-latin-700-normal.woff2',
   './fonts/inter-latin-800-normal.woff2',
-  './lib/pdfmake.min.js',
+  './lib/fonts-montserrat.js',
   './lib/fonts-carlito.js',
+  './lib/pdfmake.min.js',
   './lib/html2pdf.bundle.min.js',
-  './Logo/AVS.png',
+  './lib/xlsx.core.min.js',
+  './Logo/AVS-kop.png',
   './Logo/AVS-192.png',
   './Logo/AVS-512.png',
   './Logo/AVS-maskable-512.png'
@@ -65,6 +88,11 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   if (!/^https?:$/.test(new URL(req.url).protocol)) return;
+  // Hanya kelola cache utk aset aplikasi sendiri (same-origin). Permintaan lintas-origin
+  // (mis. polling ke Google Apps Script di sync.js) dibiarkan lewat apa adanya -- tidak perlu
+  // & tidak boleh ikut logika network-first/cache-fallback di bawah, supaya data pantauan
+  // selalu terkini dan tidak pernah "nyangkut" di respons lama yang sempat ter-cache.
+  if (new URL(req.url).origin !== self.location.origin) return;
 
   const network = fetch(req).then((res) => {
     if (res && res.status === 200) {
