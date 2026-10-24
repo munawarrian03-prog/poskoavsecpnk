@@ -14,6 +14,40 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Bug: rentang tanggal "Alat Bermasalah" di Rekap tidak mengecek jeda hari
+- **Status:** Selesai
+- **Dicatat:** 2026-10-24
+- **Diverifikasi:** Playwright — panggil `AVS_DATA.statFasilitasRentang` langsung dgn data
+  rekaan: alat "Rusak" di 1 Okt (keterangan "Bunyi berisik"), lalu "Baik" (tidak bermasalah)
+  di 2-3 Okt, lalu "Rusak" lagi di 4 Okt dgn keterangan PERSIS SAMA -> SEBELUM perbaikan
+  akan jadi satu baris "1-4 Okt 26"; SESUDAH perbaikan jadi DUA baris terpisah ("2026-10-01"
+  & "2026-10-04", masing-masing `kali:1`), krn ada jeda hari di tengah. Kasus kontrol tetap
+  benar: 8-9-10 Okt berurutan tanpa jeda & keterangan sama -> tetap satu baris rentang
+  "8-10 Okt 26" (`kali:3`); laporan Pagi & Malam di tanggal yang SAMA (15 Okt, dua shift) ->
+  tetap digabung jadi satu baris tanggal tunggal (`kali:2`), tidak dianggap berjeda. Regresi:
+  `rekap.html` dimuat ulang dgn data Fasilitas tersimpan -> tidak ada error console/halaman.
+- **Konteks:** Ditemukan saat meninjau apakah logika rentang tanggal ("1-4 Okt 26") pada
+  Rekap diterapkan konsisten di semua tempat yang punya keterangan waktu. Ternyata ADA 3
+  tempat yg pakai pola ini (Alat Bermasalah di Fasilitas, Alasan Ketidakhadiran di Personel,
+  daftar tanggal di Kepatuhan Pelaporan Shift), tapi cuma 2 dari 3 (`ringkasTanggalList` di
+  `rekap.js`, dipakai Ketidakhadiran & Kepatuhan Shift) yang betul-betul mengecek jeda hari
+  (`berurutanSebulan`, selisih harus persis H+1 kalender) sebelum menggabung jadi rentang.
+  `gabungkanCatatan` (di `data.js`, dipakai Alat Bermasalah) cuma mengecek "kemunculan
+  berurutan dalam daftar laporan bermasalah alat itu" + bulan sama + nilai sama, TANPA
+  mengecek jeda hari kalender — krn entri `catatan` cuma ditambahkan saat alat itu memang
+  dilaporkan bermasalah (hari alat itu "Baik" tidak menghasilkan entri sama sekali), alat yg
+  bermasalah di tgl 1 lalu baik-baik saja di tgl 2-3 lalu bermasalah lagi di tgl 4 dgn
+  keterangan sama persis akan salah tergabung jadi "1-4 Okt 26" — menyiratkan bermasalah
+  terus-menerus 4 hari, padahal sebenarnya sempat baik di tengah.
+- **Keputusan:** tambah pengecekan jeda hari (`tanpaJedaHari`, selisih kalender ≤1 hari dari
+  `akhir` grup sebelumnya ke `tanggal` kemunculan berikutnya — mengizinkan hari yang SAMA utk
+  laporan Pagi+Malam sehari, dan H+1 persis utk hari berikutnya) ke `gabungkanCatatan`,
+  SELARAS dgn logika `berurutanSebulan` yang sudah dipakai di dua tempat lain. Begitu ada
+  jeda ≥2 hari, baris baru dimulai meski Kondisi/Status/Keterangan masih persis sama.
+- **Implementasi:** `data.js` — fungsi baru `tanpaJedaHari(isoAkhir, isoBerikutnya)`;
+  `gabungkanCatatan` menambahkan `berurutan` sbg syarat ke-3 (selain `bulanSama` &
+  `nilaiSama`) sebelum menggabung baris catatan.
+
 ### Penggantian/Penambahan personel per pos + rincian Total per rentang waktu (PDF/WA/Lihat)
 - **Status:** Selesai
 - **Dicatat:** 2026-10-23 (didiskusikan & mockup disetujui sebelum dikerjakan, lanjutan

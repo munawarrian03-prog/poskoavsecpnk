@@ -347,12 +347,22 @@
       }));
     });
     const dominan = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0][0];
+    // H+1 kalender (atau hari yang sama -- shift Pagi & Malam di tanggal yang sama) sejak
+    // akhir grup sebelumnya. Dipakai supaya rentang tanggal cuma menggabung kemunculan yang
+    // BENAR-BENAR tanpa jeda hari -- kalau alat itu sempat "Baik"/tidak dilaporkan bermasalah
+    // di tengah-tengah (mis. bermasalah tgl 1, baik tgl 2-3, bermasalah lagi tgl 4 dgn
+    // keterangan sama persis), itu HARUS jadi dua baris terpisah ("1 Okt 26" & "4 Okt 26"),
+    // bukan "1-4 Okt 26" yang menyiratkan bermasalah terus-menerus.
+    function tanpaJedaHari(isoAkhir, isoBerikutnya) {
+      return (new Date(isoBerikutnya) - new Date(isoAkhir)) / 86400000 <= 1;
+    }
     // Gabungkan catatan BERURUTAN (hasil urut tanggal+shift naik) yang Kondisi/Status/
     // Keterangan-nya PERSIS SAMA jadi satu baris rentang tanggal (mis. "1-4 Okt 26"), bukan
-    // satu baris per laporan -- begitu salah satu dari ketiganya berubah pada kemunculan
-    // berikutnya, mulai baris baru. Tidak pernah menggabung lintas bulan (biar label rentang
-    // tanggalnya tetap benar -- lihat labelRentang di rekap.js yang mengasumsikan satu bulan).
-    // Hasil akhir diurutkan terbaru dulu, konsisten dgn urutan sebelum ada penggabungan ini.
+    // satu baris per laporan -- begitu salah satu dari ketiganya berubah, atau ada jeda hari
+    // (lihat tanpaJedaHari di atas), mulai baris baru. Tidak pernah menggabung lintas bulan
+    // (biar label rentang tanggalnya tetap benar -- lihat labelRentang di rekap.js yang
+    // mengasumsikan satu bulan). Hasil akhir diurutkan terbaru dulu, konsisten dgn urutan
+    // sebelum ada penggabungan ini.
     function gabungkanCatatan(list) {
       const urut = list.slice().sort((a, b) => (a.tanggal + a.urutanShift).localeCompare(b.tanggal + b.urutanShift));
       const grup = [];
@@ -360,7 +370,8 @@
         const last = grup[grup.length - 1];
         const bulanSama = last && last.akhir.slice(0, 7) === c.tanggal.slice(0, 7);
         const nilaiSama = last && last.kondisi === c.kondisi && last.status === c.status && last.keterangan === c.keterangan;
-        if (last && bulanSama && nilaiSama) { last.akhir = c.tanggal; last.kali++; }
+        const berurutan = last && tanpaJedaHari(last.akhir, c.tanggal);
+        if (last && bulanSama && nilaiSama && berurutan) { last.akhir = c.tanggal; last.kali++; }
         else grup.push({ mulai: c.tanggal, akhir: c.tanggal, kondisi: c.kondisi, status: c.status, keterangan: c.keterangan, kali: 1 });
       });
       return grup.reverse();
