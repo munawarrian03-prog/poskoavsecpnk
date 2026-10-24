@@ -36,6 +36,12 @@
 .kt-fld label { font-size:10px; font-weight:800; color:#8A94A6; text-transform:uppercase; letter-spacing:.3px; }
 .kt-fld select, .kt-fld input[type=text] { height:38px; border:1px solid #D7DEE8; border-radius:8px; padding:0 10px; font:600 13px 'Montserrat','Inter'; color:var(--ink); width:100%; }
 .kt-fld input[disabled] { background:#EEF1F6; color:#5C6675; font-weight:700; }
+/* Lokasi: dropdown & kotak ketik manual berbagi slot yang sama (cuma satu yang
+   display:block/flex sekaligus, diatur lewat JS) -- bukan baris terpisah di bawahnya. */
+.kt-lokasi-manual { display: none; gap: 6px; }
+.kt-lokasi-manual input[type=text] { flex: 1; min-width: 0; }
+.kt-lokasi-manual button { flex: none; width: 38px; height: 38px; border: 1px solid #D7DEE8; border-radius: 8px; background: #fff; color: #5C6675; cursor: pointer; font-size: 13px; }
+.kt-lokasi-manual button:hover { background: #F4F6FA; }
 .kt-waktu { display:flex; align-items:center; gap:10px; }
 .kt-waktu .kt-fld { flex:none; width:130px; }
 .kt-waktu .kt-fld input[type=time] { height:38px; border:1px solid #D7DEE8; border-radius:8px; padding:0 10px; font:700 13px 'Montserrat','Inter'; color:var(--ink); width:100%; }
@@ -95,7 +101,14 @@
 <div class="kt-card">
 <div class="kt-grid3">
 <div class="kt-fld"><label>Kegiatan</label><select id="ktKegiatan" onchange="ubahKesiapan('kegiatan',this.value)"><option value="Apel">Apel</option><option value="Briefing">Briefing</option></select></div>
-<div class="kt-fld"><label>Lokasi</label><input type="text" id="ktLokasi" disabled></div>
+<div class="kt-fld">
+<label>Lokasi</label>
+<select id="ktLokasiSelect" onchange="ubahLokasiSelect(this.value)"></select>
+<div class="kt-lokasi-manual" id="ktLokasiManualWrap">
+<input type="text" id="ktLokasiManual" placeholder="Ketik lokasi..." oninput="ubahKesiapan('lokasi',this.value)">
+<button type="button" onclick="kembaliKeDropdownLokasi()" title="Pilih dari daftar">▾</button>
+</div>
+</div>
 <div class="kt-fld"><label>Pemimpin</label><select id="ktPemimpin" onchange="ubahKesiapan('pemimpin',this.value)"><option value="">— pilih —</option></select></div>
 </div>
 <div class="kt-fld"><label>Materi</label><input type="text" id="ktMateri" placeholder="Tuliskan materi yang dibahas..." oninput="ubahKesiapan('materi',this.value)"></div>
@@ -218,7 +231,13 @@ let editingReportId = null;
 let catatanKegiatan = [];   // [{ id, jam, uraian }]
 let dirty = false;
 let modalReportId = null;
+// Lokasi dulunya field terkunci (otomatis & tidak bisa diubah mengikuti Kegiatan). Sekarang
+// jadi dropdown pilihan BEBAS DIUBAH + opsi "Lainnya" utk ketik manual (lihat opsiLokasiHtml/
+// ubahLokasiSelect/kembaliKeDropdownLokasi di bawah) -- LOKASI_KEGIATAN cuma dipakai sbg SARAN
+// awal saat Kegiatan diganti, bukan lagi nilai yang dipaksakan/dikunci.
 const LOKASI_KEGIATAN = { Apel: 'Ruang Kelas Avsec', Briefing: 'Whatsapp Grup' };
+const OPSI_LOKASI = ['Ruang Kelas Avsec', 'Whatsapp Grup', 'Ruang Rapat Posko'];
+const LOKASI_LAINNYA = '__lainnya__';
 function modelKesiapanBaru() { return { kegiatan: 'Apel', lokasi: LOKASI_KEGIATAN.Apel, pemimpin: '', materi: '', waktuMulai: '', waktuSelesai: '' }; }
 let kesiapanTugas = modelKesiapanBaru();   // SATU kartu tetap per laporan, bukan list
 
@@ -274,20 +293,57 @@ function personelPoskoNama(tanggal, shift, regu) {
   const pos = (rec.posPenempatan || []).find((p) => p.id === 'posko') || (rec.posPenempatan || [])[0];
   return ((pos && pos.personel) || []).map((p) => rapikan(p && p.nama)).filter(Boolean);
 }
-// Briefing (Lokasi = "Whatsapp Grup") tidak punya rentang waktu seperti Apel di Ruang Kelas
-// Avsec -- cukup satu waktu tunggal. "Waktu Selesai" & "s.d." disembunyikan, label "Waktu
-// Mulai" jadi "Waktu" saja, tapi field waktuSelesai yang sudah tersimpan TIDAK dihapus (cuma
-// tidak ditampilkan) -- supaya kalau Kegiatan diganti balik ke Apel, isiannya tidak hilang.
-function waktuTunggal() { return kesiapanTugas.lokasi === 'Whatsapp Grup'; }
+// Briefing tidak punya rentang waktu seperti Apel di Ruang Kelas Avsec -- cukup satu waktu
+// tunggal. "Waktu Selesai" & "s.d." disembunyikan, label "Waktu Mulai" jadi "Waktu" saja, tapi
+// field waktuSelesai yang sudah tersimpan TIDAK dihapus (cuma tidak ditampilkan) -- supaya
+// kalau Kegiatan diganti balik ke Apel, isiannya tidak hilang. Dicek dari KEGIATAN (bukan lagi
+// teks Lokasi) -- sejak Lokasi bebas diedit, teksnya tidak bisa lagi dipakai sbg penanda
+// andal (mis. Lokasi bisa diketik manual jadi sesuatu yg bukan "Whatsapp Grup" tapi acara-nya
+// tetap Briefing, atau sebaliknya).
+function waktuTunggal() { return kesiapanTugas.kegiatan === 'Briefing'; }
 function terapkanModeWaktu() {
   const tunggal = waktuTunggal();
   $('ktMulaiLabel').textContent = tunggal ? 'Waktu' : 'Waktu Mulai';
   $('ktWaktuSd').style.display = tunggal ? 'none' : '';
   $('ktSelesaiFld').style.display = tunggal ? 'none' : '';
 }
+// Opsi dropdown Lokasi + "Lainnya" utk ketik manual. `nilai` boleh bukan salah satu dari
+// OPSI_LOKASI (mis. rekaman lama / hasil ketik manual) -- selalu ditambahkan sbg opsi
+// terpilih kalau belum ada di daftar, supaya tidak diam-diam berubah saat dibuka lagi.
+function opsiLokasiHtml(nilai) {
+  const daftar = OPSI_LOKASI.includes(nilai) || !nilai ? OPSI_LOKASI : OPSI_LOKASI.concat(nilai);
+  return daftar.map((o) => `<option value="${esc(o)}" ${o === nilai ? 'selected' : ''}>${esc(o)}</option>`).join('')
+    + `<option value="${LOKASI_LAINNYA}">Lainnya (ketik manual)…</option>`;
+}
+// Status sementara "sedang ketik manual" -- TERPISAH dari kesiapanTugas.lokasi itu sendiri,
+// krn begitu "Lainnya" dipilih teksnya dikosongkan dulu (siap diketik), dan kalau status
+// "manual" ikut disimpulkan dari teks yg kosong itu, kotak ketiknya malah tidak jadi muncul.
+// Sengaja TIDAK disimpan di kesiapanTugas (data laporan) -- murni status tampilan halaman ini.
+let lokasiManualMode = false;
+// Lokasi: dropdown & kotak ketik manual berbagi slot yang sama -- hanya satu yang
+// ditampilkan sekaligus (lihat .kt-lokasi-manual di <style>), ditukar lewat fungsi ini.
+function renderLokasiField() {
+  const nilai = kesiapanTugas.lokasi || '';
+  const manual = lokasiManualMode || (!!nilai && !OPSI_LOKASI.includes(nilai));
+  $('ktLokasiSelect').innerHTML = opsiLokasiHtml(nilai);
+  $('ktLokasiSelect').value = manual ? LOKASI_LAINNYA : nilai;
+  $('ktLokasiSelect').style.display = manual ? 'none' : '';
+  $('ktLokasiManualWrap').style.display = manual ? 'flex' : 'none';
+  $('ktLokasiManual').value = manual ? nilai : '';
+}
+function ubahLokasiSelect(val) {
+  if (val === LOKASI_LAINNYA) { lokasiManualMode = true; kesiapanTugas.lokasi = ''; renderLokasiField(); markDirty(); setTimeout(() => $('ktLokasiManual').focus(), 0); return; }
+  lokasiManualMode = false; kesiapanTugas.lokasi = val; markDirty();
+}
+function kembaliKeDropdownLokasi() {
+  lokasiManualMode = false;
+  kesiapanTugas.lokasi = LOKASI_KEGIATAN[kesiapanTugas.kegiatan] || OPSI_LOKASI[0];
+  renderLokasiField(); markDirty();
+}
 function renderKesiapanTugas() {
+  lokasiManualMode = false;   // reset tiap render penuh (ganti/buka laporan) -- status manual-mode tidak "nempel" dari laporan sebelumnya
   $('ktKegiatan').value = kesiapanTugas.kegiatan;
-  $('ktLokasi').value = kesiapanTugas.lokasi;
+  renderLokasiField();
   $('ktMateri').value = kesiapanTugas.materi;
   $('ktMulai').value = kesiapanTugas.waktuMulai;
   $('ktSelesai').value = kesiapanTugas.waktuSelesai;
@@ -303,7 +359,9 @@ function renderKesiapanTugas() {
 }
 function ubahKesiapan(field, val) {
   kesiapanTugas[field] = val;
-  if (field === 'kegiatan') { kesiapanTugas.lokasi = LOKASI_KEGIATAN[val] || ''; $('ktLokasi').value = kesiapanTugas.lokasi; terapkanModeWaktu(); }
+  // Ganti Kegiatan -> Lokasi ikut disarankan ulang ke nilai baku kegiatan itu (Apel/Briefing),
+  // TAPI tetap field bebas yang bisa langsung diganti lagi -- bukan dikunci seperti sebelumnya.
+  if (field === 'kegiatan') { lokasiManualMode = false; kesiapanTugas.lokasi = LOKASI_KEGIATAN[val] || ''; renderLokasiField(); terapkanModeWaktu(); }
   markDirty();
 }
 
@@ -557,7 +615,7 @@ function renderLihatHTML(catatan, catatanSerahTerima, kesiapan) {
     `<div class="lb-auto-item"><span>Lokasi</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.lokasi) || '-'}</span></div>` +
     `<div class="lb-auto-item"><span>Pemimpin</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.pemimpin) || '-'}</span></div>` +
     `<div class="lb-auto-item"><span>Materi</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(k.materi) || '-'}</span></div>` +
-    `<div class="lb-auto-item"><span>Waktu Pelaksanaan</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${k.lokasi === 'Whatsapp Grup' ? (esc(k.waktuMulai) || '--:--') : `${esc(k.waktuMulai) || '--:--'} – ${esc(k.waktuSelesai) || '--:--'}`}</span></div>`;
+    `<div class="lb-auto-item"><span>Waktu Pelaksanaan</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${k.kegiatan === 'Briefing' ? (esc(k.waktuMulai) || '--:--') : `${esc(k.waktuMulai) || '--:--'} – ${esc(k.waktuSelesai) || '--:--'}`}</span></div>`;
   html += '</div>';
   html += `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${catatan.length})</div>`;
   html += catatan.length

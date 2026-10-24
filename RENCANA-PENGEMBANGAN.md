@@ -14,6 +14,68 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Pos Penempatan 1 kolom bertingkat + Kategori/Jam sebaris dgn Jabatan
+- **Status:** Selesai
+- **Dicatat:** 2026-10-24 (mockup disetujui sebelum dikerjakan,
+  https://claude.ai/artifact/XjMoKi9o9k8NfuGRa6PUwA)
+- **Diverifikasi:** Playwright — `#penempatanContainer` kini `display:flex;flex-direction:
+  column` (bukan grid 2 kolom); urutan kartu Pos sesuai `POS_BAWAAN` (POSKO, CCTV, PSCP,
+  LAGs INSPECTION, HBSCP, ...) dari atas ke bawah, tidak lagi terbagi kiri-kanan. Satu baris
+  personel kini 6 kolom (`16px minmax(0,1fr) 118px 118px 118px 24px`): No → Nama → Jabatan →
+  Kategori → Jam → Hapus — dicek urutan elemen DOM-nya persis begitu. `updateKategoriPos`/
+  `updateJenisPos` tetap berfungsi (jam ikut terisi otomatis dari kategori, Penggantian/
+  Penambahan tetap tersimpan benar). Tidak ada error console/halaman.
+- **Konteks:** Sebelumnya pos tersebar 2 kolom kiri-kanan (dibaca Z: kiri-atas, kanan-atas,
+  kiri-bawah, ...) tidak sesuai urutan baku `POS_BAWAAN`, dan field Kategori+Jam ada di baris
+  tersendiri di bawah Nama/Jabatan (bukan sebaris), membuat tabel pos jadi 2 baris per orang.
+- **Keputusan (dari mockup, 2 revisi):** satu kolom bertingkat atas-bawah sesuai urutan baku;
+  Kategori & Jam dipindah sebaris dengan Jabatan (bukan baris terpisah). Revisi mockup: lebar
+  kolom Jabatan/Kategori/Jam disamakan (118px) supaya rapi & jam seperti "08:00–20:00" muat
+  satu baris tanpa patah (`white-space:nowrap`). Selektor Penggantian/Penambahan (entri ke-2
+  dst) TETAP di baris terpisah di bawahnya — tidak diminta pindah.
+- **Implementasi:** `laporan-personel.css` (`#penempatanContainer` jadi flex-column; `.dynamic-row`
+  grid 6 kolom; `.pos-jam-wrap` dihapus, `.pos-kat`/`.pos-jam` jadi sel grid langsung;
+  `.pos-jenis-wrap` grid-column 2/6); `laporan-personel.html` (`renderPenempatan()`: urutan
+  markup select Kategori & input Jam dipindah ke antara select Peran dan tombol Hapus,
+  menggantikan div `.pos-jam-wrap` pembungkus lama).
+
+### Lokasi "Catatan Kesiapan Tugas" (Log Book): dropdown + ketik manual
+- **Status:** Selesai
+- **Dicatat:** 2026-10-24 (mockup disetujui sebelum dikerjakan,
+  https://claude.ai/artifact/7WUEsySWa7vKtBXtmkQPfA — 2 revisi: awalnya kotak ketik manual
+  muncul sbg baris baru di bawah dropdown, diubah jadi menukar dropdown di tempat yang sama)
+- **Diverifikasi:** Playwright — default Apel → dropdown "Ruang Kelas Avsec" terpilih; ganti ke
+  opsi lain ("Ruang Rapat Posko") → tersimpan benar; pilih "Lainnya (ketik manual)…" → dropdown
+  LANGSUNG HILANG digantikan kotak ketik di slot yang sama (bukan baris baru), `lokasi`
+  dikosongkan dulu siap diketik; ketik teks bebas → tersimpan; ganti Kegiatan ke Briefing →
+  Lokasi otomatis tersarankan ulang "Whatsapp Grup" & KELUAR dari mode ketik manual, mode waktu
+  ikut berubah jadi "Waktu" tunggal (bukan rentang Mulai–Selesai); klik tombol ▾ dari mode
+  manual → kembali ke dropdown dgn saran sesuai Kegiatan saat ini. Regresi: rekaman LAMA
+  (`lokasi` terisi nilai baku spt "Ruang Kelas Avsec") dibuka → dropdown terpilih benar, tidak
+  error; rekaman dgn `lokasi` CUSTOM tersimpan (mis. hasil ketik manual sebelumnya, "Aula
+  Serbaguna Lt.2") dibuka → otomatis masuk mode ketik manual dgn teks itu ditampilkan, bukan
+  hilang diam-diam. Tidak ada error console/halaman.
+- **Konteks:** Field Lokasi sebelumnya `<input disabled>` terkunci, otomatis mengikuti
+  Kegiatan (Apel → "Ruang Kelas Avsec", Briefing → "Whatsapp Grup") tanpa bisa diubah — padahal
+  kegiatan sungguhan kadang di lokasi lain (ruang rapat, lapangan apel sementara, dll).
+- **Keputusan:** Lokasi jadi dropdown pilihan (`OPSI_LOKASI`: Ruang Kelas Avsec, Whatsapp Grup,
+  Ruang Rapat Posko) + opsi "Lainnya" yang MENGGANTIKAN dropdown jadi kotak ketik bebas di slot
+  yang sama (bukan menambah baris, sesuai revisi mockup) — tombol ▾ kecil di sampingnya utk
+  kembali ke mode pilih dari daftar. Kegiatan tetap menyarankan Lokasi baku saat diganti (titik
+  awal yang masuk akal), tapi tidak lagi MENGUNCI — pengguna bebas menimpanya kapan saja.
+  **Efek samping yang harus ditangani:** `waktuTunggal()` (penentu Briefing cuma 1 jam vs Apel
+  rentang Mulai–Selesai) sebelumnya dicek dari TEKS Lokasi (`=== 'Whatsapp Grup'`) — sejak teks
+  itu bebas diedit, pengecekan itu tidak andal lagi. Diganti dicek dari field **Kegiatan**
+  (`kegiatan === 'Briefing'`) yang memang sumber aslinya, konsisten di semua tempat yang
+  memakainya (form, ringkasan otomatis, PDF).
+- **Implementasi:** `logbook.html` — markup Lokasi (`#ktLokasiSelect` + `#ktLokasiManualWrap`
+  dgn `#ktLokasiManual` & tombol kembali), CSS `.kt-lokasi-manual`; `OPSI_LOKASI`/
+  `LOKASI_LAINNYA` baru, `opsiLokasiHtml()`/`renderLokasiField()`/`ubahLokasiSelect()`/
+  `kembaliKeDropdownLokasi()` baru, var transient `lokasiManualMode` (status tampilan saja,
+  TIDAK ikut tersimpan ke data laporan); `waktuTunggal()` & badge ringkasan "Waktu Pelaksanaan"
+  diganti dari cek `lokasi === 'Whatsapp Grup'` jadi `kegiatan === 'Briefing'`.
+  `logbook-pdf.js` — badge "Waktu Pelaksanaan" di PDF ikut disamakan (`k.kegiatan === 'Briefing'`).
+
 ### Bug: rentang tanggal Ketidakhadiran/Kepatuhan Shift baru gabung mulai hari ke-3
 - **Status:** Selesai
 - **Dicatat:** 2026-10-24

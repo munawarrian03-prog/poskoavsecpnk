@@ -1,4 +1,4 @@
-/* ===== Laporan Personel: tabel kekuatan ringkas + penempatan 2 kolom ===== */
+/* ===== Laporan Personel: tabel kekuatan ringkas + penempatan 1 kolom bertingkat ===== */
 #pageSaved { flex: 1; min-height: 0; }
 .addwrap { flex: none; padding: 8px 14px; background: #F8FAFC; border-bottom: 1px solid #EEF1F6; }
 .addwrap #addPanel { background: transparent; border: none; padding: 0; }
@@ -27,24 +27,26 @@
 .dynamic-row[data-kind="absen"] input, .dynamic-row[data-kind="absen"] select { height: 28px; padding: 0 8px; font-size: 11.5px; }
 #kekuatanContainer .kat-edit { margin: 6px 0 2px; }
 
-/* Penempatan */
-#penempatanContainer { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+/* Penempatan -- satu kolom bertingkat dari atas ke bawah sesuai urutan Pos Penempatan
+   baku (bukan lagi 2 kolom kiri-kanan), supaya pos selalu dibaca dalam urutan yang sama
+   dengan daftar Pos Penempatan (lihat kategori.js: POS_BAWAAN). */
+#penempatanContainer { display: flex; flex-direction: column; gap: 8px; }
 #penempatanContainer .kat-card { padding: 0; margin: 0; background: #FAFBFD; border: 1px solid #E9EDF4; border-radius: 10px; box-shadow: none; }
 #penempatanContainer .kat-title { display: flex; justify-content: space-between; align-items: center; padding: 6px 9px; margin: 0; font-size: 10.5px; border-bottom: 1px solid #EEF1F6; }
 #penempatanContainer .kat-title b { background: #E4F3F4; color: #0F5F65; border-radius: 9px; padding: 0 7px; font-size: 10px; }
-#penempatanContainer .dynamic-row { display: grid; grid-template-columns: 16px 1fr 86px 24px; gap: 5px; margin: 0; padding: 3px 8px; align-items: center; }
+/* No. | Nama | Jabatan | Kategori | Jam | Hapus -- Kategori & Jam kini sebaris dgn
+   Nama/Jabatan (bukan baris tersendiri di bawahnya); Jabatan/Kategori/Jam disamakan
+   lebarnya (118px) supaya rapi & cukup utk jam tanpa patah baris (mis. "08:00–20:00"). */
+#penempatanContainer .dynamic-row { display: grid; grid-template-columns: 16px minmax(0,1fr) 118px 118px 118px 24px; gap: 6px; margin: 0; padding: 3px 8px; align-items: center; }
 #penempatanContainer .dynamic-row .no { font-size: 9.5px; font-weight: 800; color: #8A94A6; }
 #penempatanContainer .dynamic-row input, #penempatanContainer .dynamic-row select { height: 26px; padding: 0 7px; font-size: 11px; }
 #penempatanContainer .btn-remove { width: 24px; height: 24px; padding: 0; font-size: 10px; }
-/* Baris ke-2 per nama: Kategori (sumber auto-isi jam) + Jam -- di bawah nama & peran,
-   grid-column 2/4 supaya sejajar dgn lebar nama+peran gabungan (bukan ikut kolom no/hapus). */
-#penempatanContainer .pos-jam-wrap { grid-column: 2 / 4; display: flex; gap: 5px; }
-#penempatanContainer .pos-kat { flex: 1; min-width: 0; height: 24px; padding: 0 6px; font-size: 10px; color: #475569; border: 1px solid #E3E8F0; border-radius: 6px; background: #fff; }
-#penempatanContainer .pos-jam { width: 84px; flex: none; height: 24px; padding: 0 7px; font-size: 10.5px; font-weight: 700; color: #5C6675; border: 1px solid #E3E8F0; border-radius: 6px; background: #FAFBFD; }
+#penempatanContainer .pos-kat { min-width: 0; height: 26px; padding: 0 6px; font-size: 10px; color: #475569; border: 1px solid #E3E8F0; border-radius: 6px; background: #fff; }
+#penempatanContainer .pos-jam { min-width: 0; height: 26px; padding: 0 7px; font-size: 10.5px; font-weight: 700; color: #5C6675; border: 1px solid #E3E8F0; border-radius: 6px; background: #FAFBFD; white-space: nowrap; }
 #penempatanContainer .pos-jam:not(:placeholder-shown) { color: #157A82; border-color: #BEE3E3; background: #F2FAFA; }
-/* Selektor Penggantian/Penambahan -- baris ke-3 per nama (entri ke-2 dst saja), grid-column
-   2/4 spy sejajar dgn baris nama/peran & kategori/jam di atasnya. */
-#penempatanContainer .pos-jenis-wrap { grid-column: 2 / 4; display: flex; gap: 10px; margin-top: 1px; }
+/* Selektor Penggantian/Penambahan -- baris ke-2 per nama (entri ke-2 dst saja), grid-column
+   2/6 spy sejajar dgn lebar Nama+Jabatan+Kategori+Jam gabungan di atasnya. */
+#penempatanContainer .pos-jenis-wrap { grid-column: 2 / 6; display: flex; gap: 10px; margin-top: 1px; }
 #penempatanContainer .pos-jenis-wrap label { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: #8A94A6; cursor: pointer; }
 #penempatanContainer .pos-jenis-wrap label.aktif { color: #157A82; font-weight: 700; }
 #penempatanContainer .pos-jenis-wrap input[type="radio"] { width: 11px; height: 11px; accent-color: #157A82; margin: 0; }

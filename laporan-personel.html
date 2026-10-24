@@ -627,11 +627,9 @@ function renderPenempatan() {
 <span class="no">${pIdx + 1}</span>
 <input type="text" class="nm" list="listPersonel" placeholder="Nama personel" value="${esc(p.nama)}" oninput="updateNamaPos(${posIdx},${pIdx},this.value)">
 <select onchange="updatePeranPos(${posIdx},${pIdx},this.value)">${opts}</select>
-<button type="button" class="btn-remove" onclick="removePersonelPos(${posIdx},${pIdx})">✕</button>
-<div class="pos-jam-wrap">
 <select class="pos-kat" onchange="updateKategoriPos(${posIdx},${pIdx},this.value)">${opsiKategoriPos(p.kategoriId)}</select>
 <input type="text" class="pos-jam" placeholder="Jam" value="${esc(p.jam)}" title="Jam bertugas (opsional) -- terisi otomatis saat pilih Kategori, tetap bisa diedit manual" oninput="updateJamPos(${posIdx},${pIdx},this.value)">
-</div>
+<button type="button" class="btn-remove" onclick="removePersonelPos(${posIdx},${pIdx})">✕</button>
 ${jenisHtml}
 </div>`;
     });
