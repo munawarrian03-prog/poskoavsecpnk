@@ -14,6 +14,26 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Tata letak formulir Log Book: Serah Terima sejajar, Catatan Kegiatan penuh, isian tumbuh otomatis
+- **Status:** Selesai
+- **Dicatat:** 2026-10-24 (mockup disetujui, https://claude.ai/artifact/TSfNv3Ym7YGXs8AGRpagTN)
+- **Diverifikasi:** Playwright (1366px) — panel Kesiapan Tugas & Serah Terima sama tinggi (315px,
+  sebaris); Catatan Kegiatan di baris kedua selebar penuh, tepi kanannya sejajar tepi kanan Serah
+  Terima (1336px). Tiap baris Catatan Kegiatan: Waktu, isian, tombol Hapus sama-sama 38px saat isian
+  kosong/satu baris; isian teks panjang tumbuh sendiri (58px = 2 baris), dan mengetik teks panjang di
+  baris kosong ikut menumbuhkan kotaknya + tersimpan ke `catatanKegiatan`. Tidak ada error.
+- **Konteks:** Sebelumnya Serah Terima panel pendek sendiri di kolom kanan (tidak sejajar dgn dua
+  panel bertumpuk di kiri), Catatan Kegiatan sempit cuma selebar kolom kiri, dan isian tiap barisnya
+  tinggi tetap 58px (lebih tinggi dari kolom Waktu) yang harus diseret manual.
+- **Keputusan:** baris 1 grid = Kesiapan Tugas | Serah Terima (`align-items:stretch`, textarea Serah
+  Terima `flex:1` mengisi tinggi panel); baris 2 = Catatan Kegiatan `grid-column:1/-1`. Isian Catatan
+  Kegiatan pakai teknik CSS grid + bayangan `::after` (isi disalin ke `data-replicated-value` saat
+  mengetik) — tinggi diukur CSS, bukan `scrollHeight` via JS, jadi tidak terpengaruh waktu muat font.
+  Satu baris = line-height 20px + padding 2×8px + border 2×1px = 38px.
+- **Implementasi:** `logbook.html` — markup `.lb-wrap` (panel jadi anak grid langsung, `.lb-serah`,
+  `.lb-kegiatan`), CSS `.lb-serah`/`.lb-kegiatan`/`.lb-grow`, `renderCatatan()` membungkus textarea
+  dlm `.lb-grow` + `rows="1"` + sinkron `data-replicated-value` di `oninput`.
+
 ### Pos Penempatan 1 kolom bertingkat + Kategori/Jam sebaris dgn Jabatan
 - **Status:** Selesai
 - **Dicatat:** 2026-10-24 (mockup disetujui sebelum dikerjakan,
