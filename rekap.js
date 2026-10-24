@@ -24,8 +24,11 @@
   const skalaY = (maxVal) => { const mv = Math.max(4, maxVal), step = mv <= 6 ? 2 : mv <= 12 ? 4 : Math.ceil(mv / 3 / 2) * 2; return { step, max: Math.ceil(mv / step) * step }; };
 
   /* =========================================================
-     RINGKAS TANGGAL: gabungkan tanggal berurutan (>2 hari, bulan sama)
-     jadi rentang "1-5 Sep 26"; selebihnya ditulis satuan "3 Sep 26".
+     RINGKAS TANGGAL: gabungkan tanggal berurutan (2+ hari, bulan sama)
+     jadi rentang "1-2 Sep 26"; selebihnya ditulis satuan "3 Sep 26".
+     Ambang 2 hari ini SELARAS dengan gabungkanCatatan (data.js, "Alat
+     Bermasalah") -- keduanya mulai menggabung sejak 2 kemunculan berurutan,
+     bukan baru mulai di hari ke-3.
      ========================================================= */
   function labelTunggal(iso) {
     const [y, m, d] = iso.split('-').map(Number);
@@ -49,7 +52,7 @@
     while (i < uniq.length) {
       let j = i;
       while (j + 1 < uniq.length && berurutanSebulan(uniq[j], uniq[j + 1])) j++;
-      if (j - i + 1 > 2) parts.push(labelRentang(uniq[i], uniq[j]));
+      if (j - i + 1 > 1) parts.push(labelRentang(uniq[i], uniq[j]));
       else for (let k = i; k <= j; k++) parts.push(labelTunggal(uniq[k]));
       i = j + 1;
     }

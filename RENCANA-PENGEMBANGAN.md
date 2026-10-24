@@ -14,6 +14,32 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Bug: rentang tanggal Ketidakhadiran/Kepatuhan Shift baru gabung mulai hari ke-3
+- **Status:** Selesai
+- **Dicatat:** 2026-10-24
+- **Diverifikasi:** Playwright — data uji: Budi Santoso absen "Sakit" di 1 & 2 Okt (berurutan,
+  alasan sama) + 5 Okt (terpisah, alasan sama juga) -> SEBELUM perbaikan tabel "Ketidakhadiran
+  per Personel" menampilkan tiga tanggal terpisah "1 Okt 26, 2 Okt 26, 5 Okt 26"; SESUDAH
+  perbaikan jadi "1-2 Okt 26, 5 Okt 26" sesuai harapan. Kasus kontrol: Andi Wijaya absen Izin
+  di 10 Okt lalu Cuti Tahunan di 11 Okt (berurutan TAPI alasan beda) tetap benar sbg dua baris
+  terpisah ("10 Okt 26" & "11 Okt 26"), tidak ikut tergabung. Regresi: `rekap.html` dimuat ulang
+  tanpa data (localStorage kosong) -> bagian "Kepatuhan Pelaporan Shift" (pemakai fungsi yang
+  sama) tetap tampil wajar, tidak ada error console/halaman.
+- **Konteks:** Ditemukan saat meninjau permintaan pengguna: "tanggal keterangan hari tidak
+  masuk tidak pakai logika rentang seperti tanggal bermasalah — berturut dengan alasan yang
+  sama pakai rentang, contoh 1-2 Okt 26". Penyebabnya: `ringkasTanggalList` (`rekap.js`,
+  dipakai tabel "Ketidakhadiran per Personel" DAN daftar tanggal "Kepatuhan Pelaporan Shift")
+  sengaja ditulis baru menggabung jadi rentang kalau LEBIH DARI 2 hari berurutan
+  (`j - i + 1 > 2`, baru mulai di hari ke-3) — beda dari `gabungkanCatatan` (data.js, "Alat
+  Bermasalah", lihat entri di bawah) yang sudah diperbaiki sehari sebelumnya utk mulai
+  menggabung sejak 2 kemunculan berurutan. Akibatnya tepat 2 hari berurutan (persis contoh
+  pengguna "1-2 Okt") tetap ditulis terpisah "1 Okt 26, 2 Okt 26".
+- **Keputusan:** turunkan ambang jadi 2+ hari berurutan (`j - i + 1 > 1`), menyamakan
+  `ringkasTanggalList` dengan `gabungkanCatatan` — keduanya kini konsisten: gabung mulai dari
+  kemunculan ke-2 yang berurutan tanpa jeda, bukan baru di kemunculan ke-3.
+- **Implementasi:** `rekap.js` — `ringkasTanggalList`, ganti `j - i + 1 > 2` jadi
+  `j - i + 1 > 1`; perbarui komentar penjelasnya.
+
 ### Bug: rentang tanggal "Alat Bermasalah" di Rekap tidak mengecek jeda hari
 - **Status:** Selesai
 - **Dicatat:** 2026-10-24
