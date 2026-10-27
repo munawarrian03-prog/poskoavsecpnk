@@ -14,6 +14,24 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Login/Keluar: selalu ke Beranda + bisa ganti akun dari halaman Pantau Posko
+- **Status:** Selesai
+- **Dicatat:** 2026-10-27 (hasil audit akun Admin)
+- **Diverifikasi:** Playwright — Admin di Pantau Posko -> Keluar -> pindah ke Beranda & tampil pilihan
+  Posko/Admin; login Posko -> tetap Beranda; Posko di Laporan Personel -> Keluar -> login Admin -> Beranda;
+  buka Pantau Posko tanpa sesi -> gerbangnya kini punya tombol "Pilih peran lain" (pilih Posko -> Beranda);
+  sesi aktif membuka Rekap lewat URL langsung TIDAK dipaksa ke Beranda; login di Beranda tetap Beranda.
+  Tidak ada error.
+- **Konteks:** (1) Halaman Pantau Posko memakai `AVS_gerbangAdminSaja` yang langsung meminta PIN Admin
+  tanpa pilihan peran (`gantiPeran:false`), jadi setelah Keluar tidak ada jalan masuk dgn akun lain.
+  (2) Setelah login pengguna lanjut di halaman terakhir (gerbang hanya muncul di atas halaman yg sama).
+- **Keputusan:** `AVS_KELUAR` kini pindah ke `index.html` (gerbang menampilkan pilihan peran); setelah PIN
+  berhasil di gerbang manapun, SELALU diarahkan ke `index.html` (fungsi `keBeranda`, menggantikan
+  `alihkanJikaPerlu` yg hanya mengalihkan saat peran tak cocok dgn halaman). Gerbang Admin-saja diberi
+  tombol "Pilih peran lain". Catatan: bila sesi habis (idle 1 jam) saat form belum disimpan, setelah PIN
+  dialihkan ke Beranda dan browser menampilkan konfirmasi "tinggalkan halaman" (beforeunload) dulu.
+- **Implementasi:** `akses.js` saja.
+
 ### Pantau Posko: pratinjau laporan disamakan dgn "Lihat" asli + tombol PDF di atas + Pratinjau PDF
 - **Status:** Selesai
 - **Dicatat:** 2026-10-27 (hasil audit akun Admin)

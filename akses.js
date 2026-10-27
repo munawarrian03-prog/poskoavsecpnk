@@ -71,24 +71,14 @@
   }
   function tulisSesi(peran) { localStorage.setItem(KUNCI_SESI, JSON.stringify({ peran, lastActivity: Date.now() })); }
 
-  // Alihkan ke halaman utama peran begitu PIN berhasil dimasukkan (login pertama ATAU
-  // ganti peran lewat "‹ Pilih peran lain" setelah logout), KALAU halaman yang sedang
-  // dibuka memang khusus untuk peran lain -- supaya tidak "nyangkut" di halaman peran
-  // sebelumnya (lihat laporan bug: logout Posko -> masuk Admin, halaman Posko masih
-  // terbuka sampai pindah menu manual). TIDAK dipakai untuk sesi yang sudah berjalan
-  // (buka halaman lewat URL langsung tetap diizinkan lintas peran seperti biasa) --
-  // hanya dipicu pada momen PIN baru saja dimasukkan.
-  const HALAMAN_KHUSUS_POSKO = ['laporan-personel.html', 'fasilitas.html', 'logbook.html'];
-  const HALAMAN_KHUSUS_ADMIN = ['rekap.html', 'pantau-posko.html'];
-  const HALAMAN_UTAMA_PERAN = { admin: 'pantau-posko.html', posko: 'index.html' };
+  // Setelah PIN berhasil dimasukkan (login pertama, ganti peran, atau sesi habis), SELALU masuk
+  // ke Beranda (index.html) -- tidak lanjut di halaman terakhir yang terbuka. Ini sekaligus
+  // mencegah "nyangkut" di halaman peran sebelumnya (mis. logout Posko -> masuk Admin).
+  // Sesi yang SUDAH berjalan tidak terpengaruh (buka halaman lewat URL langsung tetap boleh).
   function halamanSaatIni() { return location.pathname.split('/').pop() || 'index.html'; }
-  function alihkanJikaPerlu(peran) {
-    const h = halamanSaatIni();
-    const takRelevan = (peran === 'admin' && HALAMAN_KHUSUS_POSKO.includes(h)) || (peran === 'posko' && HALAMAN_KHUSUS_ADMIN.includes(h));
-    if (!takRelevan) return false;
-    const tujuan = HALAMAN_UTAMA_PERAN[peran];
-    if (tujuan === h) return false;
-    location.href = tujuan;
+  function keBeranda() {
+    if (halamanSaatIni() === 'index.html') return false;
+    location.href = 'index.html';
     return true;
   }
   function perbaruiAktivitas() {
@@ -106,7 +96,9 @@
   }
 
   root.AVS_PERAN = () => { const s = bacaSesi(); return s ? s.peran : null; };
-  root.AVS_KELUAR = () => { localStorage.removeItem(KUNCI_SESI); location.reload(); };
+  // Keluar -> kembali ke Beranda, tempat gerbang menampilkan pilihan peran (Posko/Admin), supaya
+  // bisa langsung masuk dgn akun lain dari halaman manapun (termasuk halaman khusus Admin).
+  root.AVS_KELUAR = () => { localStorage.removeItem(KUNCI_SESI); if (!keBeranda()) location.reload(); };
 
   // Terapkan tampilan sesuai peran. Menu topbar sendiri sudah dipilih per-peran di dalam
   // shell.js (renderNav), tapi topbar bisa SUDAH ter-render SEBELUM peran diketahui (tiap
@@ -144,7 +136,7 @@ ${tampilkanGanti ? '<button id="gerbangBtnGanti" style="width:100%;height:30px;m
       tulisSesi(peran);
       ov.remove();
       pasangPemantauAktivitas();
-      if (tampilkanGanti && alihkanJikaPerlu(peran)) return; // sedang pindah ke halaman utama peran ini
+      if (keBeranda()) return; // selalu mulai dari Beranda setelah login
       onBerhasil();
     };
     document.getElementById('gerbangBtn').onclick = coba;
@@ -225,6 +217,6 @@ ${tampilkanGanti ? '<button id="gerbangBtnGanti" style="width:100%;height:30px;m
     segarkanPinCache();
     const s = bacaSesi();
     if (s && s.peran === 'admin') { perbaruiAktivitas(); pasangPemantauAktivitas(); onBerhasil(); return; }
-    formPin('admin', 'Masuk - Pantau Posko (Admin)', onBerhasil, { gantiPeran: false });
+    formPin('admin', 'Masuk - Pantau Posko (Admin)', onBerhasil, { gantiPeran: true });
   };
 })(typeof window !== 'undefined' ? window : globalThis);
