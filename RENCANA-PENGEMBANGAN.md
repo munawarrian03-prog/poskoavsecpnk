@@ -14,6 +14,18 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### PDF Laporan Personel: kolom Jam (Penempatan) rata kanan
+- **Status:** Selesai
+- **Dicatat:** 2026-10-27
+- **Diverifikasi:** render PDF (Playwright) — judul "Jam", jam tiap orang, dan jam di baris "Total
+  Penempatan" rata kanan; Tabel Kekuatan tidak diubah. Tidak ada error.
+- **Konteks:** permintaan pengguna, bersamaan dgn pertanyaan kenapa Total Hadir 25/24/22 tapi Total
+  Penempatan 24/23/21 di rentang 17:00-20:00 pada laporan Regu D 27 Okt (Pagi). Penyebab: Total per
+  rentang dihitung dari KATEGORI tiap orang -- Kekuatan menghitung 4 orang berkategori 05:00-17:00
+  (IASS PP 2 + IASS NEW PP 2), sedangkan di Penempatan ada 5 orang bertanda 05:00-17:00, jadi setelah
+  17:00 Penempatan kehilangan 1 orang lebih banyak. Total di rentang 08:00-17:00 tetap sama (29).
+- **Implementasi:** `personel-pdf.js` (`tabelPenempatan`).
+
 ### Login/Keluar: selalu ke Beranda + bisa ganti akun dari halaman Pantau Posko
 - **Status:** Selesai
 - **Dicatat:** 2026-10-27 (hasil audit akun Admin)

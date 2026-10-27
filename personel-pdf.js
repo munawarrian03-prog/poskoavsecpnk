@@ -140,7 +140,7 @@
       totalBersih += valid.filter((x) => x.jenis !== 'penggantian').length;
       const list = valid.length ? valid.map((x, i) => `${i + 1}. ${esc(rapikan(x.nama))}${x.peran ? ' ' + esc(x.peran) : ''}`).join('<br>') : '- Nihil';
       const jamList = valid.length ? valid.map((x) => esc(x.jam || '-')).join('<br>') : '';
-      return `<tr><td style="${TD};font-weight:800;color:#10243D;vertical-align:top;width:${W1}%">${esc(root.AVS.namaPosPersonelTerbaru(p.id, p.name))}</td><td style="${TD};vertical-align:top;width:${W2 + W3}%">${list}</td><td style="${TD};vertical-align:top;width:${W4 + W5}%">${jamList}</td></tr>`;
+      return `<tr><td style="${TD};font-weight:800;color:#10243D;vertical-align:top;width:${W1}%">${esc(root.AVS.namaPosPersonelTerbaru(p.id, p.name))}</td><td style="${TD};vertical-align:top;width:${W2 + W3}%">${list}</td><td style="${TD};vertical-align:top;text-align:right;width:${W4 + W5}%">${jamList}</td></tr>`;
     }).join('');
     const itemsWaktu = [];
     (pos || []).forEach((p) => (p.personel || []).filter(adaNama).forEach((x) => {
@@ -148,8 +148,8 @@
       itemsWaktu.push({ mulai: k ? k.mulai : null, selesai: k ? k.selesai : null, bobot: 1 });
     }));
     const rincian = segmentasiWaktu(itemsWaktu, shiftLabel);
-    const totalRows = (rincian.length ? rincian : [{ jumlah: totalBersih, mulai: null, selesai: null }]).map((r) => `<tr style="font-weight:800;background:#F6F8FB"><td style="${TD};text-align:right">Total Penempatan</td><td style="${TD}">${r.jumlah} Personel</td><td style="${TD}">${r.mulai ? `(${r.mulai} - ${r.selesai})` : ''}</td></tr>`).join('');
-    return { html: `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:6px;table-layout:fixed"><tr><th style="${TH};width:${W1}%">Pos Penempatan</th><th style="${TH};width:${W2 + W3}%">Personel</th><th style="${TH};width:${W4 + W5}%">Jam</th></tr>${rows}${totalRows}</table>`, total: totalBersih };
+    const totalRows = (rincian.length ? rincian : [{ jumlah: totalBersih, mulai: null, selesai: null }]).map((r) => `<tr style="font-weight:800;background:#F6F8FB"><td style="${TD};text-align:right">Total Penempatan</td><td style="${TD}">${r.jumlah} Personel</td><td style="${TD};text-align:right">${r.mulai ? `(${r.mulai} - ${r.selesai})` : ''}</td></tr>`).join('');
+    return { html: `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:6px;table-layout:fixed"><tr><th style="${TH};width:${W1}%">Pos Penempatan</th><th style="${TH};width:${W2 + W3}%">Personel</th><th style="${TH};text-align:right;width:${W4 + W5}%">Jam</th></tr>${rows}${totalRows}</table>`, total: totalBersih };
   }
   function ttdBlok(pembuat) {
     const nama = pembuat && pembuat.ada && pembuat.nama ? pembuat.nama.toUpperCase() : '....................';
