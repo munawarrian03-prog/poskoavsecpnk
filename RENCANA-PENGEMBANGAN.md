@@ -14,6 +14,23 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Pantau Posko: pratinjau laporan disamakan dgn "Lihat" asli + tombol PDF di atas + Pratinjau PDF
+- **Status:** Selesai
+- **Dicatat:** 2026-10-27 (hasil audit akun Admin)
+- **Diverifikasi:** Playwright (peran admin) — teks pratinjau di Pantau Posko vs "Lihat" di halaman asli,
+  data uji Personel (jam kategori, absen, Penggantian), Fasilitas (keterangan), Log Book (Kesiapan Tugas):
+  ketiganya IDENTIK karakter per karakter. Tombol "Pratinjau PDF" & "Unduh PDF" kini tepat di bawah
+  subjudul (di atas isi, `footer` lama dihapus); pratinjau menghasilkan blob `application/pdf` (236 KB),
+  modal buka/tutup normal; Kejadian/BAST tetap tanpa tombol PDF. Tidak ada error console/halaman.
+  (Tampilan PDF di dalam iframe tidak bisa dilihat di Chromium uji krn tak punya penampil PDF.)
+- **Konteks:** audit menemukan pratinjau di `pantau-posko.html` adalah salinan lama: tanpa bagian
+  Penempatan, Total Hadir/Penempatan per rentang waktu, "Dibuat oleh", jam kategori di judul, keterangan
+  alat (Fasilitas), dan Catatan Kesiapan Tugas (Log Book).
+- **Keputusan:** port ulang fungsi "Lihat" terbaru ke `renderLihatPersonel/Fasilitas/Logbook`
+  (tetap salinan, bukan modul bersama -- harus disinkronkan manual bila "Lihat" di halaman asli berubah).
+  PDF dibangun lewat satu fungsi `susunPdfPantau` dipakai Pratinjau & Unduh supaya pasti sama.
+- **Implementasi:** `pantau-posko.html` saja.
+
 ### Tata letak formulir Log Book: Serah Terima sejajar, Catatan Kegiatan penuh, isian tumbuh otomatis
 - **Status:** Selesai
 - **Dicatat:** 2026-10-24 (mockup disetujui, https://claude.ai/artifact/TSfNv3Ym7YGXs8AGRpagTN)

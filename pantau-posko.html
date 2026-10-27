@@ -34,6 +34,9 @@ table.pptbl tr.hari-ini td:first-child { box-shadow: inset 3px 0 0 #C9922E; }
 .pp-legend .it { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; color: var(--ink); }
 .pp-legend .sw { width: 20px; height: 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; flex: none; }
 .pp-legend small { display: block; font-weight: 600; color: #8A94A6; font-size: 10px; margin-top: 1px; }
+.drawer#drawerLihat .lhaksi { display: flex; gap: 8px; padding: 8px 16px; background: #fff; border-bottom: 1px solid var(--border-color); }
+.drawer#drawerLihat .lhaksi:empty { display: none; }
+.drawer#drawerLihat .lhaksi button { flex: 1; padding: 8px 12px; font-size: 12px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; }
 .pp-nihil { font-size: 11px; color: #A8B2C2; font-weight: 700; font-style: italic; }
 </style>
 </head>
@@ -72,10 +75,16 @@ table.pptbl tr.hari-ini td:first-child { box-shadow: inset 3px 0 0 #C9922E; }
 <aside class="drawer" id="drawerLihat">
 <div class="dh"><span>LIHAT LAPORAN</span><button type="button" onclick="tutupLihat()" title="Tutup">&#10005;</button></div>
 <div class="lhsub" id="lihatSub"></div>
+<div class="lhaksi" id="lihatAksi"></div>
 <div class="lhbody" id="lihatIsi"></div>
-<div class="dfoot" id="lihatFoot"></div>
 </aside>
 
+<div class="modal-overlay" id="modalPdf">
+<div class="modal-container" style="max-width:920px;height:90vh">
+<div class="modal-header"><div class="modal-title" id="modalPdfJudul">PRATINJAU PDF</div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn-success" id="modalPdfUnduh" style="padding:7px 14px;font-size:12px">Unduh PDF</button><button class="modal-close" onclick="tutupPratinjauPdf()">&#10005;</button></div></div>
+<div style="flex:1;min-height:0;background:#525659"><iframe id="pdfFrame" title="Pratinjau PDF" style="width:100%;height:100%;border:0"></iframe></div>
+</div>
+</div>
 <div id="pdfTemplate"><div id="pdfContent"></div></div>
 
 <script src="akses.js"></script>
@@ -112,41 +121,95 @@ function badgeOpsional(st, jenis, tanggal, sk) {
 /* ---------- Pratinjau laporan (laci dari samping, tanpa pindah halaman) ----------
    Porting renderLihatHTML dari laporan-personel.html / fasilitas.html / logbook.html
    supaya tampilannya identik dengan laci "Lihat Laporan" yang sudah ada di tiap halaman. */
-function renderLihatPersonel(kat) {
-  return (kat || []).map((k) => {
-    const absen = (k.absen || []).filter((p) => p && String(p.nama || '').trim());
-    const jml = parseInt(k.jml, 10) || 0, hadir = jml - absen.length;
-    const judul = `${esc(k.nama)} &mdash; Jumlah ${jml} &bull; Hadir ${hadir} &bull; Kurang ${absen.length}`;
-    const isi = absen.length
-      ? absen.map((p) => `<div class="lb-auto-item"><span>${esc(p.nama)}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(p.alasan === 'Lainnya' ? (p.ket || 'Lainnya') : p.alasan)}</span></div>`).join('')
+const rapikan = (s) => String(s == null ? '' : s).trim().replace(/\s+/g, ' ');
+const adaNama = (p) => rapikan(p && p.nama) !== '';
+// Sama persis dgn rincianHadirWaktu/rincianPenempatanWaktu di laporan-personel.html (memakai
+// AVS_rincianWaktu dari personel-pdf.js) -- jaga tetap sinkron kalau aturan di sana berubah.
+function rincianHadirWaktu(kat, shift) {
+  if (typeof AVS_rincianWaktu !== 'function') return [];
+  return AVS_rincianWaktu((kat || []).map((k) => ({ mulai: k.mulai, selesai: k.selesai, bobot: Math.max(0, Math.max(0, parseInt(k.jml, 10) || 0) - (k.absen || []).filter(adaNama).length) })), shift);
+}
+function rincianPenempatanWaktu(pos, kat, shift) {
+  if (typeof AVS_rincianWaktu !== 'function') return [];
+  const byId = {}; (kat || []).forEach((k) => { byId[k.id] = k; });
+  const items = [];
+  (pos || []).forEach((p) => (p.personel || []).filter(adaNama).forEach((x) => { const k = x.kategoriId ? byId[x.kategoriId] : null; items.push({ mulai: k ? k.mulai : null, selesai: k ? k.selesai : null, bobot: 1 }); }));
+  return AVS_rincianWaktu(items, shift);
+}
+// Porting renderLihatHTML(kat, pos, shift) dari laporan-personel.html.
+function renderLihatPersonel(r) {
+  const kat = r.kategoriKekuatan || [], pos = r.posPenempatan || [];
+  let totalHadir = 0, totalPenempatan = 0;
+  let html = kat.map((k) => {
+    const valid = (k.absen || []).filter(adaNama);
+    const jml = Math.max(0, parseInt(k.jml, 10) || 0), hdr = Math.max(0, jml - valid.length);
+    totalHadir += hdr;
+    const nama = rapikan(k.nama), label = (k.mulai && k.selesai) ? `${nama} (${k.mulai} - ${k.selesai}) WIB` : nama;
+    const judul = `${esc(label)} &mdash; Jumlah ${jml} &bull; Hadir ${hdr} &bull; Kurang ${valid.length}`;
+    const isi = valid.length
+      ? valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(p.alasan === 'Lainnya' ? (rapikan(p.ket) || 'Lainnya') : p.alasan)}</span></div>`).join('')
       : '<div class="lihat-empty">Lengkap, tidak ada yang tidak hadir.</div>';
     return `<div class="lb-auto"><div class="t"><i></i>${judul}</div>${isi}</div>`;
   }).join('') || '<div class="lihat-empty">Belum ada kategori kekuatan.</div>';
+  const rHadir = rincianHadirWaktu(kat, r.shift);
+  html += rHadir.length
+    ? rHadir.map((x) => `<div class="lihat-total">TOTAL HADIR ${x.jumlah} PERSONEL (${x.mulai} - ${x.selesai})</div>`).join('')
+    : `<div class="lihat-total">TOTAL HADIR: <b>${totalHadir}</b> PERSONEL</div>`;
+  html += pos.map((p) => {
+    const valid = (p.personel || []).filter(adaNama);
+    totalPenempatan += valid.filter((x) => x.jenis !== 'penggantian').length;
+    const isi = valid.length
+      ? valid.map((x) => `<div class="lb-auto-item"><span>${esc(rapikan(x.nama))}${x.peran ? ` <small style="color:#8A94A6;font-weight:600">${esc(x.peran)}</small>` : ''}${x.jam ? ` <small style="color:#157A82;font-weight:700">${esc(x.jam)}</small>` : ''}</span></div>`).join('')
+      : '<div class="lihat-empty">Nihil.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosPersonelTerbaru(p.id, p.name))} &mdash; ${valid.length} orang</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada pos penempatan.</div>';
+  const rPen = rincianPenempatanWaktu(pos, kat, r.shift);
+  html += rPen.length
+    ? rPen.map((x) => `<div class="lihat-total">TOTAL PENEMPATAN ${x.jumlah} PERSONEL (${x.mulai} - ${x.selesai})</div>`).join('')
+    : `<div class="lihat-total">TOTAL PENEMPATAN: <b>${totalPenempatan}</b> PERSONEL</div>`;
+  const posko = pos.find((p) => p.id === 'posko') || pos[0];
+  const pertama = posko && (posko.personel || []).find(adaNama);
+  const jab = (!pertama || !pertama.peran || pertama.peran === '(Chief)') ? 'CHIEF' : `a.n. Chief ${pertama.peran.replace(/^\(|\)$/g, '')}`;
+  html += `<div class="lihat-footer">Dibuat oleh, ${esc(jab)} &mdash; ${esc(pertama ? rapikan(pertama.nama) : '(....................)')}</div>`;
+  return html;
 }
 function renderLihatFasilitas(pos) {
   return (pos || []).map((p) => {
     const isi = (p.items || []).map((it) => {
       if (it.bentuk === 'C') {
         const masalah = !it.lengkap;
-        return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${it.lengkap ? 'Lengkap' : 'Tidak Lengkap'}</span></div>`;
+        return `<div class="lb-auto-item"><span>${esc(it.name)}${it.keterangan ? ` <small style="color:#8A94A6;font-weight:600">(${esc(it.keterangan)})</small>` : ''}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${it.lengkap ? 'Lengkap' : 'Tidak Lengkap'}</span></div>`;
       }
       if (it.bentuk === 'B') {
         const baik = Math.max(0, (it.jumlah || 0) - (it.rusak || 0)), masalah = (it.rusak || 0) > 0;
-        return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${it.jumlah || 0} unit &bull; Baik ${baik}${masalah ? ` &bull; Rusak ${it.rusak}` : ''}</span></div>`;
+        return `<div class="lb-auto-item"><span>${esc(it.name)}${it.keterangan ? ` <small style="color:#8A94A6;font-weight:600">(${esc(it.keterangan)})</small>` : ''}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${it.jumlah || 0} unit &bull; Baik ${baik}${masalah ? ` &bull; Rusak ${it.rusak}` : ''}</span></div>`;
       }
       const masalah = it.kondisi === 'Rusak' || it.status === 'Tidak Digunakan';
-      return `<div class="lb-auto-item"><span>${esc(it.name)}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${esc(it.kondisi)} &bull; ${esc(it.status)}</span></div>`;
+      return `<div class="lb-auto-item"><span>${esc(it.name)}${it.keterangan ? ` <small style="color:#8A94A6;font-weight:600">(${esc(it.keterangan)})</small>` : ''}</span><span class="lb-badge" style="background:${masalah ? '#FBE9E7' : '#E4F3F4'};color:${masalah ? '#A82F24' : '#0F5F65'}">${esc(it.kondisi)} &bull; ${esc(it.status)}</span></div>`;
     }).join('') || '<div class="lihat-empty">Belum ada item.</div>';
     return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosFasilitasTerbaru(p.id, p.name))}</div>${isi}</div>`;
   }).join('') || '<div class="lihat-empty">Belum ada pos.</div>';
 }
-function renderLihatLogbook(catatan, catatanSerahTerima) {
-  let html = `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${(catatan || []).length})</div>`;
-  html += (catatan || []).length
-    ? catatan.map((c) => `<div class="lb-auto-item"><span>${esc(c.uraian) || '(kosong)'}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(c.jam || '--:--')}</span></div>`).join('')
+// Porting renderLihatHTML(catatan, catatanSerahTerima, kesiapan) dari logbook.html.
+function renderLihatLogbook(catatan, catatanSerahTerima, kesiapan) {
+  catatan = catatan || [];
+  const k = kesiapan || { kegiatan: 'Apel', lokasi: '', pemimpin: '', materi: '', waktuMulai: '', waktuSelesai: '' };
+  const kosong = !rapikan(k.pemimpin) && !rapikan(k.materi) && !k.waktuMulai && !k.waktuSelesai;
+  const bd = (v) => `<span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${v}</span>`;
+  let html = '<div class="lb-auto"><div class="t"><i></i>Catatan Kesiapan Tugas</div>';
+  html += kosong ? '<div class="lihat-empty">Belum diisi.</div>'
+    : `<div class="lb-auto-item"><span>Kegiatan</span>${bd(esc(k.kegiatan))}</div>` +
+      `<div class="lb-auto-item"><span>Lokasi</span>${bd(esc(k.lokasi) || '-')}</div>` +
+      `<div class="lb-auto-item"><span>Pemimpin</span>${bd(esc(k.pemimpin) || '-')}</div>` +
+      `<div class="lb-auto-item"><span>Materi</span>${bd(esc(k.materi) || '-')}</div>` +
+      `<div class="lb-auto-item"><span>Waktu Pelaksanaan</span>${bd(k.kegiatan === 'Briefing' ? (esc(k.waktuMulai) || '--:--') : `${esc(k.waktuMulai) || '--:--'} – ${esc(k.waktuSelesai) || '--:--'}`)}</div>`;
+  html += '</div>';
+  html += `<div class="lb-auto"><div class="t"><i></i>Catatan Kegiatan (${catatan.length})</div>`;
+  html += catatan.length
+    ? catatan.map((c) => `<div class="lb-auto-item"><span>${esc(rapikan(c.uraian)) || '(kosong)'}</span>${bd(esc(c.jam || '--:--'))}</div>`).join('')
     : '<div class="lihat-empty">Belum ada catatan waktu.</div>';
   html += '</div>';
-  const st = String(catatanSerahTerima || '').trim();
+  const st = rapikan(catatanSerahTerima);
   html += `<div class="lb-auto"><div class="t"><i></i>Catatan Serah Terima</div><div style="font-size:12.5px;color:var(--ink);line-height:1.6;white-space:pre-wrap">${st ? esc(st) : '<span class="lihat-empty">(kosong)</span>'}</div></div>`;
   return html;
 }
@@ -175,9 +238,9 @@ function bukaPratinjau(jenis, tanggal, sk) {
   const cocokShift = (r) => r.tanggal === tanggal && ((r.shift || '').toLowerCase().startsWith('malam') ? 'M' : 'P') === sk;
   const cocokBast = (r) => r.tanggal === tanggal && ((parseInt(String(r.waktu || '0').split(':')[0], 10) || 0) < 20 ? 'P' : 'M') === sk;
   let r, isi, labelJenis;
-  if (jenis === 'personel') { r = gabunganTerkini.personel.find(cocokShift); isi = r ? renderLihatPersonel(r.kategoriKekuatan) : ''; labelJenis = 'Laporan Personel'; }
+  if (jenis === 'personel') { r = gabunganTerkini.personel.find(cocokShift); isi = r ? renderLihatPersonel(r) : ''; labelJenis = 'Laporan Personel'; }
   else if (jenis === 'fasilitas') { r = gabunganTerkini.fasilitas.find(cocokShift); isi = r ? renderLihatFasilitas(r.posFasilitas) : ''; labelJenis = 'Laporan Fasilitas'; }
-  else if (jenis === 'logbook') { r = gabunganTerkini.logbook.find(cocokShift); isi = r ? renderLihatLogbook(r.catatanKegiatan, r.catatanSerahTerima) : ''; labelJenis = 'Log Book'; }
+  else if (jenis === 'logbook') { r = gabunganTerkini.logbook.find(cocokShift); isi = r ? renderLihatLogbook(r.catatanKegiatan, r.catatanSerahTerima, r.kesiapanTugas) : ''; labelJenis = 'Log Book'; }
   else if (jenis === 'kejadian') { r = gabunganTerkini.kejadian.find(cocokShift); isi = r ? renderLihatKejadian(r) : ''; labelJenis = 'Laporan Kejadian'; }
   else { r = gabunganTerkini.bast.find(cocokBast); isi = r ? renderLihatBast(r) : ''; labelJenis = 'Berita Acara Serah Terima'; }
   if (!r) return;
@@ -188,43 +251,62 @@ function bukaPratinjau(jenis, tanggal, sk) {
   // disinkronkan, jadi hasilnya identik dgn PDF yang diunduh langsung dari akun Posko.
   // Kejadian/BAST SENGAJA tanpa tombol ini (lihat RENCANA-PENGEMBANGAN.md): sinkronisasinya
   // teks-saja (foto/tanda tangan dibuang), jadi PDF dari sini tidak akan identik.
-  $('lihatFoot').innerHTML = (jenis === 'personel' || jenis === 'fasilitas' || jenis === 'logbook')
-    ? `<button type="button" class="btn-success" onclick="unduhPdfDariPantau('${jenis}','${tanggal}','${sk}')">Unduh PDF</button>`
+  $('lihatAksi').innerHTML = (jenis === 'personel' || jenis === 'fasilitas' || jenis === 'logbook')
+    ? `<button type="button" class="btn-info" onclick="pratinjauPdfDariPantau('${jenis}','${tanggal}','${sk}')">Pratinjau PDF</button><button type="button" class="btn-success" onclick="unduhPdfDariPantau('${jenis}','${tanggal}','${sk}')">Unduh PDF</button>`
     : '';
   $('drawerLihat').classList.add('open');
 }
-async function unduhPdfDariPantau(jenis, tanggal, sk) {
+// Susun HTML PDF + nama file utk satu laporan (dipakai Pratinjau & Unduh -- keduanya PASTI sama).
+function susunPdfPantau(jenis, tanggal, sk) {
   const cocokShift = (r) => r.tanggal === tanggal && ((r.shift || '').toLowerCase().startsWith('malam') ? 'M' : 'P') === sk;
   const r = gabunganTerkini[jenis].find(cocokShift);
-  if (!r) return;
-  if (typeof html2pdf === 'undefined') { alert('Pustaka PDF (lib/html2pdf.bundle.min.js) tidak termuat.'); return; }
+  if (!r) return null;
   const tglCetak = new Date().toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  let html, namaFile;
+  const reguAman = String(r.regu).replace(/[\\/:*?"<>|]/g, '');
   if (jenis === 'personel') {
-    const pembuat = window.pembuatDariPosPenempatan(r.posPenempatan);
-    html = window.buildPersonelPdfHTML(r, pembuat, tglCetak);
-    namaFile = `Lap Personel - ${String(r.regu).replace(/[\\/:*?"<>|]/g, '')} - (${r.tanggal}).pdf`;
-  } else if (jenis === 'fasilitas') {
-    const pembuat = AVS.infoPembuatDariPersonel(r.tanggal, r.shift, r.regu, gabunganTerkini.personel);
-    html = window.buildFasilitasPdfHTML(r, pembuat, tglCetak);
-    namaFile = `Lap Fasilitas - ${String(r.regu).replace(/[\\/:*?"<>|]/g, '')} - (${r.tanggal}).pdf`;
-  } else {
-    const pembuat = AVS.infoPembuatDariPersonel(r.tanggal, r.shift, r.regu, gabunganTerkini.personel);
-    const personelRec = AVS.cariLaporanPersonel(r.tanggal, r.shift, r.regu, gabunganTerkini.personel);
-    const fasilitasRec = gabunganTerkini.fasilitas.find((x) => x.tanggal === r.tanggal && x.shift === r.shift && x.regu === r.regu) || null;
-    html = window.buildLogbookPdfHTML(r, pembuat, personelRec, fasilitasRec, tglCetak);
-    namaFile = `Log Book - ${String(r.regu).replace(/[\\/:*?"<>|]/g, '')} - (${r.tanggal}).pdf`;
+    return { html: window.buildPersonelPdfHTML(r, window.pembuatDariPosPenempatan(r.posPenempatan), tglCetak), namaFile: `Lap Personel - ${reguAman} - (${r.tanggal}).pdf` };
   }
-  $('pdfContent').innerHTML = html;
-  await AVS.tungguFontSiap();
-  html2pdf().set({
+  const pembuat = AVS.infoPembuatDariPersonel(r.tanggal, r.shift, r.regu, gabunganTerkini.personel);
+  if (jenis === 'fasilitas') {
+    return { html: window.buildFasilitasPdfHTML(r, pembuat, tglCetak), namaFile: `Lap Fasilitas - ${reguAman} - (${r.tanggal}).pdf` };
+  }
+  const personelRec = AVS.cariLaporanPersonel(r.tanggal, r.shift, r.regu, gabunganTerkini.personel);
+  const fasilitasRec = gabunganTerkini.fasilitas.find((x) => x.tanggal === r.tanggal && x.shift === r.shift && x.regu === r.regu) || null;
+  return { html: window.buildLogbookPdfHTML(r, pembuat, personelRec, fasilitasRec, tglCetak), namaFile: `Log Book - ${reguAman} - (${r.tanggal}).pdf` };
+}
+function opsiHtml2pdf(namaFile) {
+  return {
     margin: 10, filename: namaFile,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['css'], avoid: ['tr', '.ttd-block', '.fa-pdf-pos'] }
-  }).from($('pdfContent')).save();
+  };
 }
+async function unduhPdfDariPantau(jenis, tanggal, sk) {
+  const d = susunPdfPantau(jenis, tanggal, sk); if (!d) return;
+  if (typeof html2pdf === 'undefined') { alert('Pustaka PDF (lib/html2pdf.bundle.min.js) tidak termuat.'); return; }
+  $('pdfContent').innerHTML = d.html;
+  await AVS.tungguFontSiap();
+  html2pdf().set(opsiHtml2pdf(d.namaFile)).from($('pdfContent')).save();
+}
+let pdfBlobUrl = null;
+async function pratinjauPdfDariPantau(jenis, tanggal, sk) {
+  const d = susunPdfPantau(jenis, tanggal, sk); if (!d) return;
+  if (typeof html2pdf === 'undefined') { alert('Pustaka PDF (lib/html2pdf.bundle.min.js) tidak termuat.'); return; }
+  $('modalPdfJudul').textContent = 'PRATINJAU PDF - ' + d.namaFile.replace(/\.pdf$/, '');
+  $('modalPdfUnduh').onclick = () => unduhPdfDariPantau(jenis, tanggal, sk);
+  $('pdfFrame').removeAttribute('src');
+  $('modalPdf').style.display = 'flex';
+  $('pdfContent').innerHTML = d.html;
+  await AVS.tungguFontSiap();
+  try {
+    const url = await html2pdf().set(opsiHtml2pdf(d.namaFile)).from($('pdfContent')).outputPdf('bloburl');
+    if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
+    pdfBlobUrl = url; $('pdfFrame').src = url;
+  } catch (e) { tutupPratinjauPdf(); alert('Gagal membuat pratinjau PDF.'); }
+}
+function tutupPratinjauPdf() { $('modalPdf').style.display = 'none'; $('pdfFrame').removeAttribute('src'); if (pdfBlobUrl) { URL.revokeObjectURL(pdfBlobUrl); pdfBlobUrl = null; } }
 const BULAN_PENDEK = AVS.BULAN_PENDEK, BULAN = AVS.BULAN;
 function tglIndo(iso) {
   const [y, m, d] = iso.split('-').map(Number);
