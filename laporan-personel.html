@@ -292,7 +292,7 @@ function daftarGanda(names) {
   m.forEach((e, k) => { if (e.c > 1) { set.add(k); tampil.push(e.tampil); } });
   return { set, tampil };
 }
-function hitungData(kat, pos) {
+function hitungData(kat, pos, shift) {
   let totalHadir = 0, totalPenempatan = 0;
   const issues = [];
 
@@ -335,9 +335,53 @@ function hitungData(kat, pos) {
     balanceIssue = totalPenempatan < totalHadir ? `Penempatan kurang ${selisih} orang dari total hadir.` : `Penempatan kelebihan ${selisih} orang dari total hadir.`;
     issues.push(balanceIssue);
   }
+  peringatanKategoriWaktu(kat, pos, shift).forEach((t) => issues.push(t));
   return { rows, posRows, totalHadir, totalPenempatan, pergantianCount, issues, balanceIssue, dupAbs: gAbs.set, dupPos: gPos.set };
 }
-const hitung = () => hitungData(kategoriKekuatan, posPenempatan);
+const hitung = () => hitungData(kategoriKekuatan, posPenempatan, $('shift').value);
+
+// Peringatan yang TIDAK terlihat dari total keseluruhan: Total Hadir & Total Penempatan bisa sama
+// persis tapi berbeda di rentang jam tertentu (krn dihitung dari KATEGORI tiap orang, bukan teks
+// Jam). (1) satu kategori punya lebih banyak orang di Penempatan daripada yang hadir di Kekuatan
+// (entri "Penggantian" tidak dihitung -- itu pengganti slot yang sama); (2) kalau SEMUA orang di
+// Penempatan sudah diberi kategori, bandingkan Total Hadir vs Penempatan di tiap rentang waktu.
+// Orang tanpa kategori dihitung sepanjang shift, jadi (2) tidak dijalankan utk laporan yg belum
+// lengkap kategorinya (lama/sebagian) supaya tidak memberi peringatan palsu.
+function peringatanKategoriWaktu(kat, pos, shift) {
+  const out = [], byId = {}, hadir = {}, tertanda = {};
+  (kat || []).forEach((k) => { byId[k.id] = k; hadir[k.id] = Math.max(0, (Math.max(0, parseInt(k.jml, 10) || 0)) - (k.absen || []).filter(adaNama).length); });
+  let valid = 0, bertanda = 0;
+  (pos || []).forEach((p) => (p.personel || []).filter(adaNama).forEach((x) => {
+    valid++;
+    if (x.kategoriId && byId[x.kategoriId]) { bertanda++; if (x.jenis !== 'penggantian') tertanda[x.kategoriId] = (tertanda[x.kategoriId] || 0) + 1; }
+  }));
+  (kat || []).forEach((k) => {
+    const t = tertanda[k.id] || 0;
+    if (t > hadir[k.id]) out.push(`${labelKategori(k)}: ${t} orang di Penempatan memakai kategori ini, tetapi yang hadir di Kekuatan hanya ${hadir[k.id]}.`);
+  });
+  if (valid && bertanda === valid) {
+    const seg = selisihRentangWaktu(rincianHadirWaktu(kat, shift), rincianPenempatanWaktu(pos, kat, shift), shift);
+    if (seg.length) out.push(`Total Hadir dan Penempatan berbeda pada rentang waktu: ${seg.join('; ')}.`);
+  }
+  return out;
+}
+function selisihRentangWaktu(hList, pList, shift) {
+  const m = String(shift || '').match(/(\d{2}):(\d{2})\s*-\s*\d{2}:\d{2}/); if (!m) return [];
+  const mulai = +m[1] * 60 + +m[2], mnt = (t) => { const [h, mm] = t.split(':').map(Number); return h * 60 + mm; };
+  const rel = (list) => list.map((r) => { const a = ((mnt(r.mulai) - mulai) + 1440) % 1440; let b = ((mnt(r.selesai) - mulai) + 1440) % 1440; if (b <= a) b += 1440; return { a, b, j: r.jumlah }; });
+  const H = rel(hList), P = rel(pList);
+  const titik = Array.from(new Set([0].concat(H.flatMap((x) => [x.a, x.b]), P.flatMap((x) => [x.a, x.b])))).sort((x, y) => x - y);
+  const nilai = (arr, t) => { const r = arr.find((x) => x.a <= t && t < x.b); return r ? r.j : 0; };
+  const segs = [];
+  for (let i = 0; i < titik.length - 1; i++) {
+    const a = titik[i], b = titik[i + 1], h = nilai(H, a), p = nilai(P, a);
+    if (h === p) continue;
+    const last = segs[segs.length - 1];
+    if (last && last.b === a && last.h === h && last.p === p) last.b = b; else segs.push({ a, b, h, p });
+  }
+  const jam = (r) => { const t = (mulai + r) % 1440; return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`; };
+  return segs.map((g) => `${jam(g.a)}-${jam(g.b)} (Hadir ${g.h}, Penempatan ${g.p})`);
+}
 
 // Rincian "Total per rentang waktu" (dipakai teks WA & drawer Lihat) -- logika SAMA PERSIS
 // dgn PDF (personel-pdf.js: AVS_rincianWaktu), supaya ketiganya selalu menampilkan angka
@@ -934,7 +978,7 @@ function copyModalReport() {
 }
 function kirimWAModal() {
   const r = getReports().find((x) => x.id === modalReportId);
-  if (r && !konfirmasi('mengirim laporan', hitungData(r.kategoriKekuatan, r.posPenempatan), r.tanggal, r.shift, r.regu)) return;
+  if (r && !konfirmasi('mengirim laporan', hitungData(r.kategoriKekuatan, r.posPenempatan, r.shift), r.tanggal, r.shift, r.regu)) return;
   bukaWA($('modalViewContent').innerText);
 }
 

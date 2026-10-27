@@ -14,6 +14,26 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Laporan Personel: peringatan kategori & selisih total per rentang waktu
+- **Status:** Selesai
+- **Dicatat:** 2026-10-27
+- **Diverifikasi:** Playwright — data meniru PDF Regu D 27 Okt (Total Hadir = Penempatan = 29, tetapi 5 orang
+  berkategori 05:00-17:00 di Penempatan vs 4 di Kekuatan): tampil 2 catatan, "IASS PP ...: 3 orang di
+  Penempatan memakai kategori ini, tetapi yang hadir hanya 2" dan "Total Hadir dan Penempatan berbeda pada
+  rentang waktu: 17:00-18:00 (Hadir 25, Penempatan 24); 18:00-19:00 ...; 19:00-20:00 ..." + status bar
+  "ADA 2 CATATAN". Kasus kontrol: data konsisten -> tanpa peringatan; laporan lama tanpa kategori ->
+  tanpa peringatan; shift Malam (lewat tengah malam) berfungsi. Tidak ada error.
+- **Konteks:** pertanyaan pengguna kenapa total per rentang di PDF berbeda padahal indikator "Balance"
+  hijau -- indikator lama hanya membandingkan total keseluruhan.
+- **Keputusan:** dua peringatan masuk ke daftar `issues` (tampil di kotak "Catatan Pemeriksaan", ikut
+  konfirmasi saat Simpan/Kirim WA): (1) kategori yg dipakai lebih banyak orang di Penempatan daripada
+  jumlah hadirnya di Kekuatan (entri Penggantian tidak dihitung); (2) selisih Total Hadir vs Penempatan
+  per rentang waktu, HANYA bila semua orang di Penempatan sudah punya kategori (orang tanpa kategori
+  dihitung sepanjang shift, jadi laporan lama/sebagian tidak diberi peringatan palsu). Hanya peringatan --
+  tidak memblokir penyimpanan.
+- **Implementasi:** `laporan-personel.html` (`hitungData` menerima parameter `shift`,
+  `peringatanKategoriWaktu`, `selisihRentangWaktu`).
+
 ### PDF Laporan Personel: kolom Jam (Penempatan) rata kanan
 - **Status:** Selesai
 - **Dicatat:** 2026-10-27
