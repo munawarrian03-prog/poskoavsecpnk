@@ -47,8 +47,15 @@ Tetap manual: siapa yang tidak hadir (Kurang/Keterangan; jadwal hanya tahu yang 
 cuti/sakit/izin), pos untuk personel yang belum pernah ditempatkan, pergantian di tengah shift.
 
 Hal yang harus diputuskan/dibereskan sebelum dikerjakan:
-- Kategori berjam sama (IASS NEW PP vs IASS PP, 05:00-17:00) butuh aturan pemetaan kode Excel ke
-  kategori; bila tak ada aturan pasti, pengguna memilih saat pratinjau.
+- Kategori berjam sama (IASS NEW PP vs IASS PP, 05:00-17:00): DIPUTUSKAN dibedakan dari NAMA SHEET
+  Excel (sheet "NEW IASS" -> IASS NEW PP/PS/PM; sheet "IASS" -> IASS PP dst.; "ROSTER ORGANIK" ->
+  ORGANIK). Temuan pada Excel November: (a) legenda sheet IASS (kode di kolom B, jam di kolom D
+  berbentuk ": 08:00 S/D 20:00 WIB") TIDAK terbaca oleh `ambilLegenda` di `jadwal-dinas-import.js`
+  (legenda IASS tersimpan kosong) -> importer harus diperbaiki lebih dulu (referensi v93 `readLegend`
+  sudah menangani format ini); (b) kode IASS "PS" = 06:00-18:00 (beda dari NEW IASS "PS" =
+  07:00-19:00), "OH" IASS = 07:30-16:30, "P RDO"/"M RDO" = 08:00-20:00/20:00-08:00 -- belum ada
+  kategori yang cocok di `kategori.js` (IASS RDO PAGI di app = 07:00-19:00); tabel pemetaan
+  sheet+kode -> kategori harus disepakati/ditambah.
 - Nama di Excel harus dicocokkan dengan `personel.js`; selisih ejaan ditandai (mis. "ARIF GF" vs
   "ARIF G F"), tidak ditebak. Kode yang belum terpetakan ditandai, bisa dilewati.
 - Hanya berlaku untuk laporan baru; laporan tersimpan tidak berubah.
