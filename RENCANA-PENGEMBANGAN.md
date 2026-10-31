@@ -12,6 +12,25 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## PDF Laporan Personel: tabel Kekuatan & Penempatan dirapikan
+**Status: Selesai** (31 Okt 2026) — `personel-pdf.js`
+
+Masalah: di tabel Penempatan, nama dan jam adalah dua daftar terpisah dalam satu sel,
+sehingga nama yang membungkus membuat jam bergeser ke baris orang lain. Kolom nama sempit,
+kolom Jam lebar. Tabel Kekuatan: jam menyatu di nama kategori, total melayang di bawah kolom lain.
+
+Perubahan:
+- **Penempatan**: satu baris per personel (no., nama + peran kecil, jam rata kanan di baris yang
+  sama). Tiap pos satu `<tbody>` yang tidak terbelah halaman. Semua pos tampil sesuai web;
+  pos kosong diberi keterangan "Nihil". Jam kosong tetap "-".
+- **Kekuatan**: jam kategori jadi baris kecil di bawah nama; angka rata kanan; Kurang merah bila > 0
+  dan "–" bila 0; alasan ketidakhadiran jadi baris kecil di bawah nama personel; baris **Jumlah**
+  baru; kategori berjumlah 0 tetap tampil seperti biasa.
+- Total per rentang (hadir & penempatan) kini tabel tersendiri dengan judul kolom.
+- Keterbatasan: html2pdf memotong halaman dari gambar, jadi judul kolom TIDAK diulang di halaman
+  berikutnya (hanya dicegah agar satu pos/baris tidak terpotong).
+
+
 ## Inventaris Perubahan
 
 ### Jadwal Dinas: bulan unggah disesuaikan otomatis dgn tanggal di Excel

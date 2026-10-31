@@ -49,10 +49,8 @@
   }
   const TH = 'text-align:left;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:5px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB';
   const TD = 'padding:5px 6px;border-bottom:1px solid #F1F4F8';
-  // Lebar kolom SAMA PERSIS dipakai di tabel Kekuatan & Penempatan supaya garis kolomnya
-  // sejajar kalau ditumpuk: Kategori<->Pos Penempatan (W1), Jumlah+Hadir gabung<->Personel
-  // (W2+W3), Kurang+Keterangan gabung<->Jam (W4+W5).
-  const W1 = 34, W2 = 11, W3 = 11, W4 = 11, W5 = 33;
+  // Lebar kolom tabel Kekuatan (Kategori, Jumlah, Hadir, Kurang, Keterangan, dalam %).
+  const W1 = 28, W2 = 10, W3 = 10, W4 = 10, W5 = 42;
 
   /* ---------- Rincian "Total per rentang waktu" (Kekuatan & Penempatan) ----------
      Dipakai jg oleh laporan-personel.html (WA/drawer Lihat) lewat root.AVS_rincianWaktu,
@@ -117,30 +115,51 @@
   }
   root.AVS_rincianWaktu = segmentasiWaktu;
 
+  const MUT = '#8A94A6', KRG = '#C0392B';
+  const nomEsc = (n) => (n > 0 ? String(n) : '–');
+  const labelRentang = (r) => (r.mulai ? `${r.mulai} – ${r.selesai}` : 'Seluruh shift');
+  // Tabel kecil "Total ... per rentang" (Kekuatan & Penempatan): judul kolom + rentang di kiri,
+  // angka rata kanan. Tidak lagi baris melayang di bawah kolom tabel lain.
+  function tabelRentang(judul, rincian, fallbackJumlah) {
+    const list = rincian.length ? rincian : [{ jumlah: fallbackJumlah, mulai: null, selesai: null }];
+    const rows = list.map((r) => `<tr style="page-break-inside:avoid;break-inside:avoid"><td style="${TD}">${esc(labelRentang(r))}</td><td style="${TD};text-align:right;font-weight:800;font-variant-numeric:tabular-nums">${r.jumlah}</td></tr>`).join('');
+    return `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:6px;table-layout:fixed"><tr><th style="${TH}">${esc(judul)}</th><th style="${TH};text-align:right;width:${W4 + W2}%">Personel</th></tr>${rows}</table>`;
+  }
+
   function tabelKekuatan(kat, shiftLabel) {
-    let totalHadir = 0;
+    let totalHadir = 0, totalJml = 0, totalKrg = 0;
     const rows = (kat || []).map((k) => {
       const valid = (k.absen || []).filter(adaNama);
       const jml = Math.max(0, parseInt(k.jml, 10) || 0);
       const krg = valid.length, hdr = Math.max(0, jml - krg);
-      totalHadir += hdr;
-      let ket = jml === 0 ? '-' : (krg > 0 ? valid.map((p) => `${esc(rapikan(p.nama))} (${esc(alasanText(p))})`).join('<br>') : 'Lengkap');
-      return `<tr><td style="${TD};width:${W1}%">${esc(labelKategori(k))}</td><td style="${TD};text-align:center;width:${W2}%">${jml}</td><td style="${TD};text-align:center;width:${W3}%">${hdr}</td><td style="${TD};text-align:center;width:${W4}%">${krg || '-'}</td><td style="${TD};width:${W5}%">${ket}</td></tr>`;
+      totalHadir += hdr; totalJml += jml; totalKrg += krg;
+      // Keterangan: satu personel per blok, alasan di baris kecil di bawah nama
+      // (gaya sama dgn rentang jam di bawah nama kategori).
+      const ket = jml === 0 ? '-' : (krg > 0
+        ? valid.map((p) => `<div style="padding-bottom:3px">${esc(rapikan(p.nama))}<div style="font-size:7pt;color:${MUT};font-weight:500">${esc(alasanText(p))}</div></div>`).join('')
+        : 'Lengkap');
+      const jam = (k.mulai && k.selesai) ? `<div style="font-size:7pt;color:${MUT};font-weight:500;font-variant-numeric:tabular-nums">${esc(k.mulai)}–${esc(k.selesai)}</div>` : '';
+      return `<tr style="page-break-inside:avoid;break-inside:avoid"><td style="${TD};width:${W1}%;vertical-align:top;font-weight:700">${esc(rapikan(k.nama))}${jam}</td><td style="${TD};text-align:right;width:${W2}%;vertical-align:top;font-variant-numeric:tabular-nums">${jml}</td><td style="${TD};text-align:right;width:${W3}%;vertical-align:top;font-variant-numeric:tabular-nums">${hdr}</td><td style="${TD};text-align:right;width:${W4}%;vertical-align:top;font-variant-numeric:tabular-nums;${krg ? `color:${KRG};font-weight:800` : `color:${MUT}`}">${nomEsc(krg)}</td><td style="${TD};width:${W5}%;vertical-align:top">${ket}</td></tr>`;
     }).join('');
+    const sumRow = `<tr style="font-weight:800;background:#F6F8FB;page-break-inside:avoid;break-inside:avoid"><td style="${TD};border-top:1.5px solid #10243D">Jumlah</td><td style="${TD};border-top:1.5px solid #10243D;text-align:right">${totalJml}</td><td style="${TD};border-top:1.5px solid #10243D;text-align:right">${totalHadir}</td><td style="${TD};border-top:1.5px solid #10243D;text-align:right">${nomEsc(totalKrg)}</td><td style="${TD};border-top:1.5px solid #10243D"></td></tr>`;
     const rincian = segmentasiWaktu((kat || []).map((k) => { const v = (k.absen || []).filter(adaNama); return { mulai: k.mulai, selesai: k.selesai, bobot: Math.max(0, (Math.max(0, parseInt(k.jml, 10) || 0)) - v.length) }; }), shiftLabel);
-    const totalRows = (rincian.length ? rincian : [{ jumlah: totalHadir, mulai: null, selesai: null }]).map((r) => `<tr style="font-weight:800;background:#F6F8FB"><td style="${TD};text-align:right" colspan="2">Total Hadir</td><td style="${TD};text-align:center">${r.jumlah}</td><td style="${TD}">Personel</td><td style="${TD}">${r.mulai ? `(${r.mulai} - ${r.selesai})` : ''}</td></tr>`).join('');
-    return { html: `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:6px;table-layout:fixed"><tr><th style="${TH};width:${W1}%">Kategori</th><th style="${TH};text-align:center;width:${W2}%">Jumlah</th><th style="${TH};text-align:center;width:${W3}%">Hadir</th><th style="${TH};text-align:center;width:${W4}%">Kurang</th><th style="${TH};width:${W5}%">Keterangan</th></tr>${rows}${totalRows}</table>`, totalHadir };
+    return { html: `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:8px;table-layout:fixed"><tr><th style="${TH};width:${W1}%">Kategori</th><th style="${TH};text-align:right;width:${W2}%">Jumlah</th><th style="${TH};text-align:right;width:${W3}%">Hadir</th><th style="${TH};text-align:right;width:${W4}%">Kurang</th><th style="${TH};width:${W5}%">Keterangan</th></tr>${rows}${sumRow}</table>${tabelRentang('Total hadir per rentang', rincian, totalHadir)}`, totalHadir };
   }
+  // Penempatan: satu baris per personel (no., nama + peran kecil, jam rata kanan di baris yg
+  // sama) supaya jam tidak bisa bergeser dari pemiliknya saat nama membungkus. Tiap pos satu
+  // <tbody> yg tidak boleh terbelah halaman. Semua pos ditampilkan; pos kosong = "Nihil".
   function tabelPenempatan(pos, kat, shiftLabel) {
     let total = 0, totalBersih = 0;
     const kategoriById = {}; (kat || []).forEach((k) => { kategoriById[k.id] = k; });
+    const NO = 7, JAM = 24;
     const rows = (pos || []).map((p) => {
       const valid = (p.personel || []).filter(adaNama);
       total += valid.length;
       totalBersih += valid.filter((x) => x.jenis !== 'penggantian').length;
-      const list = valid.length ? valid.map((x, i) => `${i + 1}. ${esc(rapikan(x.nama))}${x.peran ? ' ' + esc(x.peran) : ''}`).join('<br>') : '- Nihil';
-      const jamList = valid.length ? valid.map((x) => esc(x.jam || '-')).join('<br>') : '';
-      return `<tr><td style="${TD};font-weight:800;color:#10243D;vertical-align:top;width:${W1}%">${esc(root.AVS.namaPosPersonelTerbaru(p.id, p.name))}</td><td style="${TD};vertical-align:top;width:${W2 + W3}%">${list}</td><td style="${TD};vertical-align:top;text-align:right;width:${W4 + W5}%">${jamList}</td></tr>`;
+      const nama = esc(root.AVS.namaPosPersonelTerbaru(p.id, p.name));
+      const kepala = `<tr><td colspan="2" style="padding:6px 6px 2px;font-weight:800;color:#10243D">${nama}</td><td style="padding:6px 6px 2px;text-align:right;font-size:7pt;color:${MUT}">${valid.length ? '' : '<i>Nihil</i>'}</td></tr>`;
+      const baris = valid.map((x, i) => `<tr><td style="padding:1px 6px;text-align:right;color:${MUT};vertical-align:top;width:${NO}%">${i + 1}.</td><td style="padding:1px 6px;vertical-align:top">${esc(rapikan(x.nama))}${x.peran ? `<span style="font-size:7pt;color:${MUT};margin-left:4px">${esc(x.peran)}</span>` : ''}</td><td style="padding:1px 6px;text-align:right;vertical-align:top;white-space:nowrap;font-variant-numeric:tabular-nums;width:${JAM}%">${esc(x.jam || '-')}</td></tr>`).join('');
+      return `<tbody style="page-break-inside:avoid;break-inside:avoid;border-bottom:1px solid #F1F4F8">${kepala}${baris}<tr><td colspan="3" style="padding:0;height:3px;border-bottom:1px solid #F1F4F8"></td></tr></tbody>`;
     }).join('');
     const itemsWaktu = [];
     (pos || []).forEach((p) => (p.personel || []).filter(adaNama).forEach((x) => {
@@ -148,8 +167,7 @@
       itemsWaktu.push({ mulai: k ? k.mulai : null, selesai: k ? k.selesai : null, bobot: 1 });
     }));
     const rincian = segmentasiWaktu(itemsWaktu, shiftLabel);
-    const totalRows = (rincian.length ? rincian : [{ jumlah: totalBersih, mulai: null, selesai: null }]).map((r) => `<tr style="font-weight:800;background:#F6F8FB"><td style="${TD};text-align:right">Total Penempatan</td><td style="${TD}">${r.jumlah} Personel</td><td style="${TD};text-align:right">${r.mulai ? `(${r.mulai} - ${r.selesai})` : ''}</td></tr>`).join('');
-    return { html: `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:6px;table-layout:fixed"><tr><th style="${TH};width:${W1}%">Pos Penempatan</th><th style="${TH};width:${W2 + W3}%">Personel</th><th style="${TH};text-align:right;width:${W4 + W5}%">Jam</th></tr>${rows}${totalRows}</table>`, total: totalBersih };
+    return { html: `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:8px;table-layout:fixed"><colgroup><col style="width:${NO}%"><col><col style="width:${JAM}%"></colgroup><thead><tr><th colspan="2" style="${TH}">Pos / personel</th><th style="${TH};text-align:right">Jam</th></tr></thead>${rows}</table>${tabelRentang('Total penempatan per rentang', rincian, totalBersih)}`, total: totalBersih };
   }
   function ttdBlok(pembuat) {
     const nama = pembuat && pembuat.ada && pembuat.nama ? pembuat.nama.toUpperCase() : '....................';
