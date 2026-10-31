@@ -122,7 +122,7 @@
   // angka rata kanan. Tidak lagi baris melayang di bawah kolom tabel lain.
   function tabelRentang(judul, rincian, fallbackJumlah) {
     const list = rincian.length ? rincian : [{ jumlah: fallbackJumlah, mulai: null, selesai: null }];
-    const rows = list.map((r) => `<tr style="page-break-inside:avoid;break-inside:avoid"><td style="${TD}">${esc(labelRentang(r))}</td><td style="${TD};text-align:right;font-weight:800;font-variant-numeric:tabular-nums">${r.jumlah}</td></tr>`).join('');
+    const rows = list.map((r) => `<tr style="page-break-inside:avoid;break-inside:avoid"><td style="${TD}">${esc(labelRentang(r))}</td><td style="${TD};text-align:right;font-weight:800">${r.jumlah}</td></tr>`).join('');
     return `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:6px;table-layout:fixed"><tr><th style="${TH}">${esc(judul)}</th><th style="${TH};text-align:right;width:${W4 + W2}%">Personel</th></tr>${rows}</table>`;
   }
 
@@ -138,8 +138,8 @@
       const ket = jml === 0 ? '-' : (krg > 0
         ? valid.map((p) => `<div style="padding-bottom:3px">${esc(rapikan(p.nama))}<div style="font-size:7pt;color:${MUT};font-weight:500">${esc(alasanText(p))}</div></div>`).join('')
         : 'Lengkap');
-      const jam = (k.mulai && k.selesai) ? `<div style="font-size:7pt;color:${MUT};font-weight:500;font-variant-numeric:tabular-nums">${esc(k.mulai)}–${esc(k.selesai)}</div>` : '';
-      return `<tr style="page-break-inside:avoid;break-inside:avoid"><td style="${TD};width:${W1}%;vertical-align:top;font-weight:700">${esc(rapikan(k.nama))}${jam}</td><td style="${TD};text-align:right;width:${W2}%;vertical-align:top;font-variant-numeric:tabular-nums">${jml}</td><td style="${TD};text-align:right;width:${W3}%;vertical-align:top;font-variant-numeric:tabular-nums">${hdr}</td><td style="${TD};text-align:right;width:${W4}%;vertical-align:top;font-variant-numeric:tabular-nums;${krg ? `color:${KRG};font-weight:800` : `color:${MUT}`}">${nomEsc(krg)}</td><td style="${TD};width:${W5}%;vertical-align:top">${ket}</td></tr>`;
+      const jam = (k.mulai && k.selesai) ? `<div style="font-size:7pt;color:${MUT};font-weight:500">${esc(k.mulai)}–${esc(k.selesai)}</div>` : '';
+      return `<tr style="page-break-inside:avoid;break-inside:avoid"><td style="${TD};width:${W1}%;vertical-align:top;font-weight:700">${esc(rapikan(k.nama))}${jam}</td><td style="${TD};text-align:right;width:${W2}%;vertical-align:top">${jml}</td><td style="${TD};text-align:right;width:${W3}%;vertical-align:top">${hdr}</td><td style="${TD};text-align:right;width:${W4}%;vertical-align:top;${krg ? `color:${KRG};font-weight:800` : `color:${MUT}`}">${nomEsc(krg)}</td><td style="${TD};width:${W5}%;vertical-align:top">${ket}</td></tr>`;
     }).join('');
     const sumRow = `<tr style="font-weight:800;background:#F6F8FB;page-break-inside:avoid;break-inside:avoid"><td style="${TD};border-top:1.5px solid #10243D">Jumlah</td><td style="${TD};border-top:1.5px solid #10243D;text-align:right">${totalJml}</td><td style="${TD};border-top:1.5px solid #10243D;text-align:right">${totalHadir}</td><td style="${TD};border-top:1.5px solid #10243D;text-align:right">${nomEsc(totalKrg)}</td><td style="${TD};border-top:1.5px solid #10243D"></td></tr>`;
     const rincian = segmentasiWaktu((kat || []).map((k) => { const v = (k.absen || []).filter(adaNama); return { mulai: k.mulai, selesai: k.selesai, bobot: Math.max(0, (Math.max(0, parseInt(k.jml, 10) || 0)) - v.length) }; }), shiftLabel);
@@ -147,7 +147,7 @@
   }
   // Penempatan: satu baris per personel (no., nama + peran kecil, jam rata kanan di baris yg
   // sama) supaya jam tidak bisa bergeser dari pemiliknya saat nama membungkus. Tiap pos satu
-  // <tbody> yg tidak boleh terbelah halaman. Semua pos ditampilkan; pos kosong = "Nihil".
+  // <tbody>; pos <= 5 orang tidak boleh terbelah halaman (lebih panjang boleh, antar baris). Semua pos ditampilkan; pos kosong = "Nihil".
   function tabelPenempatan(pos, kat, shiftLabel) {
     let total = 0, totalBersih = 0;
     const kategoriById = {}; (kat || []).forEach((k) => { kategoriById[k.id] = k; });
@@ -157,9 +157,10 @@
       total += valid.length;
       totalBersih += valid.filter((x) => x.jenis !== 'penggantian').length;
       const nama = esc(root.AVS.namaPosPersonelTerbaru(p.id, p.name));
-      const kepala = `<tr><td colspan="2" style="padding:6px 6px 2px;font-weight:800;color:#10243D">${nama}</td><td style="padding:6px 6px 2px;text-align:right;font-size:7pt;color:${MUT}">${valid.length ? '' : '<i>Nihil</i>'}</td></tr>`;
-      const baris = valid.map((x, i) => `<tr><td style="padding:1px 6px;text-align:right;color:${MUT};vertical-align:top;width:${NO}%">${i + 1}.</td><td style="padding:1px 6px;vertical-align:top">${esc(rapikan(x.nama))}${x.peran ? `<span style="font-size:7pt;color:${MUT};margin-left:4px">${esc(x.peran)}</span>` : ''}</td><td style="padding:1px 6px;text-align:right;vertical-align:top;white-space:nowrap;font-variant-numeric:tabular-nums;width:${JAM}%">${esc(x.jam || '-')}</td></tr>`).join('');
-      return `<tbody style="page-break-inside:avoid;break-inside:avoid;border-bottom:1px solid #F1F4F8">${kepala}${baris}<tr><td colspan="3" style="padding:0;height:3px;border-bottom:1px solid #F1F4F8"></td></tr></tbody>`;
+      const kepala = `<tr style="page-break-inside:avoid;break-inside:avoid"><td colspan="2" style="padding:4px 6px 1px;font-weight:800;color:#10243D">${nama}</td><td style="padding:4px 6px 1px;text-align:right;font-size:7pt;color:${MUT}">${valid.length ? '' : '<i>Nihil</i>'}</td></tr>`;
+      const baris = valid.map((x, i) => `<tr><td style="padding:1px 6px;text-align:right;color:${MUT};vertical-align:top;width:${NO}%">${i + 1}.</td><td style="padding:1px 6px;vertical-align:top">${esc(rapikan(x.nama))}${x.peran ? `<span style="font-size:7pt;color:${MUT};margin-left:4px">${esc(x.peran)}</span>` : ''}</td><td style="padding:1px 6px;text-align:right;vertical-align:top;white-space:nowrap;width:${JAM}%">${esc(x.jam || '-')}</td></tr>`).join('');
+      const jaga = valid.length <= 5 ? 'page-break-inside:avoid;break-inside:avoid' : ''; // pos panjang boleh terbelah antar baris
+      return `<tbody style="${jaga}">${kepala}${baris}<tr><td colspan="3" style="padding:0;height:2px;border-bottom:1px solid #F1F4F8"></td></tr></tbody>`;
     }).join('');
     const itemsWaktu = [];
     (pos || []).forEach((p) => (p.personel || []).filter(adaNama).forEach((x) => {
@@ -173,7 +174,7 @@
     const nama = pembuat && pembuat.ada && pembuat.nama ? pembuat.nama.toUpperCase() : '....................';
     const jab = pembuat && pembuat.ada && pembuat.nama ? pembuat.jabatanLabel : 'CHIEF';
     const jabHtml = jab.split(', ').map(esc).join(',<br>');
-    return `<div class="ttd-block" style="page-break-inside:avoid;break-inside:avoid;width:100%;margin-top:18mm;text-align:center">
+    return `<div class="ttd-block" style="page-break-inside:avoid;break-inside:avoid;width:100%;margin-top:10mm;text-align:center">
 <div style="font-size:9pt;color:#000">Dibuat oleh,</div>
 <div style="font-size:9pt;font-weight:800;color:#000;margin-top:2px">${jabHtml},</div>
 <div style="height:16mm">&nbsp;</div>
