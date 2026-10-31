@@ -214,13 +214,32 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
     const file = input.files && input.files[0];
     if (!file) return;
     if (typeof XLSX === 'undefined') { toast('Pustaka Excel (lib/xlsx.core.min.js) tidak termuat.', 'err'); return; }
-    const tahun = +$('upTahun').value, bulan = +$('upBulan').value;
+    let tahun = +$('upTahun').value, bulan = +$('upBulan').value;
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const wb = XLSX.read(reader.result, { type: 'array', cellDates: true });
         const sheetToRows = (nama) => XLSX.utils.sheet_to_json(wb.Sheets[nama], { header: 1, raw: true, defval: null });
-        const hasil = AVS.JadwalImport.praProsesWorkbook(wb.SheetNames, sheetToRows, { tahun, bulan });
+        let hasil = AVS.JadwalImport.praProsesWorkbook(wb.SheetNames, sheetToRows, { tahun, bulan });
+        // Sheet bentuk GRUP membawa tanggal LENGKAP (tahun+bulan) di headernya, sedangkan sheet DATAR
+        // (mis. NEW IASS) hanya angka 1..31 dan memakai bulan yang DIPILIH di atas. Kalau bulan yang
+        // dipilih beda dari tanggal di Excel (mis. pilihan awal = bulan berjalan, padahal berkas bulan
+        // depan), sheet DATAR tersimpan di bulan yang salah & sheet GRUP "hilang" dari bulan itu --
+        // jadi bulan disesuaikan otomatis ke bulan terbanyak pada tanggal sheet GRUP, lalu diproses ulang.
+        let catatanBulan = '';
+        const hitungYm = {};
+        hasil.units.filter((u) => u.punyaGrup).forEach((u) => u.grup.forEach((g) => g.orang.forEach((o) => Object.keys(o.jadwal).forEach((iso) => { const ym = iso.slice(0, 7); hitungYm[ym] = (hitungYm[ym] || 0) + 1; }))));
+        const ymTerbanyak = Object.keys(hitungYm).sort((a, b) => hitungYm[b] - hitungYm[a])[0];
+        if (ymTerbanyak) {
+          const [yd, md] = ymTerbanyak.split('-').map(Number);
+          if ((yd !== tahun || md - 1 !== bulan) && Array.from($('upTahun').options).some((o) => +o.value === yd)) {
+            const salah = `${AVS.BULAN[bulan]} ${tahun}`;
+            tahun = yd; bulan = md - 1;
+            $('upTahun').value = String(yd); renderOpsiBulanUpload(); $('upBulan').value = String(bulan);
+            hasil = AVS.JadwalImport.praProsesWorkbook(wb.SheetNames, sheetToRows, { tahun, bulan });
+            catatanBulan = `<div style="background:#FCF1DF;border:1px solid #F0D9A8;color:#8A5A0C;font-size:11.5px;font-weight:700;border-radius:8px;padding:9px 12px;margin-bottom:10px">Bulan disesuaikan otomatis ke <b>${AVS.BULAN[bulan]} ${tahun}</b> (sesuai tanggal di Excel), bukan ${E(salah)} yang sempat dipilih.</div>`;
+          }
+        }
         if (!hasil.units.length) {
           const alasanLewat = hasil.dilewati.map((d) => `${E(d.sheet)} — ${E(d.alasan)}`).join('<br>');
           $('hasilProses').innerHTML = `<div class="empty" style="padding:20px 0">Tidak ada sheet yang dikenali sebagai jadwal harian di berkas ini.${alasanLewat ? '<br><br>' + alasanLewat : ''}</div>`;
@@ -229,7 +248,7 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
         pending = { diimporPada: new Date().toISOString(), namaBerkas: file.name, units: hasil.units, dilewati: hasil.dilewati, bulan: { tahun, bulan } };
         const ringkasUnit = hasil.units.map((u) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #EEF1F6"><span><b>${E(u.nama)}</b>${u.punyaGrup ? ` <span style="color:#8A94A6;font-weight:600">(${u.grup.length} grup)</span>` : ''}</span><span style="color:#8A94A6;font-weight:700">${u.grup.reduce((n, g) => n + g.orang.length, 0)} orang</span></div>`).join('');
         const ringkasLewat = hasil.dilewati.length ? `<div style="margin-top:10px;font-size:11px;color:#8A94A6;font-weight:600">Dilewati: ${hasil.dilewati.map((d) => `${E(d.sheet)} — ${E(d.alasan)}`).join('; ')}</div>` : '';
-        $('hasilProses').innerHTML = `<div style="font-size:11.5px;font-weight:800;color:#8A94A6;text-transform:uppercase;margin-bottom:4px">Ditemukan ${hasil.units.length} unit</div>${ringkasUnit}${ringkasLewat}`;
+        $('hasilProses').innerHTML = `${catatanBulan}<div style="font-size:11.5px;font-weight:800;color:#8A94A6;text-transform:uppercase;margin-bottom:4px">Ditemukan ${hasil.units.length} unit</div>${ringkasUnit}${ringkasLewat}`;
         $('btnSimpanJadwal').style.display = '';
       } catch (e) {
         console.error(e);

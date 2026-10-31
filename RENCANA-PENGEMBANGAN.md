@@ -14,6 +14,26 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ## Inventaris Perubahan
 
+### Jadwal Dinas: bulan unggah disesuaikan otomatis dgn tanggal di Excel
+- **Status:** Selesai
+- **Dicatat:** 2026-10-31 (hasil audit berkas "11. JADWAL DINAS NOVEMBER.xlsx")
+- **Diverifikasi:** berkas diimpor lewat halaman Jadwal Dinas sungguhan (Playwright, zona waktu WIB) lalu
+  tiap sel tabel dibandingkan dgn sel Excel (4 sheet: ROSTER ORGANIK, ORGANIK, IASS, NEW IASS): bulan
+  November dipilih -> 0 sel berbeda. Pemetaan regu bertugas Pagi/Malam utk 1-30 Nov (dipakai Kepatuhan
+  Grup di Beranda/Rekap) -> tiap tanggal & shift tepat satu regu, tak ada yg ambigu. TEMUAN: bila bulan di
+  menu unggah BUKAN November (pilihan awal = bulan yg sedang aktif, mis. Oktober), sheet GRUP tersimpan di
+  bulan itu tapi tanggalnya November -> tampilan Oktober kosong, sedangkan sheet DATAR (NEW IASS, hanya angka
+  1..31) justru TAMPIL di Oktober memakai pola November. SESUDAH perbaikan: unggah dgn bulan Oktober ->
+  otomatis disesuaikan ke November (muncul catatan kuning), tersimpan di 2026-11, 0 sel berbeda.
+- **Keputusan:** bulan ditentukan dari tanggal terbanyak pada sheet bentuk GRUP (membawa tahun+bulan
+  lengkap), lalu diproses ulang; selektor bulan/tahun ikut berubah. Bila berkas hanya berisi sheet DATAR,
+  tetap memakai bulan yg dipilih (tak ada petunjuk bulan di berkasnya).
+- **Catatan (belum diubah):** sheet "ORGANIK" di Excel adalah sheet turunan (rumus) yg memetakan kode
+  roster ke kode lain (APGD/APIK/APN7, libur = "00") dan ikut terimpor sbg unit sendiri tanpa legenda;
+  kode "00" tampil berwarna teal spt shift dinas. Kepatuhan Grup memakai sheet "ROSTER ORGANIK" (urutan
+  pertama), jadi tidak terpengaruh.
+- **Implementasi:** `jadwal-dinas.html` (`prosesBerkas`).
+
 ### Laporan Personel: peringatan kategori & selisih total per rentang waktu
 - **Status:** Selesai
 - **Dicatat:** 2026-10-27
