@@ -29,13 +29,33 @@ Rencana:
 - Di luar lingkup: Rencana Cuti (butuh penyimpanan baru), ekspor Word.
 
 ## Laporan Personel: isi otomatis dari Jadwal Dinas (jumlah, nama, jam dinas)
-**Status: Direncanakan — masih tahap analisis kelayakan** (31 Okt 2026) — `laporan-personel.html`
+**Status: Direncanakan — mockup disetujui sebagai arah, belum dikerjakan** (31 Okt 2026) — `laporan-personel.html`
 
 Tujuan: pembuat laporan tidak perlu mengetik jumlah per kategori, nama personel, dan jam dinas.
-Gagasan dari referensi: Kekuatan Grup (hitung personel per sumber/kategori untuk satu shift) dan
-Penempatan Pos (daftar personel + jam, dipetakan ke pos, mewarisi penempatan sebelumnya).
-Detail kelayakan dan batasan: lihat percakapan 31 Okt 2026; keputusan format menunggu persetujuan.
+Gagasan dari referensi `jadwal-dinas-v93.html`: Kekuatan Grup (hitung personel per sumber untuk satu
+shift) dan Penempatan Pos (daftar personel + jam, dipetakan ke pos, mewarisi penempatan sebelumnya).
+Mockup sederhana: https://claude.ai/artifact/5z6G4pTJikT68x5zn6hcu6
+Mockup rinci: https://claude.ai/artifact/X8nyktK3YPzU72PEvWxnc9
 
+Alur: pilih tanggal + shift -> tombol "Isi dari Jadwal Dinas" -> pratinjau (grup bertugas, jumlah
+per kategori, peringatan) -> "Terapkan ke Laporan". Belum ada yang berubah sebelum "Terapkan";
+isian yang sudah diketik ditanyakan dulu sebelum ditimpa.
+
+Terisi otomatis (dari `savedJadwalDinas`): regu bertugas, Jumlah per kategori Kekuatan, nama +
+jabatan + jam dinas personel, dan pos yang diwarisi dari laporan sebelumnya.
+Tetap manual: siapa yang tidak hadir (Kurang/Keterangan; jadwal hanya tahu yang DIJADWALKAN, bukan
+cuti/sakit/izin), pos untuk personel yang belum pernah ditempatkan, pergantian di tengah shift.
+
+Hal yang harus diputuskan/dibereskan sebelum dikerjakan:
+- Kategori berjam sama (IASS NEW PP vs IASS PP, 05:00-17:00) butuh aturan pemetaan kode Excel ke
+  kategori; bila tak ada aturan pasti, pengguna memilih saat pratinjau.
+- Nama di Excel harus dicocokkan dengan `personel.js`; selisih ejaan ditandai (mis. "ARIF GF" vs
+  "ARIF G F"), tidak ditebak. Kode yang belum terpetakan ditandai, bisa dilewati.
+- Hanya berlaku untuk laporan baru; laporan tersimpan tidak berubah.
+- Bergantung pada data Jadwal Dinas per personel (sudah tersimpan), jadi tampilan Harian Jadwal Dinas
+  (entri di atas) tidak wajib lebih dulu, tapi keduanya memakai logika baca yang sama sehingga
+  sebaiknya dibuat sebagai satu fungsi bersama, bukan salinan.
+- Opsi lanjutan terpisah: fitur Rencana Cuti agar kolom Kurang juga bisa otomatis.
 
 ## PDF Laporan Personel: tabel Kekuatan & Penempatan dirapikan
 **Status: Selesai** (31 Okt 2026) — `personel-pdf.js`
