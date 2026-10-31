@@ -24,7 +24,7 @@
 <body class="locked">
 
 <!-- LAYAR KUNCI: aplikasi hanya untuk komputer/laptop -->
-<div id="lockScreen"><img src="Logo/AVS.png" alt="Logo AVSEC PNK"></div>
+<div id="lockScreen"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"><p>Desktop Only</p></div>
 
 <datalist id="listPersonel"></datalist>
 
@@ -90,10 +90,11 @@
 <div class="panel-box" id="pageSaved" style="display: none; height: 100%;">
 <div class="panel-title">DAFTAR LAPORAN TERSIMPAN</div>
 <div class="stool">
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Inter'"></div>
-<div class="selectlike"><small>Regu</small><select id="fRegu" onchange="renderSavedReports()"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
-<div class="selectlike"><small>Shift</small><select id="fShift" onchange="renderSavedReports()"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Dari</label><input type="date" id="fMulai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Sampai</label><input type="date" id="fSampai" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Regu</label><select id="fRegu" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="A">A (Alfa)</option><option value="B">B (Bravo)</option><option value="C">C (Charlie)</option><option value="D">D (Delta)</option></select></div>
+<div class="fld" style="display:flex;flex-direction:column;gap:2px"><label style="font-size:9px;font-weight:800;color:#8A94A6;letter-spacing:.4px;text-transform:uppercase">Shift</label><select id="fShift" onchange="renderSavedReports()" style="height:30px;border:1px solid #D7DEE8;border-radius:7px;padding:0 8px;font:700 12px 'Montserrat', 'Inter'"><option value="all">Semua</option><option value="P">Pagi</option><option value="M">Malam</option></select></div>
+<button type="button" style="align-self:flex-end;height:30px;padding:0 12px;border-radius:7px;border:1px solid #D7DEE8;background:#fff;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer" onclick="resetFilterTersimpan()" title="Hapus filter tanggal">✕ Reset Tanggal</button>
 <div style="flex:1"></div>
 </div>
 <div class="sumline" id="sumLine"></div>
@@ -106,23 +107,28 @@
 <span id="compStatus" class="compStatus-balance" onclick="togglePratinjau(true)" title="Klik untuk melihat catatan pemeriksaan">✓ SESUAI (BALANCE)</span>
 <span class="tt" id="totalPenempatanDisplay">TOTAL PENEMPATAN: 0 PERSONEL</span>
 <span class="sp"></span>
-<button type="button" class="sbtn ghost" onclick="togglePratinjau()">Pratinjau</button>
-<button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button>
+<button type="button" class="sbtn ghost" onclick="bukaLihatDraft()">Pratinjau Web</button>
 <button type="button" class="sbtn red" onclick="saveReport()">Simpan Laporan</button>
 </div>
 </div>
 
-<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU ‹</button>
+<button type="button" class="hdl" id="hdl" onclick="togglePratinjau(true)">PRATINJAU WA ‹</button>
 <aside class="drawer" id="drawer">
-<div class="dh"><span>PRATINJAU LAPORAN</span><button type="button" onclick="copyReport()" title="Salin teks laporan" style="background:#E4F3F4;color:#0F5F65;border:none;border-radius:7px;padding:5px 12px;font:700 11px 'Inter';cursor:pointer">Salin</button><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
+<div class="dh"><span>Pratinjau Laporan WA</span><button type="button" onclick="togglePratinjau(false)" title="Tutup">✕</button></div>
 <div class="issue-box" id="issueBox"></div>
 <div class="output-area" id="outputReport">Mengolah laporan...</div>
+<div class="dfoot"><button type="button" class="sbtn ghost" onclick="copyReport()">Salin</button><button type="button" class="sbtn grn" onclick="kirimWA()">Kirim ke WA</button></div>
 </aside>
 <aside class="drawer" id="drawerRw">
 <div class="dh"><span>RIWAYAT PERUBAHAN</span><button type="button" onclick="tutupRiwayat()" title="Tutup">✕</button></div>
 <div class="rwsub" id="rwSub"></div>
 <div class="rwlist" id="rwList"></div>
 <div class="rwnote">Riwayat menyimpan 30 entri terakhir per laporan (entri "Dibuat" selalu dipertahankan). Riwayat mencatat perubahan, tidak dapat mengembalikan versi lama.</div>
+</aside>
+<aside class="drawer" id="drawerLihat">
+<div class="dh"><span>LIHAT LAPORAN</span><button type="button" onclick="tutupLihat()" title="Tutup">✕</button></div>
+<div class="lhsub" id="lihatSub"></div>
+<div class="lhbody" id="lihatIsi"></div>
 </aside>
 
 
@@ -134,7 +140,7 @@
 <button class="modal-close" onclick="closeViewModal()">✕</button>
 </div>
 <div class="modal-body">
-<div class="output-area" id="modalViewContent" style="height: 100%; max-height: 60vh;"></div>
+<div class="output-area" id="modalViewContent" style="min-height: 200px; max-height: 60vh;"></div>
 </div>
 <div class="modal-footer">
 <button type="button" class="btn-success btn-wa" onclick="kirimWAModal()">Kirim ke WA</button>
@@ -151,7 +157,10 @@
 
 <script src="lib/html2pdf.bundle.min.js"></script>
 <script src="personel-pdf.js"></script>
+<script src="akses.js"></script>
 <script src="shell.js"></script>
+<script src="sync.js"></script>
+<script>AVS_gerbangUtama();</script>
 <script src="personel.js"></script>
 <script src="kategori.js"></script>
 <script>
@@ -256,7 +265,7 @@ function normReport(r) {
     id: r.id, tanggal: r.tanggal, shift: r.shift, regu: r.regu, savedAt: r.savedAt,
     dibuatPada: r.dibuatPada, diperbaruiPada: r.diperbaruiPada, riwayat: r.riwayat, jumlahUbah: r.jumlahUbah,
     kategoriKekuatan: (r.kategoriKekuatan || []).map(normKategori),
-    posPenempatan: (r.posPenempatan || []).map((p) => ({ id: p.id, name: p.name, personel: (p.personel || []).map((x) => ({ nama: x.nama || '', peran: x.peran || '' })) }))
+    posPenempatan: (r.posPenempatan || []).map((p) => ({ id: p.id, name: p.name, personel: (p.personel || []).map((x) => ({ nama: x.nama || '', peran: x.peran || '', kategoriId: x.kategoriId || '', jam: x.jam || '', jenis: x.jenis || '' })) }))
   };
 }
 function kategoriAwal() {
@@ -283,7 +292,7 @@ function daftarGanda(names) {
   m.forEach((e, k) => { if (e.c > 1) { set.add(k); tampil.push(e.tampil); } });
   return { set, tampil };
 }
-function hitungData(kat, pos) {
+function hitungData(kat, pos, shift) {
   let totalHadir = 0, totalPenempatan = 0;
   const issues = [];
 
@@ -302,10 +311,17 @@ function hitungData(kat, pos) {
   const gAbs = daftarGanda(rows.flatMap((r) => r.valid.map((p) => p.nama)));
   if (gAbs.tampil.length) issues.push(`Nama ganda pada daftar tidak hadir: ${gAbs.tampil.join(', ')}.`);
 
+  // "Penggantian" (lihat updateJenisPos) dikecualikan dari totalPenempatan -- dianggap
+  // meneruskan SLOT yang sama dgn entri sebelumnya di pos itu (bukan tambahan personel
+  // sungguhan), supaya tidak memicu "Kelebihan Penempatan" palsu dibanding Total Hadir.
+  // Tetap dihitung di `valid` (tampil penuh di web/PDF/WA/Lihat) -- riwayatnya tdk hilang.
+  let pergantianCount = 0;
   const posRows = (pos || []).map((p) => {
     const semua = p.personel || [];
     const valid = semua.filter(adaNama);
-    totalPenempatan += valid.length;
+    const bersih = valid.filter((x) => x.jenis !== 'penggantian');
+    pergantianCount += valid.length - bersih.length;
+    totalPenempatan += bersih.length;
     return { p, valid, kosong: semua.length - valid.length };
   });
   const kosongPos = posRows.reduce((a, r) => a + r.kosong, 0);
@@ -319,14 +335,82 @@ function hitungData(kat, pos) {
     balanceIssue = totalPenempatan < totalHadir ? `Penempatan kurang ${selisih} orang dari total hadir.` : `Penempatan kelebihan ${selisih} orang dari total hadir.`;
     issues.push(balanceIssue);
   }
-  return { rows, posRows, totalHadir, totalPenempatan, issues, balanceIssue, dupAbs: gAbs.set, dupPos: gPos.set };
+  peringatanKategoriWaktu(kat, pos, shift).forEach((t) => issues.push(t));
+  return { rows, posRows, totalHadir, totalPenempatan, pergantianCount, issues, balanceIssue, dupAbs: gAbs.set, dupPos: gPos.set };
 }
-const hitung = () => hitungData(kategoriKekuatan, posPenempatan);
+const hitung = () => hitungData(kategoriKekuatan, posPenempatan, $('shift').value);
+
+// Peringatan yang TIDAK terlihat dari total keseluruhan: Total Hadir & Total Penempatan bisa sama
+// persis tapi berbeda di rentang jam tertentu (krn dihitung dari KATEGORI tiap orang, bukan teks
+// Jam). (1) satu kategori punya lebih banyak orang di Penempatan daripada yang hadir di Kekuatan
+// (entri "Penggantian" tidak dihitung -- itu pengganti slot yang sama); (2) kalau SEMUA orang di
+// Penempatan sudah diberi kategori, bandingkan Total Hadir vs Penempatan di tiap rentang waktu.
+// Orang tanpa kategori dihitung sepanjang shift, jadi (2) tidak dijalankan utk laporan yg belum
+// lengkap kategorinya (lama/sebagian) supaya tidak memberi peringatan palsu.
+function peringatanKategoriWaktu(kat, pos, shift) {
+  const out = [], byId = {}, hadir = {}, tertanda = {};
+  (kat || []).forEach((k) => { byId[k.id] = k; hadir[k.id] = Math.max(0, (Math.max(0, parseInt(k.jml, 10) || 0)) - (k.absen || []).filter(adaNama).length); });
+  let valid = 0, bertanda = 0;
+  (pos || []).forEach((p) => (p.personel || []).filter(adaNama).forEach((x) => {
+    valid++;
+    if (x.kategoriId && byId[x.kategoriId]) { bertanda++; if (x.jenis !== 'penggantian') tertanda[x.kategoriId] = (tertanda[x.kategoriId] || 0) + 1; }
+  }));
+  (kat || []).forEach((k) => {
+    const t = tertanda[k.id] || 0;
+    if (t > hadir[k.id]) out.push(`${labelKategori(k)}: ${t} orang di Penempatan memakai kategori ini, tetapi yang hadir di Kekuatan hanya ${hadir[k.id]}.`);
+  });
+  if (valid && bertanda === valid) {
+    const seg = selisihRentangWaktu(rincianHadirWaktu(kat, shift), rincianPenempatanWaktu(pos, kat, shift), shift);
+    if (seg.length) out.push(`Total Hadir dan Penempatan berbeda pada rentang waktu: ${seg.join('; ')}.`);
+  }
+  return out;
+}
+function selisihRentangWaktu(hList, pList, shift) {
+  const m = String(shift || '').match(/(\d{2}):(\d{2})\s*-\s*\d{2}:\d{2}/); if (!m) return [];
+  const mulai = +m[1] * 60 + +m[2], mnt = (t) => { const [h, mm] = t.split(':').map(Number); return h * 60 + mm; };
+  const rel = (list) => list.map((r) => { const a = ((mnt(r.mulai) - mulai) + 1440) % 1440; let b = ((mnt(r.selesai) - mulai) + 1440) % 1440; if (b <= a) b += 1440; return { a, b, j: r.jumlah }; });
+  const H = rel(hList), P = rel(pList);
+  const titik = Array.from(new Set([0].concat(H.flatMap((x) => [x.a, x.b]), P.flatMap((x) => [x.a, x.b])))).sort((x, y) => x - y);
+  const nilai = (arr, t) => { const r = arr.find((x) => x.a <= t && t < x.b); return r ? r.j : 0; };
+  const segs = [];
+  for (let i = 0; i < titik.length - 1; i++) {
+    const a = titik[i], b = titik[i + 1], h = nilai(H, a), p = nilai(P, a);
+    if (h === p) continue;
+    const last = segs[segs.length - 1];
+    if (last && last.b === a && last.h === h && last.p === p) last.b = b; else segs.push({ a, b, h, p });
+  }
+  const jam = (r) => { const t = (mulai + r) % 1440; return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`; };
+  return segs.map((g) => `${jam(g.a)}-${jam(g.b)} (Hadir ${g.h}, Penempatan ${g.p})`);
+}
+
+// Rincian "Total per rentang waktu" (dipakai teks WA & drawer Lihat) -- logika SAMA PERSIS
+// dgn PDF (personel-pdf.js: AVS_rincianWaktu), supaya ketiganya selalu menampilkan angka
+// yang sama. Waktu dihitung dari jam KATEGORI (bukan teks `jam` bebas per orang -- lihat
+// catatan di personel-pdf.js). Kosong (mis. format shift tidak bisa diparse) -> fallback
+// satu baris tanpa rentang waktu, dipakai pemanggilnya.
+function rincianHadirWaktu(kat, shift) {
+  if (typeof AVS_rincianWaktu !== 'function') return [];
+  const items = (kat || []).map((k) => {
+    const v = (k.absen || []).filter(adaNama);
+    return { mulai: k.mulai, selesai: k.selesai, bobot: Math.max(0, (Math.max(0, parseInt(k.jml, 10) || 0)) - v.length) };
+  });
+  return AVS_rincianWaktu(items, shift);
+}
+function rincianPenempatanWaktu(pos, kat, shift) {
+  if (typeof AVS_rincianWaktu !== 'function') return [];
+  const byId = {}; (kat || []).forEach((k) => { byId[k.id] = k; });
+  const items = [];
+  (pos || []).forEach((p) => (p.personel || []).filter(adaNama).forEach((x) => {
+    const k = x.kategoriId ? byId[x.kategoriId] : null;
+    items.push({ mulai: k ? k.mulai : null, selesai: k ? k.selesai : null, bobot: 1 });
+  }));
+  return AVS_rincianWaktu(items, shift);
+}
 
 function calculateTotals() {
   const info = hitung();
   $('totalDisplay').innerText = `TOTAL HADIR: ${info.totalHadir} PERSONEL`;
-  $('totalPenempatanDisplay').innerText = `TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL`;
+  $('totalPenempatanDisplay').innerHTML = `TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL` + (info.pergantianCount ? ` <span style="font-weight:600;color:#8A94A6;font-size:9.5px">(${info.pergantianCount} pergantian tidak dihitung)</span>` : '');
 
   const st = $('compStatus');
   if (info.balanceIssue) {
@@ -550,6 +634,22 @@ function tambahKategori() {
 }
 
 /* ---------- Render: Penempatan ---------- */
+// Dropdown "Kategori" per nama -- opsi diambil dari kategoriKekuatan LAPORAN INI (bukan
+// KAT_BAWAAN), supaya cuma kategori yang memang dipakai di laporan ini yang muncul. Kalau
+// kategori yang sudah dipilih sebelumnya ternyata sudah dihapus dari daftar Kekuatan
+// Personel, tetap ditampilkan sbg opsi tersendiri (ditandai) -- supaya pilihan tidak hilang
+// diam-diam dan `jam` yang sudah terisi (beku, teks biasa) tidak ikut berubah.
+function opsiKategoriPos(kategoriIdTerpilih) {
+  let opsi = '<option value="">— Kategori (opsional) —</option>';
+  kategoriKekuatan.forEach((k) => {
+    const label = (k.mulai && k.selesai) ? `${k.nama} (${k.mulai}–${k.selesai})` : k.nama;
+    opsi += `<option value="${esc(k.id)}" ${k.id === kategoriIdTerpilih ? 'selected' : ''}>${esc(label)}</option>`;
+  });
+  if (kategoriIdTerpilih && !kategoriKekuatan.some((k) => k.id === kategoriIdTerpilih)) {
+    opsi += `<option value="${esc(kategoriIdTerpilih)}" selected>(kategori sudah dihapus dari laporan ini)</option>`;
+  }
+  return opsi;
+}
 function renderPenempatan() {
   const container = $('penempatanContainer');
   const st = container.scrollTop;
@@ -557,12 +657,24 @@ function renderPenempatan() {
     let rows = '';
     pos.personel.forEach((p, pIdx) => {
       const opts = opsiPeran.map((pr) => `<option value="${esc(pr)}" ${p.peran === pr ? 'selected' : ''}>${pr ? esc(pr) : 'Biasa'}</option>`).join('');
+      // Selektor Penggantian/Penambahan HANYA utk entri ke-2 dst di satu pos -- entri
+      // pertama tidak menggantikan/menambahi siapa pun, jadi tidak relevan. Lihat
+      // hitungData(): "penggantian" dikecualikan dari Total Penempatan (dianggap 1 slot yg
+      // sama dgn entri sebelumnya), "penambahan" (default) tetap dihitung penuh.
+      const jenisHtml = pIdx === 0 ? '' : `
+<div class="pos-jenis-wrap">
+<label class="${p.jenis !== 'penggantian' ? 'aktif' : ''}"><input type="radio" name="jenis_${posIdx}_${pIdx}" ${p.jenis !== 'penggantian' ? 'checked' : ''} onchange="updateJenisPos(${posIdx},${pIdx},'penambahan')"> Penambahan</label>
+<label class="${p.jenis === 'penggantian' ? 'aktif' : ''}"><input type="radio" name="jenis_${posIdx}_${pIdx}" ${p.jenis === 'penggantian' ? 'checked' : ''} onchange="updateJenisPos(${posIdx},${pIdx},'penggantian')"> Penggantian</label>
+</div>`;
       rows += `
 <div class="dynamic-row" data-kind="pos">
 <span class="no">${pIdx + 1}</span>
 <input type="text" class="nm" list="listPersonel" placeholder="Nama personel" value="${esc(p.nama)}" oninput="updateNamaPos(${posIdx},${pIdx},this.value)">
 <select onchange="updatePeranPos(${posIdx},${pIdx},this.value)">${opts}</select>
+<select class="pos-kat" onchange="updateKategoriPos(${posIdx},${pIdx},this.value)">${opsiKategoriPos(p.kategoriId)}</select>
+<input type="text" class="pos-jam" placeholder="Jam" value="${esc(p.jam)}" title="Jam bertugas (opsional) -- terisi otomatis saat pilih Kategori, tetap bisa diedit manual" oninput="updateJamPos(${posIdx},${pIdx},this.value)">
 <button type="button" class="btn-remove" onclick="removePersonelPos(${posIdx},${pIdx})">✕</button>
+${jenisHtml}
 </div>`;
     });
     return `
@@ -575,9 +687,29 @@ ${rows}
   container.scrollTop = st;
   calculateTotals();
 }
-function addPersonelPos(i) { posPenempatan[i].personel.push({ nama: '', peran: '' }); markDirty(); renderPenempatan(); }
+// Entri pertama di satu pos: jenis '' (tak relevan, tak ada yg digantikan/ditambahi).
+// Entri ke-2 dst: default 'penambahan' (lebih aman drpd 'penggantian' -- kalau Posko lupa
+// pilih, orangnya tetap terhitung sbg personel nyata, bukan diam-diam dikecualikan).
+function addPersonelPos(i) {
+  const jenis = posPenempatan[i].personel.length ? 'penambahan' : '';
+  posPenempatan[i].personel.push({ nama: '', peran: '', kategoriId: '', jam: '', jenis });
+  markDirty(); renderPenempatan();
+}
 function removePersonelPos(i, p) { posPenempatan[i].personel.splice(p, 1); markDirty(); renderPenempatan(); }
 function updateNamaPos(i, p, val) { posPenempatan[i].personel[p].nama = val; markDirty(); calculateTotals(); }
+// Pilih Kategori -> isi `jam` otomatis dari mulai/selesai kategori itu (kalau kategori tsb
+// punya jam tetap -- mis. "ORGANIK" tidak punya, jam dibiarkan kosong,
+// Posko isi manual kalau perlu). `jam` TETAP teks biasa yang bisa diedit bebas sesudahnya --
+// bukan field terkunci -- krn jam dinas sungguhan kadang beda dari jam baku kategori.
+function updateKategoriPos(i, p, kategoriId) {
+  const entri = posPenempatan[i].personel[p];
+  entri.kategoriId = kategoriId;
+  const k = kategoriKekuatan.find((x) => x.id === kategoriId);
+  if (k && k.mulai && k.selesai) entri.jam = `${k.mulai}–${k.selesai}`;
+  markDirty(); renderPenempatan();
+}
+function updateJamPos(i, p, val) { posPenempatan[i].personel[p].jam = val; markDirty(); }
+function updateJenisPos(i, p, val) { posPenempatan[i].personel[p].jenis = val; markDirty(); calculateTotals(); }
 function updatePeranPos(i, p, val) { posPenempatan[i].personel[p].peran = val; markDirty(); generateReportText(); }
 
 /* ---------- Teks laporan (WA) ---------- */
@@ -606,13 +738,19 @@ function generateReportTextFromData(tanggal, shift, regu, kat, pos) {
     else if (r.jml > 0) ket = 'Lengkap';
     t += `${labelKategori(r.k)}\nJumlah : ${r.jml}\nHadir : ${r.hdr}\nKurang : ${r.krg || '-'}\nKeterangan :\n${ket}\n\n`;
   });
-  t += `*TOTAL HADIR: ${info.totalHadir} PERSONEL*\n\n------------------------------------\n\n*PENEMPATAN PERSONEL:*\n\n`;
+  const rHadir = rincianHadirWaktu(kat, shift);
+  if (rHadir.length) rHadir.forEach((r) => { t += `*TOTAL HADIR ${r.jumlah} PERSONEL (${r.mulai} - ${r.selesai})*\n`; });
+  else t += `*TOTAL HADIR: ${info.totalHadir} PERSONEL*\n`;
+  t += `\n------------------------------------\n\n*PENEMPATAN PERSONEL:*\n\n`;
   info.posRows.forEach((r) => {
-    t += `*${r.p.name}*\n`;
+    t += `*${AVS.namaPosPersonelTerbaru(r.p.id, r.p.name)}*\n`;
     if (!r.valid.length) t += `- Nihil\n\n`;
-    else { r.valid.forEach((p, i) => { t += `${i + 1}. ${rapikan(p.nama)}${p.peran ? ' ' + p.peran : ''}\n`; }); t += `\n`; }
+    else { r.valid.forEach((p, i) => { t += `${i + 1}. ${rapikan(p.nama)}${p.peran ? ' ' + p.peran : ''}${p.jam ? ' (' + p.jam + ')' : ''}\n`; }); t += `\n`; }
   });
-  t += `*TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL*\n\n`;
+  const rPenempatan = rincianPenempatanWaktu(pos, kat, shift);
+  if (rPenempatan.length) rPenempatan.forEach((r) => { t += `*TOTAL PENEMPATAN ${r.jumlah} PERSONEL (${r.mulai} - ${r.selesai})*\n`; });
+  else t += `*TOTAL PENEMPATAN: ${info.totalPenempatan} PERSONEL*\n`;
+  t += `\n`;
   const pb = getPembuatLaporanInfo(pos, 'text');
   t += `Dibuat oleh,\n${pb.jabatanLabel},\n\n\n( ${pb.nama} )`;
   return t;
@@ -671,7 +809,8 @@ function updateBadge() {
   if (!r) { b.style.display = 'none'; b.innerHTML = ''; return; }
   const k = AVS.ketJejak(r);
   b.innerHTML = `<b>✎ Mengubah laporan tersimpan</b><span class="sep">•</span><span>${esc(k.dibuat)}</span><span class="sep">•</span><b>${esc(k.ubah)}</b>` +
-    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>`;
+    `<button type="button" class="rw" onclick="bukaRiwayat()">Riwayat ▾</button>` +
+    `<button type="button" class="batal" onclick="newReport()">Batal</button>`;
   b.style.display = 'flex';
 }
 function bukaRiwayat() {
@@ -687,7 +826,7 @@ function bukaRiwayatDari(r) {
   const judul = `${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${r.tanggal ? new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'} • Laporan Personel`;
   const out = AVS.renderRiwayat(r, judul);
   $('rwSub').textContent = out.sub; $('rwList').innerHTML = out.html;
-  togglePratinjau(false); $('drawerRw').classList.add('open');
+  togglePratinjau(false); tutupLihat(); $('drawerRw').classList.add('open');
 }
 function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
 document.addEventListener('click', (e) => { const p = $('rwPop'); if (p && p.classList.contains('open') && !p.contains(e.target)) p.classList.remove('open'); });
@@ -695,7 +834,49 @@ function togglePratinjau(force) {
   const d = $('drawer'), buka = force === undefined ? !d.classList.contains('open') : !!force;
   d.classList.toggle('open', buka);
   $('hdl').style.display = buka ? 'none' : '';
+  if (buka) { tutupRiwayat(); tutupLihat(); }
 }
+
+/* ---------- Laci "Lihat" (tampilan web hanya-baca, tidak dapat diubah) ---------- */
+function renderLihatHTML(kat, pos, shift) {
+  const info = hitungData(kat, pos);
+  const pb = getPembuatLaporanInfo(pos, 'text');
+  let html = info.rows.map((row) => {
+    const judul = `${esc(labelKategori(row.k))} &mdash; Jumlah ${row.jml} &bull; Hadir ${row.hdr} &bull; Kurang ${row.krg || 0}`;
+    const isi = row.valid.length
+      ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}</span><span class="lb-badge" style="background:#EEF1F6;color:#5C6675">${esc(alasanText(p))}</span></div>`).join('')
+      : '<div class="lihat-empty">Lengkap, tidak ada yang tidak hadir.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${judul}</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada kategori kekuatan.</div>';
+  const rHadir = rincianHadirWaktu(kat, shift);
+  html += rHadir.length
+    ? rHadir.map((r) => `<div class="lihat-total">TOTAL HADIR ${r.jumlah} PERSONEL (${r.mulai} - ${r.selesai})</div>`).join('')
+    : `<div class="lihat-total">TOTAL HADIR: <b>${info.totalHadir}</b> PERSONEL</div>`;
+  html += info.posRows.map((row) => {
+    const isi = row.valid.length
+      ? row.valid.map((p) => `<div class="lb-auto-item"><span>${esc(rapikan(p.nama))}${p.peran ? ` <small style="color:#8A94A6;font-weight:600">${esc(p.peran)}</small>` : ''}${p.jam ? ` <small style="color:#157A82;font-weight:700">${esc(p.jam)}</small>` : ''}</span></div>`).join('')
+      : '<div class="lihat-empty">Nihil.</div>';
+    return `<div class="lb-auto"><div class="t"><i></i>${esc(AVS.namaPosPersonelTerbaru(row.p.id, row.p.name))} &mdash; ${row.valid.length} orang</div>${isi}</div>`;
+  }).join('') || '<div class="lihat-empty">Belum ada pos penempatan.</div>';
+  const rPenempatan = rincianPenempatanWaktu(pos, kat, shift);
+  html += rPenempatan.length
+    ? rPenempatan.map((r) => `<div class="lihat-total">TOTAL PENEMPATAN ${r.jumlah} PERSONEL (${r.mulai} - ${r.selesai})</div>`).join('')
+    : `<div class="lihat-total">TOTAL PENEMPATAN: <b>${info.totalPenempatan}</b> PERSONEL</div>`;
+  html += `<div class="lihat-footer">Dibuat oleh, ${esc(pb.jabatanLabel.replace(/\n/g, ' '))} &mdash; ${esc(pb.nama)}</div>`;
+  return html;
+}
+function bukaLihat(id) {
+  const r = getReports().find((x) => x.id === id); if (!r) return;
+  $('lihatSub').textContent = `Regu ${r.regu || '-'} • ${(r.shift || '').split(' (')[0]} • ${formatTanggalIndo(r.tanggal)}`;
+  $('lihatIsi').innerHTML = renderLihatHTML(r.kategoriKekuatan, r.posPenempatan, r.shift);
+  togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
+}
+function bukaLihatDraft() {
+  $('lihatSub').textContent = `Regu ${$('regu').value || '-'} • ${($('shift').value || '').split(' (')[0]} • ${$('tanggal').value ? formatTanggalIndo($('tanggal').value) : '-'} • (draf belum disimpan)`;
+  $('lihatIsi').innerHTML = renderLihatHTML(kategoriKekuatan, posPenempatan, $('shift').value);
+  togglePratinjau(false); tutupRiwayat(); $('drawerLihat').classList.add('open');
+}
+function tutupLihat() { $('drawerLihat').classList.remove('open'); }
 function saveReport() {
   const tanggal = $('tanggal').value, shift = $('shift').value, regu = $('regu').value;
   if (!tanggal || !shift || !regu) { toast('Harap lengkapi Tanggal, Shift, dan Regu!', 'err'); return; }
@@ -710,12 +891,15 @@ function saveReport() {
     savedAt: new Date().toLocaleString('id-ID'), versi: 2
   };
   const reports = lsGet(STORAGE_KEY, []);
+  const dup = reports.find((r) => r.tanggal === tanggal && r.shift === shift && r.id !== reportData.id);
+  if (dup) { toast(`Laporan Personel ${formatTanggalIndo(tanggal)} shift ${shift.split(' (')[0]} sudah ada (Regu ${dup.regu}). Satu tanggal hanya boleh satu laporan Pagi dan satu Malam — ubah laporan yang sudah ada itu.`, 'err'); return; }
   const idx = reports.findIndex((r) => r.id === reportData.id);
   const lama = idx !== -1 ? reports[idx] : null;
   const perubahan = lama ? AVS.diffPersonel(normReport(lama), reportData) : [];
   AVS.catatJejak(reportData, lama, perubahan);   // waktu dibuat, waktu pembaruan terakhir, riwayat & rincian perubahan
   if (idx !== -1) reports[idx] = reportData; else reports.unshift(reportData);
   if (!lsSet(STORAGE_KEY, reports)) return;
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.kirim('personel', reportData);
 
   lsSet(LAST_KEY, kategoriKekuatan.map((k) => k.id).filter((id) => KAT_BAWAAN.some((b) => b.id === id)));
   editingReportId = reportData.id;   // simpan berikutnya menimpa laporan ini, bukan membuat duplikat
@@ -747,6 +931,7 @@ function jejakHTML(r) {
   if (k.j.pernahDiubah) return `<span class="upd">✎ Diperbarui</span><span>${esc(k.dibuat)}</span><span>•</span><span><b>${esc(k.ubah)}</b></span>`;
   return `<span>${esc(k.dibuat)}</span>${k.j.tercatat ? '<span>•</span><span>Belum pernah diubah</span>' : ''}`;
 }
+function resetFilterTersimpan() { $('fMulai').value = ''; $('fSampai').value = ''; renderSavedReports(); }
 function renderSavedReports() {
   const box = $('savedReportsList');
   const { semua, list } = laporanTerfilter();
@@ -768,9 +953,9 @@ function renderSavedReports() {
 <div class="pchips">${chBal}<span class="pchip" style="background:#E4F3F4;color:#0F5F65">Hadir ${info.totalHadir}</span><span class="pchip" style="background:${kurang ? '#FBE9E7' : '#EEF1F6'};color:${kurang ? '#A82F24' : '#5C6675'}">Tidak hadir ${kurang}</span><span class="pchip" style="background:#EEF1F6;color:#5C6675">${r.kategoriKekuatan.length} kategori</span></div>
 </div>
 <div class="saved-actions">
-<button type="button" class="btn-info" onclick="viewReport('${esc(r.id)}')">Lihat</button>
+<button type="button" class="btn-info" onclick="bukaLihat('${esc(r.id)}')">Lihat</button>
 <button type="button" class="btn-warning" onclick="editReport('${esc(r.id)}')">Ubah</button>
-<button type="button" class="btn-success btn-wa" onclick="kirimWAId('${esc(r.id)}')">Kirim WA</button>
+<button type="button" class="btn-success btn-wa" onclick="viewReport('${esc(r.id)}')">Kirim WA</button>
 <button type="button" class="btn-success" onclick="exportPDF('${esc(r.id)}')">Unduh PDF</button>
 <button type="button" class="btn-info" style="background:#EEF1F6;color:#475569" onclick="bukaRiwayatId('${esc(r.id)}')">Riwayat</button>
 <button type="button" class="btn-danger" onclick="deleteReport('${esc(r.id)}')">Hapus</button>
@@ -791,11 +976,10 @@ function closeViewModal() { $('viewModal').style.display = 'none'; }
 function copyModalReport() {
   copyText($('modalViewContent').innerText).then((ok) => toast(ok ? 'Teks laporan berhasil disalin!' : 'Gagal menyalin teks.', ok ? 'ok' : 'err'));
 }
-function kirimWAModal() { bukaWA($('modalViewContent').innerText); }
-function kirimWAId(id) {
-  const r = getReports().find((x) => x.id === id); if (!r) return;
-  if (!konfirmasi('mengirim laporan', hitungData(r.kategoriKekuatan, r.posPenempatan), r.tanggal, r.shift, r.regu)) return;
-  bukaWA(textOfReport(r));
+function kirimWAModal() {
+  const r = getReports().find((x) => x.id === modalReportId);
+  if (r && !konfirmasi('mengirim laporan', hitungData(r.kategoriKekuatan, r.posPenempatan, r.shift), r.tanggal, r.shift, r.regu)) return;
+  bukaWA($('modalViewContent').innerText);
 }
 
 function editReport(id) {
@@ -815,6 +999,7 @@ function deleteReport(id) {
   if (!confirm('Hapus laporan ini?')) return;
   const rest = lsGet(STORAGE_KEY, []).filter((r) => r.id !== id);
   lsSet(STORAGE_KEY, rest);
+  if (typeof AVS_SYNC !== 'undefined') AVS_SYNC.hapus('personel', id);
   if (editingReportId === id) { editingReportId = null; updateBadge(); }
   renderSavedReports();
 }
@@ -849,13 +1034,14 @@ function switchPage(page) {
    satu tombol gabungan (seluruh jenis laporan) di rekap.html. Lihat RENCANA-PENGEMBANGAN.md. */
 
 /* ---------- PDF ---------- */
-function exportPDF(id) {
+async function exportPDF(id) {
   const r = getReports().find((x) => x.id === id); if (!r) return;
   if (typeof html2pdf === 'undefined') { toast('Pustaka PDF (lib/html2pdf.bundle.min.js) tidak termuat.', 'err'); return; }
   if (typeof window.buildPersonelPdfHTML !== 'function') { toast('Pembangun PDF (personel-pdf.js) tidak termuat.', 'err'); return; }
   const pembuat = window.pembuatDariPosPenempatan(r.posPenempatan);
   const tglCetak = new Date().toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   $('pdfContent').innerHTML = window.buildPersonelPdfHTML(r, pembuat, tglCetak);
+  await AVS.tungguFontSiap();
   html2pdf().set({
     margin: 10,
     filename: `Lap Personel - ${String(r.regu).replace(/[\\/:*?"<>|]/g, '')} - (${r.tanggal}).pdf`,
@@ -882,10 +1068,6 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeVie
 
 window.addEventListener('DOMContentLoaded', () => {
   AVS.nav('personel');
-  const semuaLap = getReports(), hIni = new Date();
-  const terbaru = semuaLap.map((r) => r.tanggal).filter(Boolean).sort().reverse()[0];
-  const awalRentang = terbaru ? `${terbaru.slice(0, 8)}01` : tanggalLokalISO(new Date(hIni.getFullYear(), hIni.getMonth(), 1));
-  $('fMulai').value = awalRentang; $('fSampai').value = tanggalLokalISO(hIni);
   updateCount();
   cekPerangkat();
   isiDaftarPersonel();
@@ -899,6 +1081,14 @@ window.addEventListener('DOMContentLoaded', () => {
 window.adaPerubahanBelumTersimpan = () => dirty === true;
 AVS.daftarSW();
 
+// Deep-link dari Pantau Posko: #lihat=<tanggal-ISO>|<P|M> -> buka pratinjau laporan shift tsb.
+(function () {
+  const m = /^#lihat=([^|]+)\|([PM])$/.exec(location.hash);
+  if (!m) return;
+  const tgl = decodeURIComponent(m[1]), sk = m[2];
+  const r = getReports().find((x) => x.tanggal === tgl && shiftKunci(x.shift) === sk);
+  if (r) bukaLihat(r.id);
+})();
 </script>
 </body>
 </html>
