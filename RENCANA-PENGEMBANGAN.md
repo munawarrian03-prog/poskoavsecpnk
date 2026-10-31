@@ -12,6 +12,31 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## Jadwal Dinas: tampilan Harian per tanggal & shift (mengikuti referensi "Shift Planning v93")
+**Status: Direncanakan** (31 Okt 2026, belum dikerjakan) — `jadwal-dinas.html`
+
+Referensi: `jadwal-dinas-v93.html` (aplikasi mandiri; tab Harian, Kekuatan Grup, Rencana Cuti,
+Penempatan pos, Data Tersimpan). Mockup disetujui sebagai arah: https://claude.ai/artifact/N5WDR7WjCLSfQ8VxGo3LRg
+
+Rencana:
+- Tab baru "Harian": tombol shift Pagi/Malam (jumlah tersedia + grup bertugas), kalender tanggal,
+  personel dikelompokkan per unit/grup/kode/jam (jam dari legenda Excel), tiga kolom seperti referensi.
+- Tab "Tabel Bulanan" yang sekarang TETAP ada (satu-satunya tampilan sebulan penuh).
+- Hanya MEMBACA `savedJadwalDinas`; tidak mengubah `jadwal-dinas-import.js`, bentuk data, atau
+  proses unggah. Beranda/Rekap/Kejadian (`reguBertugasJadwal`) tidak boleh terpengaruh.
+- Uji sebelum diserahkan: regu bertugas tiap tanggal sebelum = sesudah (Excel November), halaman lain
+  tanpa galat konsol, isi `savedJadwalDinas` tidak berubah setelah tab Harian dibuka.
+- Di luar lingkup: Rencana Cuti (butuh penyimpanan baru), ekspor Word.
+
+## Laporan Personel: isi otomatis dari Jadwal Dinas (jumlah, nama, jam dinas)
+**Status: Direncanakan — masih tahap analisis kelayakan** (31 Okt 2026) — `laporan-personel.html`
+
+Tujuan: pembuat laporan tidak perlu mengetik jumlah per kategori, nama personel, dan jam dinas.
+Gagasan dari referensi: Kekuatan Grup (hitung personel per sumber/kategori untuk satu shift) dan
+Penempatan Pos (daftar personel + jam, dipetakan ke pos, mewarisi penempatan sebelumnya).
+Detail kelayakan dan batasan: lihat percakapan 31 Okt 2026; keputusan format menunggu persetujuan.
+
+
 ## PDF Laporan Personel: tabel Kekuatan & Penempatan dirapikan
 **Status: Selesai** (31 Okt 2026) — `personel-pdf.js`
 
