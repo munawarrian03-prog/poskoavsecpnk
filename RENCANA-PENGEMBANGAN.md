@@ -27,6 +27,8 @@ Perubahan:
   dan "–" bila 0; alasan ketidakhadiran jadi baris kecil di bawah nama personel; baris **Jumlah**
   baru; kategori berjumlah 0 tetap tampil seperti biasa.
 - Total per rentang (hadir & penempatan) kini tabel tersendiri dengan judul kolom.
+- Susulan (31 Okt 2026): nilai Jumlah/Hadir/Kurang, angka Personel di tabel total per rentang, dan
+  kolom jam di Penempatan dibuat rata tengah; judul kolom "Jam" diganti "Jam Dinas".
 - Keterbatasan: html2pdf memotong halaman dari gambar, jadi judul kolom TIDAK diulang di halaman
   berikutnya (hanya dicegah agar satu pos/baris tidak terpotong).
 
