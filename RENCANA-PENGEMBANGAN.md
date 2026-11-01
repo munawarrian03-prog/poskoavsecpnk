@@ -20,12 +20,17 @@ kelompok **A D M** (ORGANIK) dan **ADM PAS ID** (IASS) DIABAIKAN, tidak masuk hi
 kelompok **LALIN = RDO**.
 - `personel.js`: 95 nama unik (ORGANIK ALPHA-DELTA 49, IASS ALPHA-DELTA + LALIN 36, NEW IASS 10), urut abjad.
   Dihapus: ARIES DARTA, BARIR BAIHAQI, HESTIN M, MARTHIN R.D.H, MIHARTI, RENGGA INDOCIPTA P (kelompok A D M).
-  Ejaan mengikuti Excel: "HIKMAH NURZAMAN" -> "HIKMAH N".
+  Ejaan: Excel menulis "HIKMAH N", tetapi atas keputusan pengguna dipakai nama lengkap "HIKMAH NURZAMAN".
 - `kategori.js`: ditambah IASS PS 06:00-18:00 (id `iass_ps`); IASS RDO PAGI/MALAM jam menjadi
   08:00-20:00 / 20:00-08:00 (legenda "P RDO"/"M RDO"). Id lama tidak diubah. Kode legenda yang tidak dipakai
   personel non-ADM bulan ini (ORGANIK PS 05:00-17:00, OH) tidak dibuat kategori.
 - Laporan tersimpan tidak berubah (menyimpan salinan nama/jam sendiri).
-- Catatan: BARIR BAIHAQI ada di kelompok A D M tetapi berkode P (dinas) 20 hari; ikut dikeluarkan sesuai aturan.
+- Keputusan pengguna: BARIR BAIHAQI (kelompok A D M, berkode P 20 hari) tetap dikeluarkan; kode legenda yang tak
+  dipakai bulan ini (ORGANIK PS 05:00-17:00, OH) memang tidak dibuat kategorinya.
+- PERMINTAAN LANJUTAN (untuk langkah 3 rangkaian berurutan): bila bulan berikutnya kode/kategori yang kini
+  tidak dipakai (mis. ORGANIK PS, OH) ATAU personel kelompok yang diabaikan mulai berkode dinas, aplikasi
+  harus MEMUNCULKAN pemberitahuan agar pengguna memutuskan memasukkannya (bukan diam-diam dimasukkan atau
+  dibuang). Masuk ke alur "kode baru belum punya nama" di tabel nama tampilan.
 - Sheet "JAM DINAS" dan "JUMLAH PERSONEL" dilewati importer; "JUMLAH PERSONEL" memuat roster resmi + jabatan + NIK.
 
 
@@ -51,7 +56,8 @@ Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
 3. **Tabel nama tampilan** (alias): kode + sheet + jam dibaca dari Excel (abu-abu, tak perlu diubah),
    hanya "Nama di laporan" yang diatur pengguna. Jam berubah -> nama tetap, jam ikut Excel. Kode baru ->
    baris kuning "belum punya nama" (sementara tampil "SHEET · KODE · JAM"). Kode hilang -> tidak ada
-   yang rusak. Muncul: (a) otomatis sebagai pemberitahuan setelah unggah Excel bila ada kode tanpa
+   yang rusak. Kode yang SEBELUMNYA sengaja tak dipakai (mis. ORGANIK PS, OH) dan personel dari kelompok yang
+   diabaikan (A D M, ADM PAS ID) yang bulan itu berkode dinas juga ditandai untuk diputuskan pengguna. Muncul: (a) otomatis sebagai pemberitahuan setelah unggah Excel bila ada kode tanpa
    nama, (b) tombol "Nama Kategori" di Jadwal Dinas, (c) tautan dari pratinjau isi otomatis.
    Mockup: https://claude.ai/artifact/9ozpjbojD2j1qEbj4fwqqn
    USULAN (belum dikonfirmasi): diisi awal dari kategori yang ada sekarang; letaknya di Jadwal Dinas.
