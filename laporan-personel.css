@@ -71,3 +71,15 @@ ul.dft select { height: 28px; border: 1px solid #D7DEE8; border-radius: 7px; fon
 .abs-pick select { height: 28px; border: 1px solid #D7DEE8; border-radius: 7px; font-size: 11.5px; min-width: 170px; background: #fff; }
 .abs-pick button { height: 28px; border: 0; border-radius: 7px; background: #157A82; color: #fff; font: 800 11px 'Montserrat','Inter'; padding: 0 12px; cursor: pointer; }
 .abs-pick button.b { background: #fff; color: #475569; border: 1px solid #D7DEE8; }
+
+/* Bilah atas Laporan Personel: kolom dirapatkan agar muat satu baris dan tidak bertumpuk */
+#toolbar { gap: 6px; padding: 0 8px; }
+#toolbar .tdiv { display: none; }
+#toolbar .seg button { padding: 6px 10px; }
+#toolbar .fld { gap: 5px; }
+#toolbar .fld select#shift { min-width: 160px; }
+#toolbar .fld select#regu { min-width: 104px; }
+#toolbar .fld input#tanggal { min-width: 108px; width: 108px; }
+#toolbar .tbtn { white-space: nowrap; flex: none; }
+#toolbar .seg { flex: none; }
+#toolbar #btnIsiJadwal { background: #E4F3F4; border-color: #B9DEE1; color: #0F5F65; }
