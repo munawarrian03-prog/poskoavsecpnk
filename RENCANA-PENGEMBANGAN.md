@@ -12,6 +12,16 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## Menu topbar di bawah judul KAPUAS + urutan menu baru
+**Status: Selesai** (1 Nov 2026) — `shell.js`, `layout.css`
+Topbar dua baris: baris 1 logo, judul, chip tanggal, profil; baris 2 menu tab teks tepat di bawah judul (rata kiri dengan
+judul, jarak antar menu 26 px, garis bawah biru untuk menu aktif). Tinggi topbar 50 -> 79 px (tata letak halaman fleksibel,
+bilah bawah tetap terlihat di semua halaman). Aturan sembunyikan chip tanggal < 1280 px dihapus (tak perlu lagi).
+Urutan menu: Posko = Beranda, Laporan Personel, Laporan Fasilitas, Laporan Kejadian, Log Book, Jadwal Dinas, Rekap;
+Admin = Beranda, Pantau Laporan, Jadwal Dinas, Rekap. Uji 1024-1920 px: tidak bertumpuk/keluar bilah, menu aktif benar,
+Fokus menyembunyikan topbar, tanpa galat.
+
+
 ## Menu topbar gaya tab teks, semua menu tampil (tanpa dropdown)
 **Status: Selesai** (1 Nov 2026) — `shell.js`, `layout.css`
 Acuan visual: tab referensi v95 (HARIAN, KEKUATAN GRUP, ...). Menu topbar kini berderet semua (Posko: Beranda, Laporan Personel,

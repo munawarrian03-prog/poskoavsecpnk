@@ -56,14 +56,14 @@
   const JUMLAH_TETAP = 3; // selain Beranda
   const MENU_ADMIN = [
     ['pantau', 'Pantau Laporan', 'pantau-posko.html', 'search'],
-    ['rekap', 'Rekap', 'rekap.html', 'chart'],
-    ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal']
+    ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal'],
+    ['rekap', 'Rekap', 'rekap.html', 'chart']
   ];
   const MENU_POSKO = [
     ['personel', 'Laporan Personel', 'laporan-personel.html', 'people'],
     ['fasilitas', 'Laporan Fasilitas', 'fasilitas.html', 'wrench'],
-    ['logbook', 'Log Book', 'logbook.html', 'book'],
     ['kejadian', 'Laporan Kejadian', 'kejadian.html', 'doc'],
+    ['logbook', 'Log Book', 'logbook.html', 'book'],
     ['jadwal', 'Jadwal Dinas', 'jadwal-dinas.html', 'cal'],
     ['rekap', 'Rekap', 'rekap.html', 'chart']
   ];
@@ -114,10 +114,10 @@ ${btnGantiPin}<button type="button" class="prof-keluar" onclick="AVS_KELUAR()">$
     if (!el) return;
     el.dataset.aktifHalaman = aktif; // diingat supaya bisa di-render ulang stlh gerbang PIN selesai (lihat AVS.renderNavUlang)
     el.className = 'topbar';
-    el.innerHTML = `<div class="lg"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"></div>` +
+    el.innerHTML = `<div class="tb-row1"><div class="lg"><img src="Logo/AVS-512.png" alt="Logo Kapuas Supadio"></div>` +
       `<div class="ttl"><b>KAPUAS Supadio</b><span>Kanal Aplikasi Pelaporan Unit Airport Security</span></div>` +
-      `<nav>${renderNav(aktif)}</nav>` +
-      `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>${renderProfil()}`;
+      `<div class="tsp"></div><div class="chip2">${AVS.svg(IC.cal)}${AVS.tanggalPendek(new Date())}</div>${renderProfil()}</div>` +
+      `<nav>${renderNav(aktif)}</nav>`;
     pasangTombolProfil(el);
     pasangCarousel(el);
     document.addEventListener('click', (e) => {
@@ -149,7 +149,7 @@ ${btnGantiPin}<button type="button" class="prof-keluar" onclick="AVS_KELUAR()">$
     const lama = topBar.querySelector('.prof-wrap');
     const html = renderProfil();
     if (!html) { if (lama) lama.remove(); return; }
-    if (lama) lama.outerHTML = html; else topBar.insertAdjacentHTML('beforeend', html);
+    if (lama) lama.outerHTML = html; else (topBar.querySelector('.tb-row1') || topBar).insertAdjacentHTML('beforeend', html);
     pasangTombolProfil(topBar);
   };
   // Render ulang SELURUH topbar (menu + profil) setelah gerbang PIN selesai -- dipanggil dari
