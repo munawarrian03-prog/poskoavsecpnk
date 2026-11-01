@@ -157,6 +157,86 @@
       .map(({ _i, ...k }) => k);
   };
 
+  // ---------- Tampilan Harian (per tanggal & shift) ----------
+  // Satu logika untuk tampilan Harian (langkah 4) dan, nanti, isi otomatis Laporan Personel (langkah 5).
+  // Mengikuti referensi "Shift Planning" v95: personel dikelompokkan per kategori+kode+jam; shift Pagi =
+  // kode berjam mulai < 12:00, shift Malam = mulai >= 12:00 ditambah personel yang masuk esok pagi
+  // SEBELUM 08:00 (selain kode OH). RDO (LALIN) yang masuk esok pagi dan dinas pagi yang selesai lewat
+  // 20:00 ikut tercatat di dinas malam tetapi bertanda placeOnly (tidak ditampilkan/dihitung di Harian).
+  // Grup bertugas = grup ORGANIK ALPHA..DELTA dengan kode P (pagi) / M (malam) terbanyak pada hari itu.
+  // Rencana Cuti belum ada, jadi tak ada yang ditandai cuti.
+  const GRUP_TUGAS = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA'];
+  const shiftDari = (m) => (parseInt(String(m).slice(0, 2), 10) < 12 ? 'pagi' : 'malam');
+  ns.bangunHari = function (dataBulan, ym) {
+    const [Y, M] = ym.split('-').map(Number), n = new Date(Y, M, 0).getDate();
+    const pad = (x) => String(x).padStart(2, '0');
+    const hari = {};
+    for (let d = 1; d <= n; d++) { const iso = `${ym}-${pad(d)}`; hari[iso] = { d: iso, g: { pagi: null, malam: null }, pagi: [], malam: [] }; }
+    const units = ((dataBulan && dataBulan.units) || []).filter((u) => u && (u.legenda || []).length);
+    units.forEach((u) => {
+      const peta = legendaPeta(u);
+      const tipe = /NEW/i.test(u.nama) || u.punyaGrup === false ? 'N' : (/IASS/i.test(u.nama) ? 'I' : 'R');
+      u.grup.forEach((g) => {
+        if (diabaikan(g.nama)) return;
+        const rdo = isRdo(u, g.nama);
+        g.orang.forEach((o) => {
+          Object.entries(o.jadwal || {}).forEach(([iso, kode]) => {
+            const day = hari[iso]; if (!day) return;
+            const k = String(kode).toUpperCase();
+            let e = peta[k]; if (rdo && peta[k + ' RDO']) e = peta[k + ' RDO'];
+            if (!e || !e.mulai) return;
+            day[shiftDari(e.mulai)].push({ s: tipe, g: norm(g.nama), n: aliasNama(o.nama), j: norm(o.jabatan), k, m: e.mulai, e: e.selesai, rdo });
+          });
+        });
+      });
+    });
+    const list = Object.values(hari).sort((a, b) => a.d.localeCompare(b.d));
+    list.forEach((d, i) => {
+      const nx = list[i + 1];
+      const have = new Set(d.malam.map((e) => e.n.toUpperCase()));
+      if (nx) nx.pagi.forEach((e) => {
+        if (have.has(e.n.toUpperCase())) return;
+        if (e.rdo) { if (e.m < '08:00') { d.malam.push(Object.assign({}, e, { early: true, placeOnly: true, fromD: nx.d })); have.add(e.n.toUpperCase()); } }
+        else if (e.m < '08:00' && e.k !== 'OH') { d.malam.push(Object.assign({}, e, { early: true, fromD: nx.d })); have.add(e.n.toUpperCase()); }
+      });
+      d.pagi.forEach((e) => { if (e.e > '20:00' && e.e > e.m && !have.has(e.n.toUpperCase())) { d.malam.push(Object.assign({}, e, { lateStay: true, placeOnly: true })); have.add(e.n.toUpperCase()); } });
+      [['pagi', 'P'], ['malam', 'M']].forEach(([sh, kode]) => {
+        const c = {};
+        d[sh].forEach((e) => { if (e.s === 'R' && e.k === kode && GRUP_TUGAS.includes(e.g) && !e.placeOnly) c[e.g] = (c[e.g] || 0) + 1; });
+        const g = Object.keys(c).sort((a, b) => c[b] - c[a])[0];
+        d.g[sh] = g || null;
+      });
+    });
+    return list;
+  };
+  // kategori bagian: urutan tampil (p) dan label
+  function katBagian(x, g) {
+    if (x.s === 'N') return { p: 6, label: 'NEW IASS' };
+    if (x.s === 'I' && x.g === 'LALIN') return { p: 5, label: 'RDO' };
+    if (x.s === 'I') return x.g === g ? { p: 1, label: `IASS · ${x.g}` } : { p: 4, label: `IASS · ${x.g}` };
+    return x.g === g ? { p: 0, label: `ORGANIK · ${x.g}` } : { p: 2, label: `ORGANIK · ${x.g}` };
+  }
+  function kolomBagian(b) {
+    if (b.p === 0 || b.p === 5) return 1;
+    if (b.p === 1) return 2;
+    if (b.p === 4 || b.p === 6) return b.k === 'PP' ? 2 : 3;
+    return 3;
+  }
+  // Bagian tampilan Harian untuk satu hari & shift: [{t, items, col}] (placeOnly tidak ikut).
+  ns.bagianHarian = function (day, shift) {
+    const g = day.g[shift], b = new Map();
+    day[shift].forEach((x) => {
+      if (x.placeOnly) return;
+      const c = katBagian(x, g), key = `${c.p}|${c.label}|${x.k}|${x.m}|${x.e}`;
+      if (!b.has(key)) b.set(key, { p: c.p, label: c.label, k: x.k, m: x.m, e: x.e, items: [] });
+      b.get(key).items.push(x);
+    });
+    return [...b.values()]
+      .sort((a, c) => (a.p - c.p) || a.label.localeCompare(c.label) || a.m.localeCompare(c.m) || a.k.localeCompare(c.k))
+      .map((x) => ({ t: `${x.label} · ${x.k} · ${x.m}-${x.e}`, items: x.items, col: kolomBagian(x) }));
+  };
+  ns.jumlahTersedia = function (day, shift) { return day[shift].filter((x) => !x.placeOnly).length; };
+
   // Selisih terhadap cadangan (kategori.js / personel.js). Tidak mengubah apa pun.
   ns.bandingkan = function (ringkasan, bawaan) {
     bawaan = bawaan || {};

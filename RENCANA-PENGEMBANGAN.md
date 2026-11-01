@@ -97,8 +97,19 @@ Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
    cadangan; semua halaman tanpa galat konsol. Keterbatasan: alias belum ikut Cadangkan/Pulihkan (Rekap) dan
    tidak disinkronkan lintas perangkat; kategori form tidak berganti bila tanggal laporan diubah ke bulan lain
    setelah form terbuka.
-4. **Tampilan Harian di Jadwal Dinas** (entri "Jadwal Dinas: tampilan Harian" di bawah). Hanya membaca
+4. **[SELESAI 1 Nov 2026] Tampilan Harian di Jadwal Dinas** (entri "Jadwal Dinas: tampilan Harian" di bawah). Hanya membaca
    data; tab Tabel Bulanan tetap. Mockup: https://claude.ai/artifact/N5WDR7WjCLSfQ8VxGo3LRg
+   HASIL: tab "Harian" (bawaan) dan "Tabel Bulanan" (tampilan lama, tetap) di halaman Jadwal Dinas. Harian: dua tombol
+   shift (jumlah tersedia + grup bertugas), kalender tanggal (Senin pertama), tiga kolom bagian per kategori+kode+jam,
+   kolom Cari ikut menyaring nama. Logika di `jadwal-sumber.js` (`bangunHari`, `bagianHarian`, `jumlahTersedia`;
+   bersama dengan langkah 5): shift Pagi = kode berjam mulai < 12:00, Malam = mulai >= 12:00 + personel yang masuk esok
+   pagi sebelum 08:00 (bukan OH); RDO esok pagi & dinas pagi selesai > 20:00 ditandai placeOnly (tak ditampilkan);
+   grup bertugas = grup ORGANIK dengan kode P/M terbanyak; A D M & ADM PAS ID diabaikan; LALIN = RDO.
+   Acuan visual: tangkapan layar referensi v95 pengguna. Uji (Excel November, 2 Nov): pagi Grup BRAVO dan malam Grup
+   CHARLIE, malam "27 tersedia" SAMA dengan referensi; semua bagian pagi sama dengan referensi (nama dan jumlah),
+   selisih satu-satunya: referensi 29 tersedia + 2 cuti (RINO SETIADI, ANDRI NOVIARDI) sedangkan aplikasi ini 31
+   karena Rencana Cuti belum ada. `savedJadwalDinas` tidak berubah setelah membuka 30 tanggal x 2 shift; halaman lain
+   tanpa galat. Belum ada: Rencana Cuti, tanda cuti/pengurangan "tersedia".
 5. **Isi dari Jadwal Dinas di Laporan Personel** (entri "Laporan Personel: isi otomatis" di bawah).
    Mockup sederhana: https://claude.ai/artifact/5z6G4pTJikT68x5zn6hcu6
 
