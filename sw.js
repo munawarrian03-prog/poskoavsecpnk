@@ -38,6 +38,7 @@ const ASSETS_TO_CACHE = [
   './kejadian-bast-nomor.js',
   './kejadian-bast-pdf.js',
   './jadwal-dinas-import.js',
+  './jadwal-sumber.js',
   './manifest.json',
   './fonts/montserrat-latin-400-normal.woff2',
   './fonts/montserrat-latin-500-normal.woff2',

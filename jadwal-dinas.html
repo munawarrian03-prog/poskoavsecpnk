@@ -95,6 +95,9 @@ table.jdtbl td.kd { min-width: 34px; padding: 4px 3px; }
 <script>AVS_gerbangUtama();</script>
 <script src="lib/xlsx.core.min.js"></script>
 <script src="jadwal-dinas-import.js"></script>
+<script src="kategori.js"></script>
+<script src="personel.js"></script>
+<script src="jadwal-sumber.js"></script>
 <script>
 (function () {
   'use strict';
@@ -210,6 +213,30 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
   }
   function tutupUpload() { $('uploadOverlay').style.display = 'none'; }
 
+  // Hal-hal yang perlu diputuskan pengguna dari jadwal yang baru dibaca (hanya DITAMPILKAN; tidak mengubah
+  // kategori.js / personel.js / data apa pun). Logika: jadwal-sumber.js.
+  function kotakKeputusan(units) {
+    if (!window.AVS || !AVS.JadwalSumber) return '';
+    const r = AVS.JadwalSumber.ringkas({ units });
+    if (!r.ada) return '';
+    const b = AVS.JadwalSumber.bandingkan(r);
+    const item = (judul, daftar) => daftar.length ? `<div style="margin-top:8px"><b>${judul}</b><div style="margin-top:2px">${daftar.join('<br>')}</div></div>` : '';
+    const abai = r.diabaikanBerdinas.map((p) => `${E(p.nama)} (${E(p.grup)}): ${Object.entries(p.kode).map(([k, n]) => `${E(k)} ${n} hari`).join(', ')}`);
+    const katBaru = b.kategoriBaru.map((k) => `${E(k.unit)} · ${E(k.kode)} · ${E(k.mulai)}–${E(k.selesai)} (${k.orang} orang)`);
+    const jamBeda = b.jamBeda.map((x) => `${E(x.bawaan.nama)}: kategori.js ${E(x.bawaan.mulai)}–${E(x.bawaan.selesai)}, Excel ${E(x.kategori.mulai)}–${E(x.kategori.selesai)}`);
+    const baru = b.personelBelumAda.map((p) => `${E(p.nama)} (${E(p.unit)}${p.grup ? ' · ' + E(p.grup) : ''})`);
+    const takAda = b.personelTakAda.map((n) => E(n));
+    const tanpaLeg = r.kodeTanpaLegenda.map((t) => `${E(t.unit)} · kode ${E(t.kode)} (${t.n} sel)`);
+    const isi = item('Personel kelompok yang diabaikan (A D M / ADM PAS ID) tetapi berkode DINAS', abai)
+      + item('Kode di Excel yang belum punya kategori di aplikasi', katBaru)
+      + item('Jam di Excel berbeda dari kategori.js', jamBeda)
+      + item('Personel di Excel yang belum ada di personel.js', baru)
+      + item('Nama di personel.js yang tidak ada di jadwal ini', takAda)
+      + item('Kode tanpa legenda (tidak dihitung)', tanpaLeg);
+    const ringkas = `${r.personel.aktif.length} personel dihitung dinas, ${r.personel.diabaikan.length} diabaikan, ${r.kategori.length} kategori (sheet + kode) terbaca dari legenda`;
+    return `<div style="margin-top:12px;background:${isi ? '#FCF1DF;border:1px solid #F0D9A8;color:#8A5A0C' : '#E6F5EC;border:1px solid #BFE3CC;color:#1F6B3E'};font-size:11.5px;font-weight:600;border-radius:8px;padding:10px 12px"><div style="font-weight:800">${isi ? 'Perlu diputuskan' : 'Sesuai dengan kategori.js dan personel.js'}</div><div style="margin-top:2px">${ringkas}</div>${isi}</div>`;
+  }
+
   function prosesBerkas(input) {
     const file = input.files && input.files[0];
     if (!file) return;
@@ -248,7 +275,7 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
         pending = { diimporPada: new Date().toISOString(), namaBerkas: file.name, units: hasil.units, dilewati: hasil.dilewati, bulan: { tahun, bulan } };
         const ringkasUnit = hasil.units.map((u) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #EEF1F6"><span><b>${E(u.nama)}</b>${u.punyaGrup ? ` <span style="color:#8A94A6;font-weight:600">(${u.grup.length} grup)</span>` : ''}</span><span style="color:#8A94A6;font-weight:700">${u.grup.reduce((n, g) => n + g.orang.length, 0)} orang</span></div>`).join('');
         const ringkasLewat = hasil.dilewati.length ? `<div style="margin-top:10px;font-size:11px;color:#8A94A6;font-weight:600">Dilewati: ${hasil.dilewati.map((d) => `${E(d.sheet)} — ${E(d.alasan)}`).join('; ')}</div>` : '';
-        $('hasilProses').innerHTML = `${catatanBulan}<div style="font-size:11.5px;font-weight:800;color:#8A94A6;text-transform:uppercase;margin-bottom:4px">Ditemukan ${hasil.units.length} unit</div>${ringkasUnit}${ringkasLewat}`;
+        $('hasilProses').innerHTML = `${catatanBulan}<div style="font-size:11.5px;font-weight:800;color:#8A94A6;text-transform:uppercase;margin-bottom:4px">Ditemukan ${hasil.units.length} unit</div>${ringkasUnit}${ringkasLewat}${kotakKeputusan(hasil.units)}`;
         $('btnSimpanJadwal').style.display = '';
       } catch (e) {
         console.error(e);

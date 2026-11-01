@@ -163,6 +163,7 @@
 <script>AVS_gerbangUtama();</script>
 <script src="personel.js"></script>
 <script src="kategori.js"></script>
+<script src="jadwal-sumber.js"></script>
 <script>
 'use strict';
 
@@ -760,7 +761,7 @@ function generateReportText() {
   $('outputReport').innerText = text;
   return text;
 }
-function headerChanged() { markDirty(); generateReportText(); }
+function headerChanged() { markDirty(); generateReportText(); isiDaftarPersonel(); }
 
 /* ---------- Salin & Kirim WA ---------- */
 function copyText(text) {
@@ -1053,8 +1054,12 @@ async function exportPDF(id) {
 }
 
 /* ---------- Inisialisasi ---------- */
+// Saran nama: bila Jadwal Dinas bulan laporan sudah diunggah, nama diambil dari sana (A D M dan ADM PAS ID
+// diabaikan, ejaan lewat ALIAS_NAMA); bila belum, memakai personel.js sebagai cadangan.
 function isiDaftarPersonel() {
-  const sumber = (typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : [];
+  const ym = ($('tanggal') && $('tanggal').value ? $('tanggal').value : tanggalLokalISO(new Date())).slice(0, 7);
+  const dariJadwal = (window.AVS && AVS.JadwalSumber) ? AVS.JadwalSumber.daftarNamaSaran(ym) : null;
+  const sumber = dariJadwal || ((typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : []);
   const seen = new Set(), list = [];
   sumber.forEach((n) => { const t = rapikan(n), k = t.toUpperCase(); if (t && !seen.has(k)) { seen.add(k); list.push(t); } });
   list.sort((a, b) => a.localeCompare(b, 'id'));
@@ -1070,8 +1075,8 @@ window.addEventListener('DOMContentLoaded', () => {
   AVS.nav('personel');
   updateCount();
   cekPerangkat();
-  isiDaftarPersonel();
   $('tanggal').value = tanggalLokalISO(new Date());
+  isiDaftarPersonel();
   kategoriKekuatan = kategoriAwal();
   posPenempatan = posAwal();
   renderKekuatan();

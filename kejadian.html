@@ -305,6 +305,7 @@
 <script src="lib/fonts-montserrat.js"></script>
 <script src="personel.js"></script>
 <script src="kategori.js"></script>
+<script src="jadwal-sumber.js"></script>
 <script src="kejadian-data.js"></script>
 <script src="kejadian-nomor.js"></script>
 <script src="kejadian-wa.js"></script>
@@ -579,7 +580,10 @@ document.addEventListener('click', (e) => {
 });
 
 function isiSaran() {
-  const sumber = (typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : [];
+  // Nama dari Jadwal Dinas bulan berjalan bila sudah diunggah (A D M dan ADM PAS ID diabaikan); bila belum, personel.js.
+  const d = new Date(), ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const dariJadwal = (window.AVS && AVS.JadwalSumber) ? AVS.JadwalSumber.daftarNamaSaran(ym) : null;
+  const sumber = dariJadwal || ((typeof DAFTAR_PERSONEL !== 'undefined' && Array.isArray(DAFTAR_PERSONEL)) ? DAFTAR_PERSONEL : []);
   const seen = new Set(), list = [];
   sumber.forEach((n) => { const t = rapikan(n).replace(/\s+/g, ' '), k = t.toUpperCase(); if (t && !seen.has(k)) { seen.add(k); list.push(t); } });
   list.sort((a, b) => a.localeCompare(b, 'id'));

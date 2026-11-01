@@ -57,10 +57,24 @@ Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
    jadwal/dilewati) IDENTIK sebelum-sesudah; regu bertugas 30 hari x 2 shift identik (60/60 terpetakan);
    Beranda/Rekap/Kejadian/Laporan Personel tanpa galat konsol; unggah lewat UI menyimpan legenda berjam.
    Belum ditangani: kolom tersembunyi di legenda (referensi v93 menanganinya); sheet turunan "ORGANIK".
-2. **Baca kategori & roster dari Excel bulan terpilih**: kategori = (nama sheet, kode, jam legenda);
+2. **[SELESAI 1 Nov 2026] Baca kategori & roster dari Excel bulan terpilih**: kategori = (nama sheet, kode, jam legenda);
    nama + jabatan dari roster. Kategori dibedakan per NAMA SHEET (mis. NEW IASS PP vs IASS PP, sama-sama
    05:00-17:00). Satu fungsi bersama dipakai bersama oleh langkah 3-5 (bukan salinan). Cadangan ke
    `kategori.js`/`personel.js` bila Excel bulan itu tidak ada.
+   HASIL: modul baru `jadwal-sumber.js` (`AVS.JadwalSumber`; murni baca, tidak menulis localStorage):
+   `ringkas` (kategori = sheet+kode+jam legenda; personel dihitung vs diabaikan; kode tanpa legenda),
+   `daftarNamaSaran(ym)`, `bandingkan` (kategori baru, jam beda dari kategori.js, personel baru/tak ada).
+   Aturan: A D M dan ADM PAS ID diabaikan; LALIN = RDO (kode P/M dibaca "P RDO"/"M RDO"); sheet tanpa
+   legenda dilewati. `PADANAN_AWAL` (sheet|kode -> id kategori) = benih tabel nama tampilan langkah 3.
+   `personel.js` kini juga memuat `ALIAS_NAMA` ({"HIKMAH N": "HIKMAH NURZAMAN"}) agar ejaan pilihan pengguna
+   tetap dipakai. Terpasang di: (a) Jadwal Dinas, kotak "Perlu diputuskan" saat unggah (hanya informasi;
+   memunculkan personel A D M/ADM PAS ID berkode dinas seperti BARIR BAIHAQI, kode/kategori baru, jam beda,
+   personel baru/hilang, kode tanpa legenda); (b) Laporan Personel & Kejadian: saran nama dari jadwal bulan
+   laporan/bulan berjalan, cadangan personel.js bila jadwal bulan itu belum diunggah.
+   BELUM dipasang: kategori Kekuatan di form Laporan Personel tetap dari kategori.js (menunggu nama tampilan,
+   langkah 3). Uji (Excel November): 12 kategori terbaca, 95 dihitung + 7 diabaikan, BARIR BAIHAQI (P 20 hari)
+   dimunculkan, tidak ada selisih terhadap kategori.js/personel.js; skenario sintetis (kode baru PX, jam PP
+   berubah, personel baru, kode tanpa legenda) terdeteksi semua; tanpa galat konsol di semua halaman.
 3. **Tabel nama tampilan** (alias): kode + sheet + jam dibaca dari Excel (abu-abu, tak perlu diubah),
    hanya "Nama di laporan" yang diatur pengguna. Jam berubah -> nama tetap, jam ikut Excel. Kode baru ->
    baris kuning "belum punya nama" (sementara tampil "SHEET · KODE · JAM"). Kode hilang -> tidak ada

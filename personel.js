@@ -7,6 +7,8 @@
 // =====================================================
 // Disesuaikan dengan Jadwal Dinas November 2026 (sheet ROSTER ORGANIK, IASS, NEW IASS).
 // Tidak dimasukkan: kelompok A D M (ORGANIK) dan ADM PAS ID (IASS). Kelompok LALIN dimasukkan (= RDO).
+// Ejaan nama: bila jadwal Excel menulis nama singkat, pakai ejaan di sebelah kanan (kunci HURUF BESAR).
+const ALIAS_NAMA = { "HIKMAH N": "HIKMAH NURZAMAN" };
 const DAFTAR_PERSONEL = [
   "A KHOLID",
   "ABDUL HAMID",
