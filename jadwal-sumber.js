@@ -185,7 +185,7 @@
             const k = String(kode).toUpperCase();
             let e = peta[k]; if (rdo && peta[k + ' RDO']) e = peta[k + ' RDO'];
             if (!e || !e.mulai) return;
-            day[shiftDari(e.mulai)].push({ s: tipe, g: norm(g.nama), n: aliasNama(o.nama), j: norm(o.jabatan), k, m: e.mulai, e: e.selesai, rdo });
+            day[shiftDari(e.mulai)].push({ s: tipe, u: u.nama, kunci: `${u.nama}|${e.kode}`, g: norm(g.nama), n: aliasNama(o.nama), j: norm(o.jabatan), k, m: e.mulai, e: e.selesai, rdo });
           });
         });
       });
@@ -236,6 +236,49 @@
       .map((x) => ({ t: `${x.label} · ${x.k} · ${x.m}-${x.e}`, items: x.items, col: kolomBagian(x) }));
   };
   ns.jumlahTersedia = function (day, shift) { return day[shift].filter((x) => !x.placeOnly).length; };
+
+  // ---------- Rencana isi Laporan Personel (langkah 5) ----------
+  // Dari jadwal bulan `ym`, tanggal & shift ('pagi'|'malam') -> bahan mengisi Laporan Personel:
+  //   grup bertugas, jumlah per kategori (id/nama/jam seperti kategoriForm), dan daftar personel
+  //   (nama, peran, kategori, jam dinas) berurutan seperti penempatan di referensi v95: anggota grup
+  //   bertugas dulu (jabatan lalu nama), lalu yang lain menurut jam masuk (yang masuk esok hari terakhir).
+  // Tidak menulis apa pun. Siapa yang tidak hadir TIDAK diketahui jadwal (diisi manual oleh pengguna).
+  const JAB_URUT = { 'CHIEF': 1, 'CHIEF ASST': 2, 'CHIEF ASSISTANT': 2, 'SUPERVISOR': 3, 'OFFICER': 4 };
+  const rankJab = (e) => (e.s === 'N' ? 6 : e.s === 'I' ? 5 : (JAB_URUT[norm(e.j).toUpperCase()] || 4.5));
+  function peranDari(j) {
+    const t = norm(j).toUpperCase();
+    if (t === 'CHIEF') return '(Chief)';
+    if (t === 'CHIEF ASST' || t === 'CHIEF ASSISTANT') return '(Assistant chief)';
+    if (t === 'SUPERVISOR') return '(Supervisor)';
+    return '';
+  }
+  function idKategoriDari(kunci) { return PADANAN_AWAL[kunci] || ('jd_' + slug(kunci)); }
+  ns.rencanaLaporan = function (ym, tanggalISO, shift) {
+    const hasil = { ada: false, grup: null, kategori: [], personel: [], tanpaNama: [], ganda: [] };
+    const data = semuaData()[ym] || null;
+    const form = ns.kategoriForm(ym);
+    if (!data || !form) return hasil;
+    const hari = ns.bangunHari(data, ym), day = hari.find((d) => d.d === tanggalISO);
+    if (!day) return hasil;
+    hasil.ada = true; hasil.grup = day.g[shift];
+    const g = day.g[shift], list = day[shift].filter((x) => !x.placeOnly);
+    const jml = {}, dasar = {};
+    const tanpa = new Set();
+    list.forEach((x) => {
+      const id = idKategoriDari(x.kunci);
+      jml[id] = (jml[id] || 0) + 1; (dasar[id] ||= new Set()).add(x.kunci);
+      if (!ns.punyaNama(x.kunci)) tanpa.add(x.kunci);
+    });
+    hasil.tanpaNama = [...tanpa];
+    hasil.kategori = form.map((k) => ({ id: k.id, nama: k.nama, mulai: k.mulai, selesai: k.selesai, jml: jml[k.id] || 0, dasar: [...(dasar[k.id] || [])] }));
+    const mnt = (m) => { const [h, mi] = String(m).split(':').map(Number); return h * 60 + mi; };
+    const kunciUrut = (x) => { const own = (x.s === 'R' || x.s === 'I') && x.g === g; let t = mnt(x.m); if (shift === 'malam' && x.early) t += 1440; return [own ? 0 : 1, own ? 0 : t, rankJab(x), x.n]; };
+    list.slice().sort((a, b) => { const p = kunciUrut(a), q = kunciUrut(b); for (let i = 0; i < 3; i++) if (p[i] !== q[i]) return p[i] - q[i]; return String(p[3]).localeCompare(String(q[3]), 'id'); })
+      .forEach((x) => hasil.personel.push({ nama: x.n, peran: peranDari(x.j), jabatan: x.j, kategoriId: idKategoriDari(x.kunci), jam: `${x.m}–${x.e}`, kunci: x.kunci, early: !!x.early }));
+    const hitung = {}; hasil.personel.forEach((p) => { hitung[p.nama.toUpperCase()] = (hitung[p.nama.toUpperCase()] || 0) + 1; });
+    hasil.ganda = Object.keys(hitung).filter((k) => hitung[k] > 1);
+    return hasil;
+  };
 
   // Selisih terhadap cadangan (kategori.js / personel.js). Tidak mengubah apa pun.
   ns.bandingkan = function (ringkasan, bawaan) {

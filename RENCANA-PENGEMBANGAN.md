@@ -110,8 +110,21 @@ Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
    selisih satu-satunya: referensi 29 tersedia + 2 cuti (RINO SETIADI, ANDRI NOVIARDI) sedangkan aplikasi ini 31
    karena Rencana Cuti belum ada. `savedJadwalDinas` tidak berubah setelah membuka 30 tanggal x 2 shift; halaman lain
    tanpa galat. Belum ada: Rencana Cuti, tanda cuti/pengurangan "tersedia".
-5. **Isi dari Jadwal Dinas di Laporan Personel** (entri "Laporan Personel: isi otomatis" di bawah).
+5. **[SELESAI 1 Nov 2026] Isi dari Jadwal Dinas di Laporan Personel** (entri "Laporan Personel: isi otomatis" di bawah).
    Mockup sederhana: https://claude.ai/artifact/5z6G4pTJikT68x5zn6hcu6
+   HASIL: tombol "Isi dari Jadwal" di bilah atas Laporan Personel (perlu Tanggal + Shift). Pratinjau (jendela): grup
+   bertugas/regu, jumlah per kategori + dasar sheet/kode, ringkasan penempatan, peringatan (regu form beda dari jadwal,
+   kode tanpa nama, nama ganda, bulan tanpa jadwal -> pesan). "Terapkan": regu diisi dari grup bertugas; Jumlah kategori
+   yang dikenal jadwal diperbarui (kategori buatan pengguna & isian "tidak hadir" tetap); penempatan memakai nama,
+   peran (dari jabatan), kategori, dan jam dinas dari jadwal; pos diwarisi dari laporan tersimpan terakhir dengan shift
+   sejenis; sisanya masuk panel "Belum ditempatkan" (pilih pos per orang) dan dihitung sebagai catatan/BELUM SESUAI
+   sampai habis. Logika: `AVS.JadwalSumber.rencanaLaporan` (urutan penempatan = v95: anggota grup bertugas dulu menurut
+   jabatan, lalu menurut jam masuk). Konfirmasi bila isian sudah ada. Uji (Excel November + cadangan laporan Oktober):
+   2 Nov pagi = Regu B, 31 personel, kategori 12/1/8/2/1/2/2/2/1, 29 diwarisi + 2 belum ditempatkan; setelah ditempatkan
+   semua status SESUAI (31 = 31); malam = Regu C, 27 personel; simpan laporan OK; bulan tanpa jadwal hanya memberi
+   pesan; halaman lain tanpa galat. Keterbatasan: daftar "Belum ditempatkan" tidak ikut tersimpan bila halaman
+   ditutup sebelum menyimpan; pewarisan memakai laporan tersimpan terakhir (bukan aturan khusus Posko/Supervisor
+   seperti referensi); Kurang/tidak hadir tetap manual (tanpa Rencana Cuti).
 
 Referensi diperbarui ke `jadwal-dinas-v95.html` (1 Nov 2026; sebelumnya v93). Selisih v93 -> v95 hanya 49 baris,
 semuanya di area Penempatan pos (tidak menyentuh tampilan Harian, Kekuatan Grup, Cuti):
