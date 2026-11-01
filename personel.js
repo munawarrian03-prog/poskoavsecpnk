@@ -5,6 +5,8 @@
 // abjad otomatis dan membuang nama ganda.
 // Setelah diubah, upload ulang file ini saja ke hosting.
 // =====================================================
+// Disesuaikan dengan Jadwal Dinas November 2026 (sheet ROSTER ORGANIK, IASS, NEW IASS).
+// Tidak dimasukkan: kelompok A D M (ORGANIK) dan ADM PAS ID (IASS). Kelompok LALIN dimasukkan (= RDO).
 const DAFTAR_PERSONEL = [
   "A KHOLID",
   "ABDUL HAMID",
@@ -14,13 +16,11 @@ const DAFTAR_PERSONEL = [
   "ANDRI NOVIARDI",
   "ANGGA",
   "ARIANO KHARISMA BARUS",
-  "ARIES DARTA",
   "ARIF DARMAWAN SAPUTRA",
   "ARIF G F",
   "ARIVA RAFAI",
   "ARRISHON BINTANG",
   "ARY ANSARY",
-  "BARIR BAIHAQI",
   "BARRY PRIMA P",
   "BELLA GALIH AGARTA",
   "BORNEOS SIHOMBING",
@@ -47,8 +47,7 @@ const DAFTAR_PERSONEL = [
   "HAVI ANUGRAH",
   "HERI HARDIANTO",
   "HESTI RAMADHANTI",
-  "HESTIN M",
-  "HIKMAH NURZAMAN",
+  "HIKMAH N",
   "I WAYAN YUDHA U",
   "IFAN PERMANA SAPUTRA",
   "IRFAN THARIQ PRABOWO",
@@ -68,9 +67,7 @@ const DAFTAR_PERSONEL = [
   "M ROZZAQ",
   "M. DIKA",
   "MAKEISYA NABILA P J",
-  "MARTHIN R.D.H",
   "MEI MUSTOFA",
-  "MIHARTI",
   "MUHAMMAD RAHMAD RISKI",
   "MURSYID",
   "NOERY INDAH SAYEKTI",
@@ -79,7 +76,6 @@ const DAFTAR_PERSONEL = [
   "PIPID FIDCKY BAFRI S",
   "PRASETYO H",
   "RADITIYA CANDRA AUGUST LUKITO",
-  "RENGGA INDOCIPTA P",
   "REZA BAHARI",
   "RIAN MUNAWAR",
   "RIDHO SITARA",

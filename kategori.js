@@ -8,17 +8,23 @@
 // sedang dibuat; file ini adalah nilai awalnya.
 // id harus unik dan tidak diubah-ubah (huruf kecil, angka, _).
 // =====================================================
+// Disesuaikan dengan Jadwal Dinas November 2026 (legenda tiap sheet):
+//   ROSTER ORGANIK: P/M (grup bertugas) -> ORGANIK; PJD 06:00-18:00 -> ORGANIK PJD
+//   IASS: P, M, PP 05:00-17:00, PS 06:00-18:00; kelompok LALIN (P/M RDO 08:00-20:00 / 20:00-08:00) -> IASS RDO
+//   NEW IASS: PP 05:00-17:00, PS 07:00-19:00, PM 09:00-21:00
+// Kelompok A D M dan ADM PAS ID diabaikan (tidak dihitung sebagai personel dinas).
 const KATEGORI_BAWAAN = [
   { id: 'org_pagi',   nama: 'ORGANIK',                    mulai: '',      selesai: ''      },
   { id: 'org_pjd',    nama: 'ORGANIK PJD',                mulai: '06:00', selesai: '18:00' },
   { id: 'iass_pagi',  nama: 'IASS PAGI',                  mulai: '08:00', selesai: '20:00' },
   { id: 'iass_malam', nama: 'IASS MALAM',                 mulai: '20:00', selesai: '08:00' },
   { id: 'iass_pp',    nama: 'IASS PP',                    mulai: '05:00', selesai: '17:00' },
+  { id: 'iass_ps',    nama: 'IASS PS',                    mulai: '06:00', selesai: '18:00' },
   { id: 'iass_ojt',   nama: 'IASS NEW PP',                mulai: '05:00', selesai: '17:00' },
   { id: 'iass_ojt1',  nama: 'IASS NEW PS',                mulai: '07:00', selesai: '19:00' },
   { id: 'iass_ojt2',  nama: 'IASS NEW PM',                mulai: '09:00', selesai: '21:00' },
-  { id: 'rdo_pagi',   nama: 'IASS RDO PAGI',              mulai: '07:00', selesai: '19:00' },
-  { id: 'rdo_malam',  nama: 'IASS RDO MALAM',             mulai: '19:00', selesai: '07:00' }
+  { id: 'rdo_pagi',   nama: 'IASS RDO PAGI',              mulai: '08:00', selesai: '20:00' },
+  { id: 'rdo_malam',  nama: 'IASS RDO MALAM',             mulai: '20:00', selesai: '08:00' }
 ];
 
 // Pos penempatan (tidak berubah-ubah, jadi tetap di sini)

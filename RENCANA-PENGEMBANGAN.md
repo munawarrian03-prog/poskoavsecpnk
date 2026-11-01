@@ -12,6 +12,23 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## kategori.js & personel.js disesuaikan dengan Jadwal Dinas November 2026
+**Status: Selesai** (1 Nov 2026) — `kategori.js`, `personel.js` (langkah mandiri, di luar rangkaian berurutan)
+
+Sumber: `11. JADWAL DINAS NOVEMBER.xlsx` (sheet ROSTER ORGANIK, IASS, NEW IASS). Aturan dari pengguna:
+kelompok **A D M** (ORGANIK) dan **ADM PAS ID** (IASS) DIABAIKAN, tidak masuk hitungan personel dinas;
+kelompok **LALIN = RDO**.
+- `personel.js`: 95 nama unik (ORGANIK ALPHA-DELTA 49, IASS ALPHA-DELTA + LALIN 36, NEW IASS 10), urut abjad.
+  Dihapus: ARIES DARTA, BARIR BAIHAQI, HESTIN M, MARTHIN R.D.H, MIHARTI, RENGGA INDOCIPTA P (kelompok A D M).
+  Ejaan mengikuti Excel: "HIKMAH NURZAMAN" -> "HIKMAH N".
+- `kategori.js`: ditambah IASS PS 06:00-18:00 (id `iass_ps`); IASS RDO PAGI/MALAM jam menjadi
+  08:00-20:00 / 20:00-08:00 (legenda "P RDO"/"M RDO"). Id lama tidak diubah. Kode legenda yang tidak dipakai
+  personel non-ADM bulan ini (ORGANIK PS 05:00-17:00, OH) tidak dibuat kategori.
+- Laporan tersimpan tidak berubah (menyimpan salinan nama/jam sendiri).
+- Catatan: BARIR BAIHAQI ada di kelompok A D M tetapi berkode P (dinas) 20 hari; ikut dikeluarkan sesuai aturan.
+- Sheet "JAM DINAS" dan "JUMLAH PERSONEL" dilewati importer; "JUMLAH PERSONEL" memuat roster resmi + jabatan + NIK.
+
+
 ## RANGKAIAN BERURUTAN: Jadwal Dinas Excel menjadi sumber utama kategori & nama
 **Status: Direncanakan — belum ada yang dikerjakan** (1 Nov 2026)
 
