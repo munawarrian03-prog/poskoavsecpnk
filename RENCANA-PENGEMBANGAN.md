@@ -12,6 +12,15 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## Menu topbar gaya tab teks, semua menu tampil (tanpa dropdown)
+**Status: Selesai** (1 Nov 2026) — `shell.js`, `layout.css`
+Acuan visual: tab referensi v95 (HARIAN, KEKUATAN GRUP, ...). Menu topbar kini berderet semua (Posko: Beranda, Laporan Personel,
+Laporan Fasilitas, Log Book, Laporan Kejadian, Jadwal Dinas, Rekap; Admin: Beranda, Pantau Laporan, Rekap, Jadwal Dinas),
+huruf kapital berjarak, tanpa ikon, menu aktif bergaris bawah biru. Slot dinamis + ikon carousel/dropdown dihapus dari
+`renderNav`. Di layar < 1280 px chip tanggal disembunyikan agar semua menu muat. Uji: tiap halaman menandai menu aktif
+benar, klik menu pindah halaman, tidak bertumpuk/keluar bilah pada 1024-1920 px, tanpa galat konsol.
+
+
 ## Penempatan ringkas, label "Fokus", dan laci "Pratinjau WA" dihapus
 **Status: Selesai** (1 Nov 2026) — `laporan-personel.html/.css`, `fasilitas.html`, `logbook.html`, `kejadian.html`, `layout.css`, `shell.js`
 - Laporan Personel (mode jadwal): panel Penempatan menampilkan nama yang berasal dari daftar kategori secara RINGKAS

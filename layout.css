@@ -198,3 +198,13 @@ body.locked #pitaUpdate { display: none; }
 
 /* Laci "Pratinjau WA" dihilangkan dari semua halaman (kode pratinjau tetap ada di DOM agar tombol salin/kirim WA di daftar tersimpan tetap bekerja). */
 #hdl, #hdlWA, #drawer, #drawerWA { display: none !important; }
+
+/* ---- Menu topbar gaya tab teks (semua menu tampil, tanpa dropdown) ---- */
+#topBar nav { gap: 0; margin-left: 12px; align-items: stretch; min-width: 0; }
+#topBar nav .nav-btn { padding: 9px 8px; border-radius: 0; font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #A9BBD4; background: transparent; border-bottom: 2px solid transparent; }
+#topBar nav .nav-btn svg { display: none; }
+#topBar nav .nav-btn:hover { background: transparent; color: #fff; border-bottom-color: rgba(255,255,255,.35); }
+#topBar nav a.nav-btn.active { background: transparent; color: #fff; border-bottom-color: #6C8CFF; }
+
+/* Layar lebih sempit dari 1280: chip tanggal disembunyikan agar semua menu tetap muat tanpa bertumpuk */
+@media (max-width: 1279px) { #topBar .chip2 { display: none; } #topBar nav .nav-btn { padding: 9px 6px; letter-spacing: .04em; } }
