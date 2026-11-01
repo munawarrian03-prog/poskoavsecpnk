@@ -12,6 +12,48 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## RANGKAIAN BERURUTAN: Jadwal Dinas Excel menjadi sumber utama kategori & nama
+**Status: Direncanakan — belum ada yang dikerjakan** (1 Nov 2026)
+
+Latar: kategori (`kategori.js`) dan daftar nama (`personel.js`) ditulis tangan, sehingga tiap kali jam
+dinas atau kategori di Excel berubah, keduanya harus disamakan manual dan sering tidak sesuai.
+Arah yang disepakati: Excel bulan itu = sumber utama; `kategori.js`/`personel.js` jadi CADANGAN
+(bulan yang Excel-nya belum diunggah, atau personel di luar roster, mis. pengganti unit lain).
+Laporan tersimpan aman: tiap laporan sudah menyimpan salinan nama kategori, jam, dan nama personel;
+`kategori.js`/`personel.js` hanya dipakai sebagai saran isian di form Laporan Personel dan Kejadian.
+
+Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
+1. **Perbaiki importer** (`jadwal-dinas-import.js`): baca legenda SEMUA sheet. Legenda sheet IASS
+   (kode kolom B, jam kolom D, format ": 08:00 S/D 20:00 WIB", penulisan titik/titik dua bercampur,
+   kolom tersembunyi) saat ini tersimpan kosong. Acuan: `readLegend` di referensi v93.
+   Uji: legenda IASS terisi untuk Excel November; hasil regu bertugas (Beranda/Rekap) tidak berubah.
+2. **Baca kategori & roster dari Excel bulan terpilih**: kategori = (nama sheet, kode, jam legenda);
+   nama + jabatan dari roster. Kategori dibedakan per NAMA SHEET (mis. NEW IASS PP vs IASS PP, sama-sama
+   05:00-17:00). Satu fungsi bersama dipakai bbersama oleh langkah 3-5 (bukan salinan). Cadangan ke
+   `kategori.js`/`personel.js` bila Excel bulan itu tidak ada.
+3. **Tabel nama tampilan** (alias): kode + sheet + jam dibaca dari Excel (abu-abu, tak perlu diubah),
+   hanya "Nama di laporan" yang diatur pengguna. Jam berubah -> nama tetap, jam ikut Excel. Kode baru ->
+   baris kuning "belum punya nama" (sementara tampil "SHEET · KODE · JAM"). Kode hilang -> tidak ada
+   yang rusak. Muncul: (a) otomatis sebagai pemberitahuan setelah unggah Excel bila ada kode tanpa
+   nama, (b) tombol "Nama Kategori" di Jadwal Dinas, (c) tautan dari pratinjau isi otomatis.
+   Mockup: https://claude.ai/artifact/9ozpjbojD2j1qEbj4fwqqn
+   USULAN (belum dikonfirmasi): diisi awal dari kategori yang ada sekarang; letaknya di Jadwal Dinas.
+4. **Tampilan Harian di Jadwal Dinas** (entri "Jadwal Dinas: tampilan Harian" di bawah). Hanya membaca
+   data; tab Tabel Bulanan tetap. Mockup: https://claude.ai/artifact/N5WDR7WjCLSfQ8VxGo3LRg
+5. **Isi dari Jadwal Dinas di Laporan Personel** (entri "Laporan Personel: isi otomatis" di bawah).
+   Mockup sederhana: https://claude.ai/artifact/5z6G4pTJikT68x5zn6hcu6
+
+Keputusan yang MASIH TERBUKA:
+- Kode tanpa kategori di app: IASS "PS" (06:00-18:00), IASS "OH" (07:30-16:30), IASS "P RDO"/"M RDO"
+  (08:00-20:00 / 20:00-08:00; di app IASS RDO PAGI = 07:00-19:00). Usulan: tampil sebagai "perlu dipilih
+  manual" dulu, tanpa mengubah kategori laporan lama. Perlu dipastikan jam RDO mana yang benar.
+- Rencana Cuti (agar kolom Kurang juga otomatis): fitur terpisah, belum diputuskan.
+- Di luar lingkup rangkaian ini: ekspor Word, Pantau Posko berbagi kode dengan halaman asli.
+
+Setiap langkah: mockup/penjelasan -> persetujuan -> kode -> uji (regu bertugas Beranda/Rekap harus
+sama sebelum = sesudah; `savedJadwalDinas` tidak berubah isinya) -> catat di berkas ini.
+
+
 ## Jadwal Dinas: tampilan Harian per tanggal & shift (mengikuti referensi "Shift Planning v93")
 **Status: Direncanakan** (31 Okt 2026, belum dikerjakan) — `jadwal-dinas.html`
 
