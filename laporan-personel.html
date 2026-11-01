@@ -179,7 +179,16 @@ const MIN_LEBAR = 1024;
 const opsiAlasan = ['Cuti Tahunan', 'Cuti Alasan Penting', 'Cuti Melahirkan', 'Sakit', 'Dinas Luar', 'Izin', 'Tanpa Keterangan', 'Lainnya'];
 const opsiPeran = ['', '(Chief)', '(Assistant chief)', '(Supervisor)'];
 
-const KAT_BAWAAN = (typeof KATEGORI_BAWAAN !== 'undefined' && Array.isArray(KATEGORI_BAWAAN)) ? KATEGORI_BAWAAN : [];
+const KAT_CADANGAN = (typeof KATEGORI_BAWAAN !== 'undefined' && Array.isArray(KATEGORI_BAWAAN)) ? KATEGORI_BAWAAN : [];
+// Kategori bawaan form: dari Jadwal Dinas bulan laporan bila sudah diunggah (jam dari Excel, nama dari tabel
+// "Nama Kategori"), bila belum dari kategori.js. Dihitung ulang saat form dimuat / laporan baru dibuka.
+let KAT_BAWAAN = KAT_CADANGAN;
+function segarkanKategoriBawaan() {
+  const t = ($('tanggal') && $('tanggal').value) ? $('tanggal').value : tanggalLokalISO(new Date());
+  let dariJadwal = null;
+  try { dariJadwal = (window.AVS && AVS.JadwalSumber) ? AVS.JadwalSumber.kategoriForm(t.slice(0, 7)) : null; } catch (e) { dariJadwal = null; }
+  KAT_BAWAAN = (dariJadwal && dariJadwal.length) ? dariJadwal : KAT_CADANGAN;
+}
 const POS_AWAL = (typeof POS_BAWAAN !== 'undefined' && Array.isArray(POS_BAWAAN)) ? POS_BAWAAN : [];
 
 let editingReportId = null;
@@ -1009,6 +1018,7 @@ function newReport() {
   if (dirty && !confirm('Mulai laporan baru? Isian saat ini akan dikosongkan (laporan yang sudah disimpan tidak terpengaruh).')) return;
   editingReportId = null; editingCid = null;
   $('tanggal').value = tanggalLokalISO(new Date()); $('shift').value = ''; $('regu').value = '';
+  segarkanKategoriBawaan();
   kategoriKekuatan = kategoriAwal();
   posPenempatan = posAwal();
   dirty = false; updateBadge();
@@ -1077,6 +1087,7 @@ window.addEventListener('DOMContentLoaded', () => {
   cekPerangkat();
   $('tanggal').value = tanggalLokalISO(new Date());
   isiDaftarPersonel();
+  segarkanKategoriBawaan();
   kategoriKekuatan = kategoriAwal();
   posPenempatan = posAwal();
   renderKekuatan();

@@ -90,7 +90,9 @@
     hasil.kategori = Object.values(kat).map((r) => ({ kunci: r.kunci, unit: r.unit, kode: r.kode, mulai: r.mulai, selesai: r.selesai, orang: r.orang.size, hari: r.hari }));
     hasil.personel.aktif = [...aktif.values()].sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
     hasil.personel.diabaikan = [...abai.values()].sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
-    hasil.diabaikanBerdinas = hasil.personel.diabaikan.filter((p) => Object.keys(p.kode).length);
+    // Nama yang SUDAH diputuskan pengguna tetap diabaikan (DIABAIKAN_TETAP di personel.js) tidak dimunculkan lagi.
+    const tetap = new Set(((typeof DIABAIKAN_TETAP !== 'undefined' && DIABAIKAN_TETAP) || []).map((n) => norm(n).toUpperCase()));
+    hasil.diabaikanBerdinas = hasil.personel.diabaikan.filter((p) => Object.keys(p.kode).length && !tetap.has(p.nama.toUpperCase()));
     hasil.kodeTanpaLegenda = Object.values(tak).filter((t) => !/^L$/i.test(t.kode));
     return hasil;
   };
@@ -105,6 +107,56 @@
     return r.ada && r.personel.aktif.length ? r.personel.aktif.map((p) => p.nama) : null;
   };
 
+  // ---------- Nama tampilan kategori (alias) ----------
+  // Disimpan di localStorage['savedKategoriAlias'] = { "SHEET|KODE": "Nama di laporan" } (berlaku lintas bulan).
+  // Tanpa isian pengguna: pakai nama kategori.js lewat PADANAN_AWAL; tanpa itu juga: "SHEET · KODE".
+  const LS_ALIAS = 'savedKategoriAlias';
+  function aliasTersimpan() { try { const o = JSON.parse(localStorage.getItem(LS_ALIAS) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+  function katBawaan() { return (typeof KATEGORI_BAWAAN !== 'undefined' && Array.isArray(KATEGORI_BAWAAN)) ? KATEGORI_BAWAAN : []; }
+  ns.punyaNama = function (kunci) {
+    const a = aliasTersimpan();
+    return !!(norm(a[kunci]) || (PADANAN_AWAL[kunci] && katBawaan().some((k) => k.id === PADANAN_AWAL[kunci])));
+  };
+  ns.namaTampil = function (kunci, unit, kode) {
+    const a = aliasTersimpan();
+    if (norm(a[kunci])) return norm(a[kunci]);
+    const id = PADANAN_AWAL[kunci], b = id ? katBawaan().find((k) => k.id === id) : null;
+    return b ? b.nama : `${unit} · ${kode}`;
+  };
+  // nama bawaan (tanpa isian pengguna), untuk placeholder; '' bila tidak ada padanan
+  ns.namaBawaan = function (kunci) {
+    const id = PADANAN_AWAL[kunci], b = id ? katBawaan().find((k) => k.id === id) : null;
+    return b ? b.nama : '';
+  };
+  ns.simpanAlias = function (kunci, nama) {
+    const a = aliasTersimpan(), t = norm(nama);
+    if (t && t !== ns.namaBawaan(kunci)) a[kunci] = t; else delete a[kunci];
+    try { if (Object.keys(a).length) localStorage.setItem(LS_ALIAS, JSON.stringify(a)); else localStorage.removeItem(LS_ALIAS); } catch (e) { return false; }
+    return true;
+  };
+  const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
+  // Daftar kategori untuk form Laporan Personel (Kekuatan Personel), dari jadwal bulan ym.
+  // Bentuk sama dgn KATEGORI_BAWAAN: {id, nama, mulai, selesai}. Jam SELALU dari Excel; bila satu nama
+  // dipakai beberapa jam (mis. ORGANIK = kode P dan M) jamnya dikosongkan. id memakai id kategori.js
+  // (PADANAN_AWAL) bila ada supaya laporan lama/terakhir-dipakai tetap cocok. null bila jadwal tidak ada.
+  ns.kategoriForm = function (ym) {
+    const r = ns.ringkasBulan(ym);
+    if (!r.ada || !r.kategori.length) return null;
+    const grup = new Map();
+    r.kategori.forEach((k) => {
+      const id = PADANAN_AWAL[k.kunci] || ('jd_' + slug(k.kunci));
+      const nama = ns.namaTampil(k.kunci, k.unit, k.kode);
+      const g = grup.get(id) || { id, nama, jam: new Set(), mulai: k.mulai, selesai: k.selesai };
+      g.jam.add(k.mulai + '-' + k.selesai); grup.set(id, g);
+    });
+    const urutBawaan = katBawaan().map((k) => k.id);
+    return [...grup.values()]
+      .map((g, i) => ({ id: g.id, nama: g.nama, mulai: g.jam.size > 1 ? '' : g.mulai, selesai: g.jam.size > 1 ? '' : g.selesai, _i: i }))
+      .sort((x, y) => { const ax = urutBawaan.indexOf(x.id), ay = urutBawaan.indexOf(y.id); return (ax < 0 ? 999 : ax) - (ay < 0 ? 999 : ay) || x._i - y._i; })
+      .map(({ _i, ...k }) => k);
+  };
+
   // Selisih terhadap cadangan (kategori.js / personel.js). Tidak mengubah apa pun.
   ns.bandingkan = function (ringkasan, bawaan) {
     bawaan = bawaan || {};
@@ -114,7 +166,8 @@
     const kategoriBaru = [], jamBeda = [];
     (ringkasan.kategori || []).forEach((k) => {
       const id = PADANAN_AWAL[k.kunci], b = id ? katById[id] : null;
-      if (!b) { kategoriBaru.push(k); return; }
+      if (!ns.punyaNama(k.kunci)) { kategoriBaru.push(k); return; }
+      if (!b) return;   // sudah diberi nama pengguna, tidak ada kategori.js pembanding
       if (b.mulai && (b.mulai !== k.mulai || b.selesai !== k.selesai)) jamBeda.push({ kategori: k, bawaan: b });
     });
     const setLama = new Set(nama.map((n) => norm(n).toUpperCase()));

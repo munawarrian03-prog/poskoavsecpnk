@@ -40,6 +40,10 @@ table.jdtbl tr.grp td { background: #EEF1F6; color: #10243D; font-weight: 800; t
 table.jdtbl tr.grp td.nm { min-width: 0; max-width: none; }
 table.jdtbl td.kd { min-width: 34px; padding: 4px 3px; }
 .kd-chip { display: inline-block; min-width: 28px; font-size: 10.5px; font-weight: 800; letter-spacing: .2px; border-radius: 6px; padding: 3px 0; box-shadow: inset 0 0 0 1px rgba(16,36,61,.06); }
+.jd-nk td.x { background:#F3F5F8; color:#6B7A90; font-weight:600; }
+.jd-nk tr.baru td.x { background:#FCF1DF; color:#8A5A0C; }
+.jd-nk input { width:100%; box-sizing:border-box; height:30px; border:1px solid #157A82; border-radius:7px; padding:0 9px; font:700 12px 'Montserrat','Inter'; }
+.jd-nk tr.baru input { border-color:#E0C080; background:#FFFBF0; }
 .jd-empty-cta { text-align: center; padding: 70px 20px; color: #8A94A6; }
 .jd-empty-cta .jd-btn { margin: 16px auto 0; }
 </style>
@@ -56,6 +60,7 @@ table.jdtbl td.kd { min-width: 34px; padding: 4px 3px; }
 <div class="fld"><label>Cari</label><input type="text" class="jd-search" id="jdCari" placeholder="Cari nama…" oninput="JD.renderTabelUnit()"></div>
 <span class="tsp"></span>
 <button type="button" class="tbtn" onclick="JD.bukaUpload()">⬆ Unggah Jadwal (.xlsx)</button>
+<button type="button" class="tbtn" id="btnNamaKat" style="display:none" onclick="JD.bukaNamaKategori()">🏷 Nama Kategori</button>
 <button type="button" class="tbtn" id="btnHapusBulan" style="display:none" onclick="JD.hapusBulanIni()">🗑 Hapus Jadwal Bulan Ini</button>
 </div>
 
@@ -85,6 +90,19 @@ table.jdtbl td.kd { min-width: 34px; padding: 4px 3px; }
 <button type="button" class="btn-cancel" onclick="JD.tutupUpload()">Batal</button>
 <button type="button" class="btn-info" id="btnSimpanJadwal" style="display:none" onclick="JD.simpanHasil()">Simpan Jadwal Bulan Ini</button>
 </div>
+</div>
+</div>
+
+<!-- MODAL: NAMA KATEGORI (nama tampilan kode Excel di laporan) -->
+<div class="modal-overlay" id="namaKatOverlay">
+<div class="modal-container" style="max-width:760px">
+<div class="modal-header"><span class="modal-title">NAMA KATEGORI DI LAPORAN</span><button type="button" class="modal-close" onclick="JD.tutupNamaKategori()">✕</button></div>
+<div class="modal-body">
+<div class="privacy-note">Kolom abu-abu dibaca otomatis dari Excel bulan ini, tidak perlu diubah. Isi hanya kolom <b>Nama di laporan</b>. Jam selalu mengikuti Excel; kalau jam berubah, nama tetap dan jam ikut. Baris kuning = kode yang belum punya nama (sementara tampil "SHEET · KODE").</div>
+<div style="overflow:auto;max-height:55vh;background:#fff;border-radius:8px"><table class="jdtbl jd-nk" style="width:100%;font-size:12px;white-space:normal"><thead><tr><th style="text-align:left">Sheet</th><th>Kode</th><th>Jam</th><th>Orang</th><th style="text-align:left;min-width:220px">Nama di laporan</th></tr></thead><tbody id="namaKatBody"></tbody></table></div>
+<div id="namaKatInfo" style="margin-top:10px;font-size:12px;font-weight:700;color:#CFE0F5"></div>
+</div>
+<div class="modal-footer"><button type="button" class="btn-info" onclick="JD.tutupNamaKategori()">Selesai</button></div>
 </div>
 </div>
 
@@ -183,11 +201,38 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
     if (pickerCtrl) pickerCtrl.refresh();
     const data = dataBulan(bulanAktif.y, bulanAktif.m);
     $('btnHapusBulan').style.display = data ? '' : 'none';
+    $('btnNamaKat').style.display = data ? '' : 'none';
     if (!data || !data.units.length) {
       $('isiJadwal').innerHTML = `<div class="jd-empty-cta"><div style="font-size:15px;font-weight:800;color:var(--ink)">Belum ada jadwal dinas untuk ${AVS.BULAN[bulanAktif.m]} ${bulanAktif.y}</div><div style="margin-top:6px">Unggah berkas Excel jadwal dinas bulan ini untuk mulai menampilkannya di sini.</div><button type="button" class="jd-btn teal" onclick="JD.bukaUpload()">⬆ Unggah Jadwal (.xlsx)</button></div>`;
       return;
     }
     renderTabelUnit();
+  }
+
+  /* ---------- Nama kategori (tabel nama tampilan kode Excel) ---------- */
+  function bukaNamaKategori() {
+    if (!window.AVS || !AVS.JadwalSumber) return;
+    renderNamaKategori();
+    $('namaKatOverlay').style.display = 'flex';
+  }
+  function tutupNamaKategori() { $('namaKatOverlay').style.display = 'none'; }
+  function renderNamaKategori() {
+    const S = AVS.JadwalSumber, r = S.ringkasBulan(KUNCI(bulanAktif.y, bulanAktif.m));
+    const tb = $('namaKatBody');
+    if (!r.ada || !r.kategori.length) { tb.innerHTML = '<tr><td colspan="5" style="padding:14px;color:#8A94A6;font-weight:600">Belum ada kode berjam di jadwal bulan ini.</td></tr>'; $('namaKatInfo').textContent = ''; return; }
+    const alias = (() => { try { return JSON.parse(localStorage.getItem('savedKategoriAlias') || '{}'); } catch (e) { return {}; } })();
+    tb.innerHTML = r.kategori.map((k) => {
+      const belum = !S.punyaNama(k.kunci);
+      const nilai = (alias[k.kunci] || S.namaBawaan(k.kunci) || '');
+      return `<tr class="${belum ? 'baru' : ''}"><td class="x" style="text-align:left">${E(k.unit)}</td><td class="x"><b>${E(k.kode)}</b></td><td class="x">${E(k.mulai)}–${E(k.selesai)}</td><td class="x">${k.orang}</td><td><input type="text" data-k="${E(k.kunci)}" value="${E(nilai)}" placeholder="Ketik nama…" aria-label="Nama untuk ${E(k.unit)} ${E(k.kode)}" onchange="JD.simpanNamaKategori(this)"></td></tr>`;
+    }).join('');
+    const nb = r.kategori.filter((k) => !S.punyaNama(k.kunci)).length;
+    $('namaKatInfo').textContent = nb ? `${nb} kode belum punya nama.` : 'Semua kode sudah punya nama.';
+  }
+  function simpanNamaKategori(input) {
+    if (AVS.JadwalSumber.simpanAlias(input.dataset.k, input.value)) toast('Nama kategori tersimpan.');
+    else toast('Gagal menyimpan (penyimpanan browser penuh atau diblokir).', 'err');
+    renderNamaKategori();
   }
 
   /* ---------- Modal unggah ---------- */
@@ -228,7 +273,7 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
     const takAda = b.personelTakAda.map((n) => E(n));
     const tanpaLeg = r.kodeTanpaLegenda.map((t) => `${E(t.unit)} · kode ${E(t.kode)} (${t.n} sel)`);
     const isi = item('Personel kelompok yang diabaikan (A D M / ADM PAS ID) tetapi berkode DINAS', abai)
-      + item('Kode di Excel yang belum punya kategori di aplikasi', katBaru)
+      + item('Kode di Excel yang belum punya nama kategori (setelah disimpan, beri nama lewat tombol Nama Kategori)', katBaru)
       + item('Jam di Excel berbeda dari kategori.js', jamBeda)
       + item('Personel di Excel yang belum ada di personel.js', baru)
       + item('Nama di personel.js yang tidak ada di jadwal ini', takAda)
@@ -299,6 +344,10 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
     tutupUpload();
     render();
     toast('Jadwal dinas tersimpan.');
+    try {   // kode baru yang belum punya nama: minta pengguna memberi nama sekarang
+      const S = window.AVS && AVS.JadwalSumber;
+      if (S && S.bandingkan(S.ringkasBulan(kunci)).kategoriBaru.length) { bukaNamaKategori(); toast('Ada kode baru yang belum punya nama. Isi namanya di jendela ini.', 'ok', 6500); }
+    } catch (e) { console.error(e); }
   }
 
   function hapusBulanIni() {
@@ -310,7 +359,7 @@ ${data.dilewati && data.dilewati.length ? `<div style="font-size:10.5px;color:#8
     toast('Jadwal dinas bulan ini dihapus.');
   }
 
-  window.JD = { pilihUnit, renderTabelUnit, bukaUpload, tutupUpload, prosesBerkas, simpanHasil, hapusBulanIni };
+  window.JD = { bukaNamaKategori, tutupNamaKategori, simpanNamaKategori, pilihUnit, renderTabelUnit, bukaUpload, tutupUpload, prosesBerkas, simpanHasil, hapusBulanIni };
 
   AVS.pasangKunci();
   AVS.nav('jadwal');

@@ -9,6 +9,9 @@
 // Tidak dimasukkan: kelompok A D M (ORGANIK) dan ADM PAS ID (IASS). Kelompok LALIN dimasukkan (= RDO).
 // Ejaan nama: bila jadwal Excel menulis nama singkat, pakai ejaan di sebelah kanan (kunci HURUF BESAR).
 const ALIAS_NAMA = { "HIKMAH N": "HIKMAH NURZAMAN" };
+// Personel kelompok yang diabaikan (A D M / ADM PAS ID) yang SUDAH diputuskan tetap diabaikan:
+// tidak lagi dimunculkan sebagai peringatan "berkode dinas" saat jadwal diunggah.
+const DIABAIKAN_TETAP = ["BARIR BAIHAQI"];
 const DAFTAR_PERSONEL = [
   "A KHOLID",
   "ABDUL HAMID",

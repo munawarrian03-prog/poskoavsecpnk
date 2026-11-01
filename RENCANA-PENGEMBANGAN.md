@@ -75,7 +75,7 @@ Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
    langkah 3). Uji (Excel November): 12 kategori terbaca, 95 dihitung + 7 diabaikan, BARIR BAIHAQI (P 20 hari)
    dimunculkan, tidak ada selisih terhadap kategori.js/personel.js; skenario sintetis (kode baru PX, jam PP
    berubah, personel baru, kode tanpa legenda) terdeteksi semua; tanpa galat konsol di semua halaman.
-3. **Tabel nama tampilan** (alias): kode + sheet + jam dibaca dari Excel (abu-abu, tak perlu diubah),
+3. **[SELESAI 1 Nov 2026] Tabel nama tampilan** (alias): kode + sheet + jam dibaca dari Excel (abu-abu, tak perlu diubah),
    hanya "Nama di laporan" yang diatur pengguna. Jam berubah -> nama tetap, jam ikut Excel. Kode baru ->
    baris kuning "belum punya nama" (sementara tampil "SHEET · KODE · JAM"). Kode hilang -> tidak ada
    yang rusak. Kode yang SEBELUMNYA sengaja tak dipakai (mis. ORGANIK PS, OH) dan personel dari kelompok yang
@@ -83,6 +83,20 @@ Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
    nama, (b) tombol "Nama Kategori" di Jadwal Dinas, (c) tautan dari pratinjau isi otomatis.
    Mockup: https://claude.ai/artifact/9ozpjbojD2j1qEbj4fwqqn
    USULAN (belum dikonfirmasi): diisi awal dari kategori yang ada sekarang; letaknya di Jadwal Dinas.
+   HASIL: `jadwal-sumber.js` kini punya `namaTampil`/`punyaNama`/`simpanAlias`/`kategoriForm`. Alias disimpan di
+   localStorage['savedKategoriAlias'] ({"SHEET|KODE": "Nama"}), berlaku lintas bulan; tanpa isian pengguna dipakai
+   nama kategori.js (PADANAN_AWAL), tanpa itu "SHEET · KODE". Jadwal Dinas: tombol "Nama Kategori" (jendela:
+   kolom abu-abu dari Excel, hanya "Nama di laporan" yang diisi; baris kuning = belum punya nama; mengosongkan =
+   kembali ke nama bawaan); jendela terbuka otomatis setelah Simpan Jadwal bila ada kode tanpa nama. Laporan
+   Personel: daftar kategori Kekuatan (`KAT_BAWAAN`) kini dari `kategoriForm` (jam dari Excel, id kategori.js
+   dipertahankan agar "kategori terakhir dipakai" tetap cocok; nama yang dipakai beberapa jam, mis. ORGANIK = kode P
+   dan M, jamnya dikosongkan); cadangan ke kategori.js bila jadwal bulan itu belum diunggah. Dihitung saat form dimuat
+   / laporan baru. `DIABAIKAN_TETAP` di personel.js (BARIR BAIHAQI): tidak lagi memunculkan peringatan.
+   Uji (Excel November): daftar kategori form IDENTIK dengan kategori.js (11 kategori); jam PP diubah di jadwal ->
+   form ikut 05:30-17:30; kode baru PX -> muncul "IASS · PX" lalu bernama setelah diisi; bulan tanpa jadwal ->
+   cadangan; semua halaman tanpa galat konsol. Keterbatasan: alias belum ikut Cadangkan/Pulihkan (Rekap) dan
+   tidak disinkronkan lintas perangkat; kategori form tidak berganti bila tanggal laporan diubah ke bulan lain
+   setelah form terbuka.
 4. **Tampilan Harian di Jadwal Dinas** (entri "Jadwal Dinas: tampilan Harian" di bawah). Hanya membaca
    data; tab Tabel Bulanan tetap. Mockup: https://claude.ai/artifact/N5WDR7WjCLSfQ8VxGo3LRg
 5. **Isi dari Jadwal Dinas di Laporan Personel** (entri "Laporan Personel: isi otomatis" di bawah).
