@@ -12,6 +12,19 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## Penempatan ringkas, label "Fokus", dan laci "Pratinjau WA" dihapus
+**Status: Selesai** (1 Nov 2026) — `laporan-personel.html/.css`, `fasilitas.html`, `logbook.html`, `kejadian.html`, `layout.css`, `shell.js`
+- Laporan Personel (mode jadwal): panel Penempatan menampilkan nama yang berasal dari daftar kategori secara RINGKAS
+  (nomor, nama, jabatan, jam dinas, tombol lepas ✕), tanpa kolom isian/dropdown; pos kosong "Nihil"; tautan kecil
+  "+ tambah manual" tetap ada (untuk penggantian/penambahan di tengah shift); nama manual memakai baris isian lengkap.
+- Semua halaman: tombol "Mode fokus" menjadi "Fokus" (tombol keluar: "Keluar Fokus").
+- Laci "Pratinjau WA" (gagang + panel) disembunyikan di Laporan Personel, Fasilitas, Logbook, Kejadian (CSS, elemennya
+  tetap ada agar kode salin/kirim WA di daftar tersimpan tidak rusak). Konsekuensi: salin/kirim WA untuk DRAFT tidak
+  lagi tersedia; tetap tersedia dari jendela laporan tersimpan. "Catatan pemeriksaan" Laporan Personel (dulu di laci)
+  kini jendela kecil yang dibuka dengan mengklik status SESUAI/BELUM SESUAI di bilah bawah. Kejadian: pilihan "Jenis
+  laporan WA" (awal/lanjutan/akhir) dipindah dari laci ke bilah aksi bawah.
+
+
 ## Pengurutan otomatis daftar personel (Laporan Personel)
 **Status: Selesai** (1 Nov 2026) — `laporan-personel.html`, `jadwal-sumber.js`
 Permintaan: urut otomatis menurut jabatan; petugas grup on duty lebih dulu, lalu personel grup lain menurut jam awal masuk

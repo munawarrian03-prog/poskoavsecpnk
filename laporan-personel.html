@@ -105,7 +105,7 @@
 <!-- BILAH STATUS (tetap di bawah) -->
 <div class="stat" id="statBar">
 <span class="tt" id="totalDisplay">TOTAL HADIR: 0 PERSONEL</span>
-<span id="compStatus" class="compStatus-balance" onclick="togglePratinjau(true)" title="Klik untuk melihat catatan pemeriksaan">✓ SESUAI (BALANCE)</span>
+<span id="compStatus" class="compStatus-balance" onclick="bukaCatatan()" title="Klik untuk melihat catatan pemeriksaan">✓ SESUAI (BALANCE)</span>
 <span class="tt" id="totalPenempatanDisplay">TOTAL PENEMPATAN: 0 PERSONEL</span>
 <span class="sp"></span>
 <button type="button" class="sbtn ghost" onclick="bukaLihatDraft()">Pratinjau Web</button>
@@ -148,6 +148,15 @@
 <button type="button" class="btn-info" onclick="copyModalReport()">Salin Teks</button>
 <button type="button" class="btn-danger" onclick="closeViewModal()">Tutup</button>
 </div>
+</div>
+</div>
+
+<!-- MODAL: CATATAN PEMERIKSAAN -->
+<div class="modal-overlay" id="modalCatatan">
+<div class="modal-container" style="max-width:560px">
+<div class="modal-header"><div class="modal-title">CATATAN PEMERIKSAAN</div><button class="modal-close" onclick="tutupCatatan()">✕</button></div>
+<div class="modal-body"><div id="modalCatatanIsi" style="max-height:60vh;overflow:auto"></div></div>
+<div class="modal-footer"><button type="button" class="btn-danger" onclick="tutupCatatan()">Tutup</button></div>
 </div>
 </div>
 
@@ -695,9 +704,17 @@ function opsiKategoriPos(kategoriIdTerpilih) {
 function renderPenempatan() {
   const container = $('penempatanContainer');
   const st = container.scrollTop;
+  // Mode jadwal: nama yang berasal dari daftar kategori tampil RINGKAS (nama, jabatan, jam dinas, tombol lepas) tanpa
+  // kolom isian/dropdown. Nama yang diketik manual tetap memakai baris isian lengkap.
+  const modeJadwal = kategoriKekuatan.some((k) => Array.isArray(k.daftar));
+  const namaJadwal = new Set(); kategoriKekuatan.forEach((k) => (k.daftar || []).forEach((x) => namaJadwal.add(normNama(x.nama))));
   container.innerHTML = posPenempatan.map((pos, posIdx) => {
     let rows = '';
     pos.personel.forEach((p, pIdx) => {
+      if (modeJadwal && namaJadwal.has(normNama(p.nama))) {
+        rows += `<div class="pos-ringkas"><span class="no">${pIdx + 1}</span><span class="nm2">${esc(p.nama)}${p.peran ? ` <small>${esc(p.peran)}</small>` : ''}</span><span class="jm2">${esc(p.jam)}</span><button type="button" class="btn-remove" title="Lepas dari pos (kembali ke daftar kategori)" onclick="removePersonelPos(${posIdx},${pIdx})">✕</button></div>`;
+        return;
+      }
       const opts = opsiPeran.map((pr) => `<option value="${esc(pr)}" ${p.peran === pr ? 'selected' : ''}>${pr ? esc(pr) : 'Biasa'}</option>`).join('');
       // Selektor Penggantian/Penambahan HANYA utk entri ke-2 dst di satu pos -- entri
       // pertama tidak menggantikan/menambahi siapa pun, jadi tidak relevan. Lihat
@@ -723,7 +740,8 @@ ${jenisHtml}
 <div class="kat-card">
 <div class="kat-title"><span>${esc(pos.name)}</span><b>${pos.personel.length}</b></div>
 ${rows}
-<button type="button" class="btn-add" onclick="addPersonelPos(${posIdx})">+ Tambah personel</button>
+${modeJadwal && !pos.personel.length ? '<div class="pos-nihil">Nihil</div>' : ''}
+<button type="button" class="btn-add${modeJadwal ? ' kecil' : ''}" onclick="addPersonelPos(${posIdx})">${modeJadwal ? '+ tambah manual' : '+ Tambah personel'}</button>
 </div>`;
   }).join('');
   container.scrollTop = st;
@@ -872,6 +890,14 @@ function bukaRiwayatDari(r) {
 }
 function tutupRiwayat() { $('drawerRw').classList.remove('open'); }
 document.addEventListener('click', (e) => { const p = $('rwPop'); if (p && p.classList.contains('open') && !p.contains(e.target)) p.classList.remove('open'); });
+function bukaCatatan() {
+  const info = hitung();
+  $('modalCatatanIsi').innerHTML = info.issues.length
+    ? `<div style="background:#FBE9E7;color:#A82F24;border-radius:8px;padding:10px 14px;font-size:12.5px;font-weight:600"><ul style="margin:0;padding-left:18px">${info.issues.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`
+    : '<div style="background:#E6F5EC;color:#1F6B3E;border-radius:8px;padding:10px 14px;font-size:12.5px;font-weight:700">✓ Tidak ada catatan. Total hadir sama dengan total penempatan.</div>';
+  $('modalCatatan').style.display = 'flex';
+}
+function tutupCatatan() { $('modalCatatan').style.display = 'none'; }
 function togglePratinjau(force) {
   const d = $('drawer'), buka = force === undefined ? !d.classList.contains('open') : !!force;
   d.classList.toggle('open', buka);

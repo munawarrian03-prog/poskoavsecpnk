@@ -54,7 +54,7 @@
 </div>
 </div>
 <span class="tsp"></span>
-<button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Sembunyikan bilah atas agar area isian lebih luas">⛶ Mode fokus</button>
+<button type="button" class="tbtn" onclick="AVS.toggleFokus()" title="Fokus: sembunyikan bilah atas agar area isian lebih luas">⛶ Fokus</button>
 <button type="button" class="tbtn" onclick="jenisAktif === 'BAST' ? bastNewReport() : newReport()" title="Kosongkan isian dan mulai laporan baru">+ Laporan Baru</button>
 </div>
 </div>
@@ -196,6 +196,12 @@
 <div class="stat" id="statBar">
 <span class="hint" id="actionHint"></span>
 <span class="sp"></span>
+<span class="wa-jenis" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--text-muted)"><label for="waStatus">Jenis laporan WA</label><select id="waStatus" data-f="waStatus" onchange="fieldChanged(this)">
+<option value="awal">Laporan awal</option>
+<option value="lanjutan">Laporan lanjutan</option>
+<option value="akhir">Laporan akhir</option>
+</select></span>
+
 <span id="statLK">
 <button type="button" class="sbtn ghost" onclick="togglePratinjauWebLaci()">Pratinjau Web</button>
 <button type="button" class="sbtn red" onclick="simpan()">Simpan Laporan</button>
@@ -210,14 +216,6 @@
 <button type="button" class="hdl" id="hdlWA" onclick="togglePratinjauWA(true)">PRATINJAU WA ‹</button>
 <aside class="drawer" id="drawerWA">
 <div class="dh"><span>PRATINJAU LAPORAN WHATSAPP</span><button type="button" onclick="togglePratinjauWA(false)" title="Tutup">✕</button></div>
-<div class="wa-opt">
-<label for="waStatus">Jenis laporan</label>
-<select id="waStatus" data-f="waStatus" onchange="fieldChanged(this)">
-<option value="awal">Laporan awal</option>
-<option value="lanjutan">Laporan lanjutan</option>
-<option value="akhir">Laporan akhir</option>
-</select>
-</div>
 <div class="wa-info" id="waInfo"></div>
 <div class="output-area" id="outputWA">Mengolah laporan...</div>
 <div class="dfoot">

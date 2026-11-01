@@ -191,7 +191,7 @@ ${btnGantiPin}<button type="button" class="prof-keluar" onclick="AVS_KELUAR()">$
     document.body.classList.toggle('focus', on);
     let x = document.getElementById('fokusExit');
     if (on && !x) {
-      x = document.createElement('button'); x.id = 'fokusExit'; x.type = 'button'; x.textContent = 'Keluar mode fokus ✕';
+      x = document.createElement('button'); x.id = 'fokusExit'; x.type = 'button'; x.textContent = 'Keluar Fokus ✕';
       x.onclick = () => AVS.toggleFokus(false); document.body.appendChild(x);
     }
     if (x) x.style.display = on ? 'block' : 'none';
