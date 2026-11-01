@@ -273,7 +273,8 @@
     const urut = list.slice().sort((a, b) => { const p = kunciUrut(a), q = kunciUrut(b); for (let i = 0; i < 3; i++) if (p[i] !== q[i]) return p[i] - q[i]; return String(p[3]).localeCompare(String(q[3]), 'id'); });
     urut.forEach((x) => {
       const id = idKategoriDari(x.kunci);
-      const orang = { nama: x.n, peran: peranDari(x.j), jabatan: x.j, kategoriId: id, jam: `${x.m}–${x.e}`, tag: tagDari(x), kunci: x.kunci, early: !!x.early };
+      const ku = kunciUrut(x);
+      const orang = { nama: x.n, peran: peranDari(x.j), jabatan: x.j, kategoriId: id, jam: `${x.m}–${x.e}`, tag: tagDari(x), kunci: x.kunci, early: !!x.early, u: [ku[0], ku[1], ku[2]] };
       (daftar[id] ||= []).push(orang); (dasar[id] ||= new Set()).add(x.kunci);
       if (!ns.punyaNama(x.kunci)) tanpa.add(x.kunci);
       hasil.personel.push(orang);

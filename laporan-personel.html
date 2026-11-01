@@ -287,7 +287,7 @@ function normKategori(k) {
   };
   // `daftar` (opsional) = nama personel kategori ini dari Jadwal Dinas; bila ada, Jumlah = banyaknya nama.
   if (Array.isArray(k.daftar)) {
-    hasil.daftar = k.daftar.map((x) => ({ nama: rapikan(x.nama), peran: x.peran || '', jam: x.jam || '', tag: x.tag || '' }));
+    hasil.daftar = k.daftar.map((x) => { const o = { nama: rapikan(x.nama), peran: x.peran || '', jam: x.jam || '', tag: x.tag || '' }; if (Array.isArray(x.u)) o.u = x.u.slice(0, 3); return o; });
     hasil.jml = hasil.daftar.length;
   }
   return hasil;
@@ -1147,7 +1147,7 @@ function terapkanJadwal() {
   const [jm, js] = JAM_SHIFT[sh];
   const lama = {}; kategoriKekuatan.forEach((k) => { lama[k.id] = k; });
   const baru = r.kategori.filter((k) => k.jml > 0).map((k) => {
-    const daftar = k.daftar.map((x) => ({ nama: x.nama, peran: x.peran, jam: x.jam, tag: x.tag }));
+    const daftar = k.daftar.map((x) => ({ nama: x.nama, peran: x.peran, jam: x.jam, tag: x.tag, u: x.u }));
     const namaAda = new Set(daftar.map((x) => normNama(x.nama)));
     const absen = ((lama[k.id] && lama[k.id].absen) || []).filter((a) => namaAda.has(normNama(a.nama)));
     // kategori tanpa jam tetap (mis. ORGANIK) memakai rentang shift laporan
@@ -1168,17 +1168,39 @@ let absenPicker = null;   // id kategori yang sedang menampilkan pilihan "Tidak 
 const namaDitempatkan = () => { const s = new Set(); posPenempatan.forEach((p) => p.personel.forEach((x) => { if (adaNama(x)) s.add(normNama(x.nama)); })); return s; };
 function daftarBelumDitempatkan(k) {
   const ditempat = namaDitempatkan(), absen = new Set((k.absen || []).filter(adaNama).map((a) => normNama(a.nama)));
-  return (k.daftar || []).map((x, idx) => ({ x, idx })).filter(({ x }) => !ditempat.has(normNama(x.nama)) && !absen.has(normNama(x.nama)));
+  const peta = petaUrut();
+  return (k.daftar || []).map((x, idx) => ({ x, idx })).filter(({ x }) => !ditempat.has(normNama(x.nama)) && !absen.has(normNama(x.nama)))
+    .sort((a, b) => bandingPersonel(a.x, b.x, peta));
 }
 const peranRank = (pr) => (pr === '(Chief)' ? 1 : pr === '(Assistant chief)' ? 2 : pr === '(Supervisor)' ? 3 : 4);
-// Sisipkan menurut jabatan (Chief, Assistant chief, Supervisor, lain-lain). Bila pos sudah memuat entri
-// "penggantian" urutannya bermakna (pengganti = setelah yang digantikan), jadi ditambahkan di akhir.
-function sisipkanPersonel(pos, entri) {
+// Urutan otomatis (acuan referensi v95): (1) petugas grup yang sedang on duty lebih dulu, menurut jabatan lalu nama;
+// (2) personel grup lain menurut jam awal masuk pada shift itu (yang masuk esok hari paling akhir), lalu jabatan, nama.
+// Kunci urut [anggota-grup-on-duty(0/1), jam-awal(menit), jabatan] dibawa di `daftar` (field `u`); bagi nama yang tidak
+// ada di daftar (diketik manual) dipakai: bukan grup on duty, jam awal dari teks jam, jabatan dari peran.
+function petaUrut() {
+  const m = {};
+  kategoriKekuatan.forEach((k) => (k.daftar || []).forEach((x) => { if (Array.isArray(x.u)) m[normNama(x.nama)] = x.u; }));
+  return m;
+}
+function kunciUrutPersonel(e, peta) {
+  const u = peta[normNama(e.nama)];
+  if (u) return u;
+  const t = String(e.jam || '').match(/(\d{1,2}):(\d{2})/);
+  return [1, t ? (+t[1]) * 60 + (+t[2]) : 9999, peranRank(e.peran)];
+}
+function bandingPersonel(a, b, peta) {
+  const x = kunciUrutPersonel(a, peta), y = kunciUrutPersonel(b, peta);
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i];
+  return String(a.nama).localeCompare(String(b.nama), 'id');
+}
+// Urutkan isi satu pos. Bila pos memuat entri "penggantian", urutan bermakna (pengganti = setelah yang digantikan),
+// jadi tidak diurutkan ulang. Entri pertama jenis '' (tak menggantikan siapa pun), sisanya default 'penambahan'.
+function urutkanPos(pos) {
   const list = pos.personel;
-  if (list.some((x) => x.jenis === 'penggantian')) list.push(entri);
-  else { const i = list.findIndex((x) => peranRank(x.peran) > peranRank(entri.peran)); if (i < 0) list.push(entri); else list.splice(i, 0, entri); }
+  if (!list.some((x) => x.jenis === 'penggantian')) { const peta = petaUrut(); list.sort((a, b) => bandingPersonel(a, b, peta)); }
   list.forEach((x, i) => { if (i === 0) x.jenis = ''; else if (!x.jenis) x.jenis = 'penambahan'; });
 }
+function sisipkanPersonel(pos, entri) { pos.personel.push(entri); urutkanPos(pos); }
 function tempatkanDariKategori(cid, idx, posIdx) {
   if (posIdx === '') return;
   const k = cari(cid), x = k && k.daftar && k.daftar[idx], pos = posPenempatan[+posIdx];

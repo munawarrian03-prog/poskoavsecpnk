@@ -12,6 +12,19 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## Pengurutan otomatis daftar personel (Laporan Personel)
+**Status: Selesai** (1 Nov 2026) — `laporan-personel.html`, `jadwal-sumber.js`
+Permintaan: urut otomatis menurut jabatan; petugas grup on duty lebih dulu, lalu personel grup lain menurut jam awal masuk
+pada shift itu. Aturan (acuan v95): (1) anggota grup on duty dulu, menurut jabatan (Chief, Assistant chief, Supervisor,
+ORGANIK lain, IASS, New IASS) lalu nama; (2) personel grup lain menurut jam awal masuk (yang masuk esok hari = paling
+akhir), lalu jabatan, nama. Kunci urut [on-duty 0/1, jam-awal menit, jabatan] dibawa di `daftar[].u`. Berlaku di daftar
+nama tiap kategori dan di isi tiap pos (diurutkan ulang setiap ada penempatan baru). Pos yang memuat entri "penggantian"
+tidak diurutkan ulang (urutan bermakna). Nama diketik manual: dianggap bukan grup on duty, jam dari teks jam.
+Uji (Excel November, 2 Nov): pagi dan malam, 31 dan 29 nama ditempatkan ke satu pos dari urutan terbalik, hasil berurut
+benar (grup on duty: Chief, Assistant chief, Supervisor, lain; lalu 05:00, 06:00, 07:00, 08:00, 09:00; malam: yang pulang
+09:00 lalu RDO 20:00 lalu yang masuk esok 05:00-07:00).
+
+
 ## Langkah 6 (tambahan rangkaian): Laporan Personel menampilkan daftar nama per kategori dengan pilihan pos
 **Status: Selesai** (1 Nov 2026) — `laporan-personel.html`, `laporan-personel.css`, `jadwal-sumber.js`
 Mockup: https://claude.ai/artifact/XWqmJNnFwxk4DJ3btcYP8p
