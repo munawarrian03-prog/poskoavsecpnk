@@ -29,7 +29,7 @@ Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
    Uji: legenda IASS terisi untuk Excel November; hasil regu bertugas (Beranda/Rekap) tidak berubah.
 2. **Baca kategori & roster dari Excel bulan terpilih**: kategori = (nama sheet, kode, jam legenda);
    nama + jabatan dari roster. Kategori dibedakan per NAMA SHEET (mis. NEW IASS PP vs IASS PP, sama-sama
-   05:00-17:00). Satu fungsi bersama dipakai bbersama oleh langkah 3-5 (bukan salinan). Cadangan ke
+   05:00-17:00). Satu fungsi bersama dipakai bersama oleh langkah 3-5 (bukan salinan). Cadangan ke
    `kategori.js`/`personel.js` bila Excel bulan itu tidak ada.
 3. **Tabel nama tampilan** (alias): kode + sheet + jam dibaca dari Excel (abu-abu, tak perlu diubah),
    hanya "Nama di laporan" yang diatur pengguna. Jam berubah -> nama tetap, jam ikut Excel. Kode baru ->
