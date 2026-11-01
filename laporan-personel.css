@@ -57,10 +57,17 @@
 .jejak { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .jejak .upd { background: #FFF3DC; color: #8A5A0C; border: 1px solid #F0D9A8; border-radius: 10px; padding: 1px 8px; font-weight: 800; font-size: 10px; }
 
-/* Isi dari Jadwal Dinas: daftar personel yang belum ditempatkan */
-#poolPenempatan { margin: 8px 12px 0; border: 1px dashed #E0C080; background: #FFFBF0; border-radius: 9px; max-height: 190px; overflow-y: auto; }
-#poolPenempatan .pool-h { display: flex; justify-content: space-between; padding: 6px 10px; font-size: 11px; color: #8A5A0C; position: sticky; top: 0; background: #FFFBF0; }
-#poolPenempatan .pool-r { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 4px 10px; border-top: 1px solid #F3E6C4; }
-#poolPenempatan .pool-n b { font-size: 12px; color: var(--ink); }
-#poolPenempatan .pool-n small { display: inline-block; margin-left: 6px; color: #8A94A6; font-size: 10.5px; font-weight: 600; }
-#poolPenempatan select { height: 26px; border: 1px solid #D7DEE8; border-radius: 6px; font-size: 11px; max-width: 160px; background: #fff; }
+/* Mode jadwal: daftar nama per kategori + pilihan pos */
+.kt-row input.bd.j { background: #fff; border: 1px solid #D7DEE8; color: var(--ink); }
+.kt-tag { display: inline-block; background: #FDF0D5; color: #8A5A0C; border-radius: 99px; padding: 0 7px; font-weight: 700; font-size: 9.5px; }
+ul.dft { list-style: none; margin: 6px 0 2px; padding: 0; }
+ul.dft li { display: grid; grid-template-columns: 22px minmax(0, 1fr) 150px; gap: 8px; align-items: center; padding: 2px 0; }
+ul.dft .n { color: #8A94A6; text-align: right; font-size: 12px; }
+ul.dft .who b { font-size: 12px; color: var(--ink); }
+ul.dft .who small { margin-left: 6px; color: #8A94A6; font-size: 10.5px; font-weight: 600; }
+ul.dft .who small.tg { color: #8A5A0C; background: #FDF0D5; border-radius: 99px; padding: 0 7px; font-weight: 700; }
+ul.dft select { height: 28px; border: 1px solid #D7DEE8; border-radius: 7px; font-size: 11.5px; width: 100%; background: #fff; }
+.abs-pick { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 6px 0 2px 24px; padding: 8px; background: #FDF0D5; border-radius: 8px; }
+.abs-pick select { height: 28px; border: 1px solid #D7DEE8; border-radius: 7px; font-size: 11.5px; min-width: 170px; background: #fff; }
+.abs-pick button { height: 28px; border: 0; border-radius: 7px; background: #157A82; color: #fff; font: 800 11px 'Montserrat','Inter'; padding: 0 12px; cursor: pointer; }
+.abs-pick button.b { background: #fff; color: #475569; border: 1px solid #D7DEE8; }

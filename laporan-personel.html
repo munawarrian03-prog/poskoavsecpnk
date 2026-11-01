@@ -84,7 +84,6 @@
 </div>
 <div class="pn acc-teal" style="flex:1">
 <div class="hd"><h3>Penempatan Personel</h3><span class="ct" id="posInfo"></span></div>
-<div id="poolPenempatan" style="display:none"></div>
 <div class="sc" id="penempatanContainer"></div>
 </div>
 </div>
@@ -281,11 +280,17 @@ function normKategori(k) {
     const m = String(k.name).match(/^(.*?)\s*\((\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})\)\s*WIB\s*$/);
     if (m) { nama = m[1]; mulai = m[2]; selesai = m[3]; } else { nama = k.name; }
   }
-  return {
+  const hasil = {
     id: k.id || uid(), nama: nama || '', mulai, selesai,
     jml: Math.max(0, parseInt(k.jml, 10) || 0),
     absen: (k.absen || []).map(normAbsen)
   };
+  // `daftar` (opsional) = nama personel kategori ini dari Jadwal Dinas; bila ada, Jumlah = banyaknya nama.
+  if (Array.isArray(k.daftar)) {
+    hasil.daftar = k.daftar.map((x) => ({ nama: rapikan(x.nama), peran: x.peran || '', jam: x.jam || '', tag: x.tag || '' }));
+    hasil.jml = hasil.daftar.length;
+  }
+  return hasil;
 }
 function normReport(r) {
   return {
@@ -365,19 +370,7 @@ function hitungData(kat, pos, shift) {
   peringatanKategoriWaktu(kat, pos, shift).forEach((t) => issues.push(t));
   return { rows, posRows, totalHadir, totalPenempatan, pergantianCount, issues, balanceIssue, dupAbs: gAbs.set, dupPos: gPos.set };
 }
-const hitung = () => {
-  const h = hitungData(kategoriKekuatan, posPenempatan, $('shift').value);
-  if (typeof poolBelum !== 'undefined' && poolBelum.length) h.issues.push(`${poolBelum.length} personel dari jadwal belum ditempatkan ke pos.`);
-  return h;
-};
-
-// Peringatan yang TIDAK terlihat dari total keseluruhan: Total Hadir & Total Penempatan bisa sama
-// persis tapi berbeda di rentang jam tertentu (krn dihitung dari KATEGORI tiap orang, bukan teks
-// Jam). (1) satu kategori punya lebih banyak orang di Penempatan daripada yang hadir di Kekuatan
-// (entri "Penggantian" tidak dihitung -- itu pengganti slot yang sama); (2) kalau SEMUA orang di
-// Penempatan sudah diberi kategori, bandingkan Total Hadir vs Penempatan di tiap rentang waktu.
-// Orang tanpa kategori dihitung sepanjang shift, jadi (2) tidak dijalankan utk laporan yg belum
-// lengkap kategorinya (lama/sebagian) supaya tidak memberi peringatan palsu.
+const hitung = () => hitungData(kategoriKekuatan, posPenempatan, $('shift').value);
 function peringatanKategoriWaktu(kat, pos, shift) {
   const out = [], byId = {}, hadir = {}, tertanda = {};
   (kat || []).forEach((k) => { byId[k.id] = k; hadir[k.id] = Math.max(0, (Math.max(0, parseInt(k.jml, 10) || 0)) - (k.absen || []).filter(adaNama).length); });
@@ -548,15 +541,33 @@ function kartuKekuatan(k, i) {
 </div>`;
   });
 
+  // Mode jadwal: kategori punya `daftar` nama -> Jumlah = banyaknya nama (tidak diketik), tiap nama punya pilihan pos.
+  const modeJadwal = Array.isArray(k.daftar);
+  const belum = modeJadwal ? daftarBelumDitempatkan(k) : [];
+  const tags = modeJadwal ? [...new Set(k.daftar.map((x) => x.tag).filter(Boolean))] : [];
+  const sub = modeJadwal ? ` · ${belum.length ? belum.length + ' belum ditempatkan' : 'semua sudah ditempatkan/tidak hadir ✓'}` : '';
+  const tagHtml = tags.length ? ` <span class="kt-tag">${tags.map(esc).join(', ')}</span>` : '';
+  const jmlInput = modeJadwal
+    ? `<input type="number" class="bd j" value="${k.jml}" readonly tabindex="-1" aria-label="Jumlah">`
+    : `<input type="number" min="0" step="1" placeholder="0" value="${k.jml === 0 ? '' : k.jml}" oninput="updateJumlah('${k.id}',this.value)" aria-label="Jumlah">`;
+  const tombolAbsen = modeJadwal ? `bukaAbsenPicker('${k.id}')` : `addAbsen('${k.id}')`;
+  const opsiPos = posPenempatan.map((p, pi) => `<option value="${pi}">${esc(p.name)}</option>`).join('');
+  let pilih = '';
+  if (modeJadwal && absenPicker === k.id) {
+    pilih = `<div class="abs-pick"><select id="ap_${k.id}">${belum.map(({ x }) => `<option value="${esc(x.nama)}">${esc(x.nama)}</option>`).join('')}</select><button type="button" onclick="tandaiTidakHadir('${k.id}')">Tandai tidak hadir</button><button type="button" class="b" onclick="bukaAbsenPicker('${k.id}')">Batal</button></div>`;
+  }
+  const daftarHtml = modeJadwal && belum.length
+    ? `<ul class="dft">${belum.map(({ x, idx }, n) => `<li><span class="n">${n + 1}.</span><span class="who"><b>${esc(x.nama)}</b>${x.peran ? `<small>${esc(x.peran)}</small>` : ''}${x.tag ? `<small class="tg">${esc(x.tag)}</small>` : ''}</span><select onchange="tempatkanDariKategori('${k.id}',${idx},this.value)" aria-label="Pos untuk ${esc(x.nama)}"><option value="">— pilih pos —</option>${opsiPos}</select></li>`).join('')}</ul>` : '';
   return `
 <div class="kat-card" data-cid="${k.id}">
 <div class="kt-row">
-<div class="nm"><b>${esc(rapikan(k.nama))}${alat}</b><span class="jm">${jam}</span></div>
-<input type="number" min="0" step="1" placeholder="0" value="${k.jml === 0 ? '' : k.jml}" oninput="updateJumlah('${k.id}',this.value)" aria-label="Jumlah">
+<div class="nm"><b>${esc(rapikan(k.nama))}${alat}</b><span class="jm">${jam}${tagHtml}${sub}</span></div>
+${jmlInput}
 <input type="number" id="kurang_${k.id}" class="bd k ${valid ? '' : 'z'}" value="${valid}" readonly tabindex="-1" aria-label="Kurang">
 <input type="number" id="hadir_${k.id}" class="bd h" value="${hdr}" readonly tabindex="-1" aria-label="Hadir">
-<button type="button" class="add" onclick="addAbsen('${k.id}')">+ Tidak hadir</button>
-</div>${edit}
+<button type="button" class="add" onclick="${tombolAbsen}">+ Tidak hadir</button>
+</div>${edit}${pilih}
+${daftarHtml}
 ${absenHTML ? `<div class="abs-rows">${absenHTML}</div>` : ''}
 </div>`;
 }
@@ -700,7 +711,7 @@ function renderPenempatan() {
       rows += `
 <div class="dynamic-row" data-kind="pos">
 <span class="no">${pIdx + 1}</span>
-<input type="text" class="nm" list="listPersonel" placeholder="Nama personel" value="${esc(p.nama)}" oninput="updateNamaPos(${posIdx},${pIdx},this.value)">
+<input type="text" class="nm" list="listPersonel" placeholder="Nama personel" value="${esc(p.nama)}" oninput="updateNamaPos(${posIdx},${pIdx},this.value)" onchange="renderKekuatan()">
 <select onchange="updatePeranPos(${posIdx},${pIdx},this.value)">${opts}</select>
 <select class="pos-kat" onchange="updateKategoriPos(${posIdx},${pIdx},this.value)">${opsiKategoriPos(p.kategoriId)}</select>
 <input type="text" class="pos-jam" placeholder="Jam" value="${esc(p.jam)}" title="Jam bertugas (opsional) -- terisi otomatis saat pilih Kategori, tetap bisa diedit manual" oninput="updateJamPos(${posIdx},${pIdx},this.value)">
@@ -726,7 +737,7 @@ function addPersonelPos(i) {
   posPenempatan[i].personel.push({ nama: '', peran: '', kategoriId: '', jam: '', jenis });
   markDirty(); renderPenempatan();
 }
-function removePersonelPos(i, p) { posPenempatan[i].personel.splice(p, 1); markDirty(); renderPenempatan(); }
+function removePersonelPos(i, p) { posPenempatan[i].personel.splice(p, 1); markDirty(); renderPenempatan(); renderKekuatan(); }
 function updateNamaPos(i, p, val) { posPenempatan[i].personel[p].nama = val; markDirty(); calculateTotals(); }
 // Pilih Kategori -> isi `jam` otomatis dari mulai/selesai kategori itu (kalau kategori tsb
 // punya jam tetap -- mis. "ORGANIK" tidak punya, jam dibiarkan kosong,
@@ -1022,7 +1033,6 @@ function editReport(id) {
   const posLengkap = posAwal();
   posLengkap.forEach((p) => { const s = r.posPenempatan.find((x) => x.id === p.id); if (s) p.personel = s.personel; });
   posPenempatan = posLengkap;
-  poolBelum = []; renderPool();
   dirty = false; updateBadge();
   renderKekuatan(); renderPenempatan();
   switchPage('form');
@@ -1043,7 +1053,6 @@ function newReport() {
   segarkanKategoriBawaan();
   kategoriKekuatan = kategoriAwal();
   posPenempatan = posAwal();
-  poolBelum = []; renderPool();
   dirty = false; updateBadge();
   renderKekuatan(); renderPenempatan();
   switchPage('form');
@@ -1088,30 +1097,13 @@ async function exportPDF(id) {
 
 
 /* ---------- Isi dari Jadwal Dinas ---------- */
-// Mengisi jumlah per kategori, nama, jabatan, dan jam dinas dari Jadwal Dinas bulan laporan (logika bersama:
-// jadwal-sumber.js). Yang TIDAK diketahui jadwal tetap manual: siapa yang tidak hadir (Kurang/Keterangan).
-// Pos tiap orang diwarisi dari laporan tersimpan sebelumnya (shift sejenis); yang belum pernah ditempatkan
-// masuk daftar "Belum ditempatkan" untuk dipilihkan pos.
-let poolBelum = [];
+// Mengisi kategori (hanya yang on duty pada shift ini), jumlah, dan DAFTAR NAMA tiap kategori dari Jadwal Dinas bulan
+// laporan (logika bersama: jadwal-sumber.js). Dinas malam ikut memuat personel dinas pagi yang pulang lebih dari
+// 20:00 dan personel esok hari yang masuk sebelum 08:00. Pos dipilih per nama di kategori (tanpa pewarisan).
+// Yang TIDAK diketahui jadwal tetap manual: siapa yang tidak hadir.
 let rencanaJadwal = null;
 const REGU_DARI_GRUP = { ALPHA: 'A (Alfa)', BRAVO: 'B (Bravo)', CHARLIE: 'C (Charlie)', DELTA: 'D (Delta)' };
-const urutShift = (sh) => (/malam/i.test(String(sh || '')) ? 1 : 0);
-
-function warisanPos(tanggal, shift, namaList) {
-  const kunciS = shiftKunci(shift), target = tanggal + '|' + urutShift(shift);
-  const lalu = getReports()
-    .filter((r) => shiftKunci(r.shift) === kunciS && (r.tanggal + '|' + urutShift(r.shift)) < target && r.id !== editingReportId)
-    .sort((a, b) => (b.tanggal + '|' + urutShift(b.shift)).localeCompare(a.tanggal + '|' + urutShift(a.shift)));
-  const perlu = new Set(namaList.map(normNama)), hasil = {};
-  for (const r of lalu) {
-    (r.posPenempatan || []).forEach((p) => (p.personel || []).forEach((x) => {
-      const k = normNama(x.nama);
-      if (perlu.has(k) && !(k in hasil) && p.id) hasil[k] = { pos: p.id, dari: r.tanggal };
-    }));
-    if (Object.keys(hasil).length === perlu.size) break;
-  }
-  return hasil;
-}
+const JAM_SHIFT = { pagi: ['08:00', '20:00'], malam: ['20:00', '08:00'] };
 
 function isiDariJadwal() {
   const tanggal = $('tanggal').value, shift = $('shift').value;
@@ -1120,24 +1112,27 @@ function isiDariJadwal() {
   const sh = /malam/i.test(shift) ? 'malam' : 'pagi';
   const r = AVS.JadwalSumber.rencanaLaporan(tanggal.slice(0, 7), tanggal, sh);
   if (!r.ada) { toast('Jadwal Dinas untuk bulan ini belum diunggah (atau berkas belum memuat jam dinas). Unggah di menu Jadwal Dinas.', 'err'); return; }
-  const w = warisanPos(tanggal, shift, r.personel.map((p) => p.nama));
-  const posIds = new Set(posPenempatan.map((p) => p.id));
-  const diwarisi = r.personel.filter((p) => { const x = w[normNama(p.nama)]; return x && posIds.has(x.pos); }).length;
-  rencanaJadwal = { r, w, sh };
+  rencanaJadwal = { r, sh };
   const reguJadwal = r.grup ? REGU_DARI_GRUP[r.grup] : '';
   const peringatan = [];
   if (!r.grup) peringatan.push('Grup bertugas tidak dapat ditentukan dari jadwal (kode P/M ORGANIK tidak ditemukan). Regu tidak diubah.');
   if ($('regu').value && reguJadwal && $('regu').value !== reguJadwal) peringatan.push(`Regu di form (${esc($('regu').value)}) berbeda dari jadwal (${esc(reguJadwal)}). Menerapkan akan mengganti regu.`);
   if (r.tanpaNama.length) peringatan.push(`Kode belum punya nama kategori: ${r.tanpaNama.map((d) => esc(d).replace('|', ' · ')).join(', ')}. Beri nama di Jadwal Dinas, tombol "Nama Kategori".`);
   if (r.ganda.length) peringatan.push(`Nama muncul lebih dari sekali di jadwal shift ini: ${r.ganda.map(esc).join(', ')}.`);
-  const barisKat = r.kategori.filter((k) => k.jml > 0).map((k) => `<tr><td style="padding:5px 8px;border-bottom:1px solid #EEF1F6"><b>${esc(k.nama)}</b></td><td style="padding:5px 8px;border-bottom:1px solid #EEF1F6;color:#6B7A90">${k.mulai ? esc(k.mulai) + '–' + esc(k.selesai) : 'tanpa jam tetap'}</td><td style="padding:5px 8px;border-bottom:1px solid #EEF1F6;text-align:center"><b>${k.jml}</b></td><td style="padding:5px 8px;border-bottom:1px solid #EEF1F6;color:#6B7A90;font-size:11px">${k.dasar.map((d) => esc(d).replace('|', ' · ')).join(', ')}</td></tr>`).join('');
+  const jamShift = JAM_SHIFT[sh];
+  const td = 'padding:5px 8px;border-bottom:1px solid #EEF1F6';
+  const barisKat = r.kategori.filter((k) => k.jml > 0).map((k) => {
+    const tags = [...new Set(k.daftar.map((x) => x.tag).filter(Boolean))];
+    return `<tr><td style="${td}"><b>${esc(k.nama)}</b>${tags.length ? `<div style="font-size:10.5px;color:#8A5A0C;font-weight:700">${tags.map(esc).join(', ')}</div>` : ''}</td><td style="${td};color:#6B7A90">${esc(k.mulai || jamShift[0])}–${esc(k.selesai || jamShift[1])}</td><td style="${td};text-align:center"><b>${k.jml}</b></td><td style="${td};color:#6B7A90;font-size:11px">${k.dasar.map((d) => esc(d).replace('|', ' · ')).join(', ')}</td></tr>`;
+  }).join('');
   const kotak = (bg, fg, t) => `<div style="background:${bg};color:${fg};border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12px;font-weight:600">${t}</div>`;
   $('modalJadwalIsi').innerHTML = `
-<div style="background:#E6F5EC;color:#1F6B3E;border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:700">Jadwal ditemukan: ${esc(formatTanggalIndo(tanggal))}, Dinas ${sh === 'pagi' ? 'Pagi' : 'Malam'}. Grup bertugas <b>${esc(r.grup || '-')}</b>${reguJadwal ? ` (Regu ${esc(reguJadwal)})` : ''}. ${r.personel.length} personel dijadwalkan.</div>
-<div style="font-size:11px;font-weight:800;color:#8A94A6;text-transform:uppercase;margin:12px 0 4px">Kekuatan Personel yang akan diisi</div>
+<div style="background:#E6F5EC;color:#1F6B3E;border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:700">Jadwal ditemukan: ${esc(formatTanggalIndo(tanggal))}, Dinas ${sh === 'pagi' ? 'Pagi' : 'Malam'}. Grup bertugas <b>${esc(r.grup || '-')}</b>${reguJadwal ? ` (Regu ${esc(reguJadwal)})` : ''}. ${r.personel.length} personel dalam ${r.kategori.filter((k) => k.jml > 0).length} kategori.</div>
+<div style="font-size:11px;font-weight:800;color:#8A94A6;text-transform:uppercase;margin:12px 0 4px">Kekuatan Personel yang akan diisi (hanya kategori yang on duty)</div>
 <table style="width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;color:#10243D;border-radius:8px"><tr style="background:#F3F6FA;color:#8A94A6;font-size:10px;text-transform:uppercase"><th style="padding:5px 8px;text-align:left">Kategori</th><th style="padding:5px 8px;text-align:left">Jam</th><th style="padding:5px 8px">Jumlah</th><th style="padding:5px 8px;text-align:left">Dasar dari Excel</th></tr>${barisKat}</table>
-${kotak('#E4F3F4', '#0F5F65', `<b>Penempatan:</b> ${diwarisi} personel ditempatkan seperti laporan sebelumnya, ${r.personel.length - diwarisi} belum ditempatkan (nanti dipilihkan pos satu per satu).`)}
-${kotak('#FCF1DF', '#8A5A0C', '<b>Tetap diisi manual:</b> kolom Kurang dan keterangan tidak hadir (jadwal hanya tahu siapa yang dijadwalkan, bukan yang cuti, sakit, atau izin).')}
+${sh === 'malam' ? kotak('#E4F3F4', '#0F5F65', '<b>Dinas malam</b> memuat juga personel dinas pagi yang pulang lebih dari 20:00 dan personel esok hari yang masuk sebelum 08:00 (ditandai pada kategorinya).') : ''}
+${kotak('#E4F3F4', '#0F5F65', '<b>Penempatan:</b> nama tiap kategori tampil di daftar kategori. Pilih pos di sebelah nama; nama yang sudah dipilihkan pos pindah ke panel Penempatan.')}
+${kotak('#FCF1DF', '#8A5A0C', '<b>Tetap diisi manual:</b> siapa yang tidak hadir, lewat tombol "+ Tidak hadir" (jadwal hanya tahu siapa yang dijadwalkan, bukan yang cuti, sakit, atau izin).')}
 ${peringatan.map((t) => kotak('#FBE9E7', '#A82F24', t)).join('')}`;
   $('modalJadwal').style.display = 'flex';
 }
@@ -1145,39 +1140,61 @@ function tutupJadwal() { $('modalJadwal').style.display = 'none'; }
 
 function terapkanJadwal() {
   if (!rencanaJadwal) return;
-  const { r, w } = rencanaJadwal;
+  const { r, sh } = rencanaJadwal;
   const adaIsi = kategoriKekuatan.some((k) => k.jml > 0) || posPenempatan.some((p) => p.personel.some(adaNama));
-  if (adaIsi && !confirm('Jumlah per kategori dan Penempatan yang sudah diisi akan diganti dengan data dari jadwal. Isian "tidak hadir" tetap dipertahankan. Lanjutkan?')) return;
+  if (adaIsi && !confirm('Kategori, jumlah, dan Penempatan yang sudah diisi akan diganti dengan data dari jadwal. Nama tidak hadir yang masih ada di jadwal tetap dipertahankan. Lanjutkan?')) return;
   if (r.grup && REGU_DARI_GRUP[r.grup]) $('regu').value = REGU_DARI_GRUP[r.grup];
-  // Kekuatan: jumlah kategori yang dikenal jadwal diperbarui; kategori buatan pengguna tidak disentuh.
-  const dikenal = new Set(r.kategori.map((k) => k.id));
-  kategoriKekuatan.forEach((k) => { if (dikenal.has(k.id)) k.jml = r.kategori.find((x) => x.id === k.id).jml; });
-  r.kategori.forEach((k) => { if (k.jml > 0 && !kategoriKekuatan.some((x) => x.id === k.id)) kategoriKekuatan.push(normKategori({ id: k.id, nama: k.nama, mulai: k.mulai, selesai: k.selesai, jml: k.jml })); });
-  // Penempatan: warisi pos dari laporan sebelumnya; sisanya ke daftar "Belum ditempatkan".
-  posPenempatan = posAwal(); poolBelum = [];
-  r.personel.forEach((p) => {
-    const wr = w[normNama(p.nama)], pos = wr ? posPenempatan.find((x) => x.id === wr.pos) : null;
-    const entri = { nama: p.nama, peran: p.peran, kategoriId: p.kategoriId, jam: p.jam, jenis: '' };
-    if (pos) { entri.jenis = pos.personel.length ? 'penambahan' : ''; pos.personel.push(entri); } else poolBelum.push(entri);
+  const [jm, js] = JAM_SHIFT[sh];
+  const lama = {}; kategoriKekuatan.forEach((k) => { lama[k.id] = k; });
+  const baru = r.kategori.filter((k) => k.jml > 0).map((k) => {
+    const daftar = k.daftar.map((x) => ({ nama: x.nama, peran: x.peran, jam: x.jam, tag: x.tag }));
+    const namaAda = new Set(daftar.map((x) => normNama(x.nama)));
+    const absen = ((lama[k.id] && lama[k.id].absen) || []).filter((a) => namaAda.has(normNama(a.nama)));
+    // kategori tanpa jam tetap (mis. ORGANIK) memakai rentang shift laporan
+    return normKategori({ id: k.id, nama: k.nama, mulai: k.mulai || jm, selesai: k.selesai || js, daftar, absen });
   });
-  markDirty(); tutupJadwal(); renderKekuatan(); renderPenempatan(); renderPool(); generateReportText();
-  toast(`Terisi dari jadwal: ${r.personel.length} personel${poolBelum.length ? `, ${poolBelum.length} belum ditempatkan` : ''}.`);
+  // kategori buatan pengguna (tidak dikenal jadwal) tetap dipertahankan di akhir daftar
+  const dikenal = new Set(r.kategori.map((k) => k.id));
+  const buatan = kategoriKekuatan.filter((k) => !dikenal.has(k.id));
+  kategoriKekuatan = baru.concat(buatan);
+  posPenempatan = posAwal();
+  absenPicker = null;
+  markDirty(); tutupJadwal(); renderKekuatan(); renderPenempatan(); generateReportText();
+  toast(`Terisi dari jadwal: ${r.personel.length} personel dalam ${baru.length} kategori. Pilih pos untuk tiap nama.`);
 }
 
-function renderPool() {
-  const el = $('poolPenempatan');
-  if (!poolBelum.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
-  el.style.display = '';
-  el.innerHTML = `<div class="pool-h"><b>Belum ditempatkan</b><span>${poolBelum.length} orang</span></div>` + poolBelum.map((p, i) => `
-<div class="pool-r"><div class="pool-n"><b>${esc(p.nama)}</b>${p.peran ? ` <small>${esc(p.peran)}</small>` : ''}<small>${esc(p.jam)}</small></div>
-<select onchange="tempatkanDariPool(${i}, this.value)" aria-label="Pos untuk ${esc(p.nama)}"><option value="">— pilih pos —</option>${posPenempatan.map((x, pi) => `<option value="${pi}">${esc(x.name)}</option>`).join('')}</select></div>`).join('');
+/* ---------- Mode jadwal: daftar nama per kategori, pilih pos, tandai tidak hadir ---------- */
+let absenPicker = null;   // id kategori yang sedang menampilkan pilihan "Tidak hadir"
+const namaDitempatkan = () => { const s = new Set(); posPenempatan.forEach((p) => p.personel.forEach((x) => { if (adaNama(x)) s.add(normNama(x.nama)); })); return s; };
+function daftarBelumDitempatkan(k) {
+  const ditempat = namaDitempatkan(), absen = new Set((k.absen || []).filter(adaNama).map((a) => normNama(a.nama)));
+  return (k.daftar || []).map((x, idx) => ({ x, idx })).filter(({ x }) => !ditempat.has(normNama(x.nama)) && !absen.has(normNama(x.nama)));
 }
-function tempatkanDariPool(i, posIdx) {
-  if (posIdx === '' || !poolBelum[i]) return;
-  const pos = posPenempatan[+posIdx], e = poolBelum.splice(i, 1)[0];
-  e.jenis = pos.personel.length ? 'penambahan' : '';
-  pos.personel.push(e);
-  markDirty(); renderPenempatan(); renderPool(); generateReportText();
+const peranRank = (pr) => (pr === '(Chief)' ? 1 : pr === '(Assistant chief)' ? 2 : pr === '(Supervisor)' ? 3 : 4);
+// Sisipkan menurut jabatan (Chief, Assistant chief, Supervisor, lain-lain). Bila pos sudah memuat entri
+// "penggantian" urutannya bermakna (pengganti = setelah yang digantikan), jadi ditambahkan di akhir.
+function sisipkanPersonel(pos, entri) {
+  const list = pos.personel;
+  if (list.some((x) => x.jenis === 'penggantian')) list.push(entri);
+  else { const i = list.findIndex((x) => peranRank(x.peran) > peranRank(entri.peran)); if (i < 0) list.push(entri); else list.splice(i, 0, entri); }
+  list.forEach((x, i) => { if (i === 0) x.jenis = ''; else if (!x.jenis) x.jenis = 'penambahan'; });
+}
+function tempatkanDariKategori(cid, idx, posIdx) {
+  if (posIdx === '') return;
+  const k = cari(cid), x = k && k.daftar && k.daftar[idx], pos = posPenempatan[+posIdx];
+  if (!x || !pos) return;
+  sisipkanPersonel(pos, { nama: x.nama, peran: x.peran, kategoriId: k.id, jam: x.jam, jenis: '' });
+  markDirty(); renderKekuatan(); renderPenempatan(); generateReportText();
+}
+function bukaAbsenPicker(cid) {
+  const k = cari(cid); if (!k) return;
+  if (!daftarBelumDitempatkan(k).length) { toast('Semua personel kategori ini sudah ditempatkan atau ditandai tidak hadir. Lepaskan dari pos dulu bila perlu.', 'err'); return; }
+  absenPicker = absenPicker === cid ? null : cid; renderKekuatan();
+}
+function tandaiTidakHadir(cid) {
+  const k = cari(cid), sel = $('ap_' + cid); if (!k || !sel || !sel.value) return;
+  k.absen.push({ nama: sel.value, alasan: opsiAlasan[0], ket: '' });
+  absenPicker = null; markDirty(); renderKekuatan(); generateReportText();
 }
 
 /* ---------- Inisialisasi ---------- */

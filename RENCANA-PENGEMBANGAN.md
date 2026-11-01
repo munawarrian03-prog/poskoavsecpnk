@@ -12,6 +12,29 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## Langkah 6 (tambahan rangkaian): Laporan Personel menampilkan daftar nama per kategori dengan pilihan pos
+**Status: Selesai** (1 Nov 2026) — `laporan-personel.html`, `laporan-personel.css`, `jadwal-sumber.js`
+Mockup: https://claude.ai/artifact/XWqmJNnFwxk4DJ3btcYP8p
+
+Keputusan pengguna: (1) Kekuatan Personel hanya memuat kategori yang on duty pada shift laporan; (2) tiap kategori
+memuat daftar nama dari Jadwal Dinas dengan dropdown 22 pos; (3) nama yang sudah dipilihkan pos DISEMBUNYIKAN dari
+daftar kategori dan tampil di Penempatan (urut jabatan: Chief, Assistant chief, Supervisor, lain-lain); (4) tanpa
+pewarisan pos dari laporan sebelumnya (kode pewarisan dan panel "Belum ditempatkan" dihapus); (5) kategori ORGANIK
+berjam = rentang shift laporan (08:00-20:00 pagi, 20:00-08:00 malam); (6) dinas malam menyertakan personel dinas pagi
+yang pulang LEBIH dari 20:00 (tag "pulang HH:MM") dan personel esok hari yang masuk SEBELUM 08:00 (tag "masuk esok,
+sebelum 08:00", termasuk RDO), dan mereka DIHITUNG dalam Jumlah/Hadir kategorinya.
+Teknis: kategori laporan punya field opsional `daftar` [{nama, peran, jam, tag}]; bila ada, Jumlah = banyaknya nama
+(tidak diketik). "+ Tidak hadir" memilih nama dari daftar -> masuk `absen` (alasan bisa diubah di baris itu; ✕ = batal,
+nama kembali ke daftar). Melepas nama dari pos (✕) mengembalikannya ke daftar. Sisipan menurut jabatan tidak dipakai bila
+pos sudah memuat "penggantian" (urutan bermakna). Laporan lama / kategori manual / bulan tanpa jadwal tetap memakai
+tampilan lama (Jumlah diketik). `daftar` ikut tersimpan di laporan (PDF/WA/Rekap mengabaikannya).
+Uji (Excel November, 2 Nov): pagi = 9 kategori, 31 hadir, dropdown 22 pos; malam = 9 kategori, 29 hadir (27 + 2 NEW PM
+pulang 21:00) dengan tag benar; menempatkan nama menyembunyikannya dan memunculkannya di Penempatan; melepas
+mengembalikan; tidak hadir mengurangi Hadir; semua ditempatkan -> SESUAI (BALANCE); simpan lalu buka lagi OK; halaman
+lain tanpa galat. Keterbatasan: daftar nama tidak diperbarui otomatis bila Jadwal Dinas diunggah ulang setelah laporan
+dibuat (gunakan "Isi dari Jadwal" lagi).
+
+
 ## kategori.js & personel.js disesuaikan dengan Jadwal Dinas November 2026
 **Status: Selesai** (1 Nov 2026) — `kategori.js`, `personel.js` (langkah mandiri, di luar rangkaian berurutan)
 

@@ -261,20 +261,25 @@
     const hari = ns.bangunHari(data, ym), day = hari.find((d) => d.d === tanggalISO);
     if (!day) return hasil;
     hasil.ada = true; hasil.grup = day.g[shift];
-    const g = day.g[shift], list = day[shift].filter((x) => !x.placeOnly);
-    const jml = {}, dasar = {};
-    const tanpa = new Set();
-    list.forEach((x) => {
-      const id = idKategoriDari(x.kunci);
-      jml[id] = (jml[id] || 0) + 1; (dasar[id] ||= new Set()).add(x.kunci);
-      if (!ns.punyaNama(x.kunci)) tanpa.add(x.kunci);
-    });
-    hasil.tanpaNama = [...tanpa];
-    hasil.kategori = form.map((k) => ({ id: k.id, nama: k.nama, mulai: k.mulai, selesai: k.selesai, jml: jml[k.id] || 0, dasar: [...(dasar[k.id] || [])] }));
+    const g = day.g[shift];
+    // Dinas pagi: hanya yang bertugas pagi. Dinas malam: yang bertugas malam, ditambah (aturan pengguna) personel dinas
+    // pagi yang pulang LEBIH dari 20:00 dan personel esok hari yang masuk SEBELUM 08:00 (termasuk RDO) -- semuanya
+    // ikut dihitung dalam Jumlah/Hadir kategorinya dan diberi tag agar jelas asalnya.
+    const list = day[shift].filter((x) => shift === 'malam' || !x.placeOnly);
+    const tagDari = (x) => (x.early ? 'masuk esok, sebelum 08:00' : (x.lateStay ? `pulang ${x.e}` : ''));
+    const daftar = {}, dasar = {}, tanpa = new Set();
     const mnt = (m) => { const [h, mi] = String(m).split(':').map(Number); return h * 60 + mi; };
     const kunciUrut = (x) => { const own = (x.s === 'R' || x.s === 'I') && x.g === g; let t = mnt(x.m); if (shift === 'malam' && x.early) t += 1440; return [own ? 0 : 1, own ? 0 : t, rankJab(x), x.n]; };
-    list.slice().sort((a, b) => { const p = kunciUrut(a), q = kunciUrut(b); for (let i = 0; i < 3; i++) if (p[i] !== q[i]) return p[i] - q[i]; return String(p[3]).localeCompare(String(q[3]), 'id'); })
-      .forEach((x) => hasil.personel.push({ nama: x.n, peran: peranDari(x.j), jabatan: x.j, kategoriId: idKategoriDari(x.kunci), jam: `${x.m}–${x.e}`, kunci: x.kunci, early: !!x.early }));
+    const urut = list.slice().sort((a, b) => { const p = kunciUrut(a), q = kunciUrut(b); for (let i = 0; i < 3; i++) if (p[i] !== q[i]) return p[i] - q[i]; return String(p[3]).localeCompare(String(q[3]), 'id'); });
+    urut.forEach((x) => {
+      const id = idKategoriDari(x.kunci);
+      const orang = { nama: x.n, peran: peranDari(x.j), jabatan: x.j, kategoriId: id, jam: `${x.m}–${x.e}`, tag: tagDari(x), kunci: x.kunci, early: !!x.early };
+      (daftar[id] ||= []).push(orang); (dasar[id] ||= new Set()).add(x.kunci);
+      if (!ns.punyaNama(x.kunci)) tanpa.add(x.kunci);
+      hasil.personel.push(orang);
+    });
+    hasil.tanpaNama = [...tanpa];
+    hasil.kategori = form.map((k) => ({ id: k.id, nama: k.nama, mulai: k.mulai, selesai: k.selesai, jml: (daftar[k.id] || []).length, dasar: [...(dasar[k.id] || [])], daftar: daftar[k.id] || [] }));
     const hitung = {}; hasil.personel.forEach((p) => { hitung[p.nama.toUpperCase()] = (hitung[p.nama.toUpperCase()] || 0) + 1; });
     hasil.ganda = Object.keys(hitung).filter((k) => hitung[k] > 1);
     return hasil;
