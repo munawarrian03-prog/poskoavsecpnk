@@ -74,6 +74,18 @@ Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
 5. **Isi dari Jadwal Dinas di Laporan Personel** (entri "Laporan Personel: isi otomatis" di bawah).
    Mockup sederhana: https://claude.ai/artifact/5z6G4pTJikT68x5zn6hcu6
 
+Referensi diperbarui ke `jadwal-dinas-v95.html` (1 Nov 2026; sebelumnya v93). Selisih v93 -> v95 hanya 49 baris,
+semuanya di area Penempatan pos (tidak menyentuh tampilan Harian, Kekuatan Grup, Cuti):
+- Urutan hasil penempatan tetap, tidak bergantung urutan memilih: (1) anggota grup yang bertugas (ORGANIK lalu IASS)
+  menurut jabatan lalu nama; (2) personel lain menurut jam masuk paling awal (yang masuk esok hari/H+1 paling akhir),
+  lalu jabatan, nama. Berlaku di layar penempatan, data tersimpan, ekspor, dan detail.
+- Aturan RDO: hanya kelompok LALIN yang dihitung RDO (ADM PAS ID tidak lagi); RDO yang masuk esok pagi SEBELUM
+  08:00 ikut ditempatkan di dinas malam (termasuk kode OH), yang masuk 08:00 atau lebih siang tidak. Selaras dengan
+  aturan pengguna: A D M dan ADM PAS ID diabaikan, LALIN = RDO.
+Catatan untuk langkah 5 (isi otomatis Laporan Personel): urutan penempatan di atas dan aturan "masuk sebelum 08:00
+ikut dinas malam sebelumnya; dinas pagi yang selesai lewat 20:00 (mis. PM 09:00-21:00) ikut dinas malam hari yang
+sama" dipakai sebagai acuan; kedua aturan itu juga ada di v93.
+
 Keputusan yang MASIH TERBUKA:
 - Kode tanpa kategori di app: IASS "PS" (06:00-18:00), IASS "OH" (07:30-16:30), IASS "P RDO"/"M RDO"
   (08:00-20:00 / 20:00-08:00; di app IASS RDO PAGI = 07:00-19:00). Usulan: tampil sebagai "perlu dipilih
