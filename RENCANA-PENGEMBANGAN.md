@@ -45,10 +45,18 @@ Laporan tersimpan aman: tiap laporan sudah menyimpan salinan nama kategori, jam,
 `kategori.js`/`personel.js` hanya dipakai sebagai saran isian di form Laporan Personel dan Kejadian.
 
 Urutan (tiap langkah baru dimulai setelah langkah sebelumnya selesai dan diuji):
-1. **Perbaiki importer** (`jadwal-dinas-import.js`): baca legenda SEMUA sheet. Legenda sheet IASS
+1. **[SELESAI 1 Nov 2026] Perbaiki importer** (`jadwal-dinas-import.js`): baca legenda SEMUA sheet. Legenda sheet IASS
    (kode kolom B, jam kolom D, format ": 08:00 S/D 20:00 WIB", penulisan titik/titik dua bercampur,
    kolom tersembunyi) saat ini tersimpan kosong. Acuan: `readLegend` di referensi v93.
    Uji: legenda IASS terisi untuk Excel November; hasil regu bertugas (Beranda/Rekap) tidak berubah.
+   HASIL: `ambilLegenda` kini tidak bergantung nomor kolom (baca sel terisi dari kiri ke kanan; bentuk
+   "KODE | : jam" maupun "KODE : jam"; pemisah jam titik/titik dua; kode berspasi seperti "P RDO"), dan tiap
+   kode kini juga membawa `mulai`/`selesai` ("HH:MM", null untuk LIBUR). Temuan: pada Excel November terbaru
+   SEMUA legenda (ROSTER ORGANIK, IASS, NEW IASS) tersimpan kosong karena kolom legenda bergeser; pada Excel
+   lama hanya IASS yang kosong. Kini terbaca penuh pada kedua berkas. Uji: bagian data lain (unit/grup/orang/
+   jadwal/dilewati) IDENTIK sebelum-sesudah; regu bertugas 30 hari x 2 shift identik (60/60 terpetakan);
+   Beranda/Rekap/Kejadian/Laporan Personel tanpa galat konsol; unggah lewat UI menyimpan legenda berjam.
+   Belum ditangani: kolom tersembunyi di legenda (referensi v93 menanganinya); sheet turunan "ORGANIK".
 2. **Baca kategori & roster dari Excel bulan terpilih**: kategori = (nama sheet, kode, jam legenda);
    nama + jabatan dari roster. Kategori dibedakan per NAMA SHEET (mis. NEW IASS PP vs IASS PP, sama-sama
    05:00-17:00). Satu fungsi bersama dipakai bersama oleh langkah 3-5 (bukan salinan). Cadangan ke

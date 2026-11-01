@@ -91,23 +91,43 @@
     return row.some((v) => bersih(v).toUpperCase().replace(/[^A-Z]/g, '') === 'KETERANGAN');
   }
   // Ambil legenda kode shift dari baris-baris setelah penanda "KETERANGAN".
+  // TIDAK bergantung pada nomor kolom tertentu (letak kolom legenda berbeda antar sheet dan
+  // bisa bergeser antar bulan): tiap baris dibaca dari sel-sel terisi dari kiri ke kanan.
+  //   Bentuk A: sel pertama = kode pendek, sel berikutnya yang berisi jam/LIBUR = deskripsi
+  //             (": 08:00 S/D 20:00 WIB", ": LIBUR", "05.00 WIB - 17.00 WIB").
+  //   Bentuk B: satu sel "KODE : deskripsi".
+  // Hasil tiap kode: {kode, label, mulai, selesai}; mulai/selesai = "HH:MM" bila deskripsi memuat
+  // dua jam, selain itu null (mis. LIBUR). Titik atau titik dua sebagai pemisah jam sama-sama dikenali.
+  function jamDariTeks(t) {
+    if (!t || /LIBUR/i.test(t)) return { mulai: null, selesai: null };
+    const m = [...String(t).matchAll(/(\d{1,2})[.:](\d{2})/g)];
+    if (m.length < 2) return { mulai: null, selesai: null };
+    const f = (x) => `${pad2(+x[1])}:${x[2]}`;
+    return { mulai: f(m[0]), selesai: f(m[1]) };
+  }
+  const mirip_deskripsi = (t) => /\d|LIBUR/i.test(t);
   function ambilLegenda(rows, mulaiBaris) {
     const legenda = [];
     let kosongBerturut = 0;
     for (let r = mulaiBaris; r < rows.length && r < mulaiBaris + 25; r++) {
       const row = rows[r] || [];
+      const sel = [];
+      row.forEach((v) => { const t = bersih(v); if (t) sel.push(t); });
       let ditemukan = false;
-      // Bentuk A: kolom kedua = kode pendek, kolom ketiga diawali ":" = deskripsi (ROSTER ORGANIK, IASS)
-      const c1 = bersih(row[1]), c2 = bersih(row[2]);
-      if (c1 && !c1.includes(':') && c1.length <= 8 && c2.startsWith(':')) {
-        legenda.push({ kode: c1.toUpperCase(), label: c2.replace(/^:\s*/, '').trim() });
-        ditemukan = true;
-      } else if (c1 && c1.includes(':')) {
-        // Bentuk B: satu sel "KODE : deskripsi" (NEW IASS)
-        const idx = c1.indexOf(':');
-        const kode = c1.slice(0, idx).trim();
-        const label = c1.slice(idx + 1).trim();
-        if (kode && kode.length <= 8 && !/keterangan/i.test(kode)) { legenda.push({ kode: kode.toUpperCase(), label }); ditemukan = true; }
+      if (sel.length) {
+        const awal = sel[0];
+        const inline = awal.match(/^([A-Za-z][A-Za-z0-9 ]*?)\s*:\s*(.+)$/);
+        let kode = null, label = null;
+        if (inline && inline[1].length <= 8 && mirip_deskripsi(inline[2]) && !/keterangan/i.test(inline[1])) {
+          kode = inline[1]; label = inline[2];
+        } else if (!awal.includes(':') && /^[A-Za-z][A-Za-z0-9 ]*$/.test(awal) && awal.length <= 8 && !/keterangan/i.test(awal)) {
+          const d = sel.slice(1).find(mirip_deskripsi);
+          if (d) { kode = awal; label = d.replace(/^:\s*/, '').trim(); }
+        }
+        if (kode) {
+          legenda.push(Object.assign({ kode: kode.trim().toUpperCase(), label }, jamDariTeks(label)));
+          ditemukan = true;
+        }
       }
       if (!ditemukan) { kosongBerturut++; if (kosongBerturut >= 3) break; } else kosongBerturut = 0;
     }
