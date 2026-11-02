@@ -12,6 +12,15 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## Keputusan tertunda (dicatat 2 Nov 2026, belum diputuskan pengguna)
+1. **Proteksi sandi situs** (Netlify Pro berbayar atau alternatif gratis: Cloudflare Access / Edge Function sandi). Sampai diputuskan,
+   PIN hanya pelindung tampilan dan token Apps Script di `sync.js` dapat dibaca publik; PIN cadangan di `akses.js` sebaiknya diganti.
+2. **Kapasitas penyimpanan browser** (±5 MB, diperkirakan penuh ±6 bulan): rutin Cadangkan; opsi pengarsipan otomatis / pindah ke IndexedDB.
+3. Usulan masukan lain dari audit belum dikerjakan (simpan draft otomatis, salin laporan sebelumnya di Fasilitas, Rencana Cuti,
+   rentang Rekap awal bulan, pengingat Cadangkan, tombol salin/kirim WA untuk draft, indikator sinkronisasi di Pantau, aturan akses
+   Admin ke halaman Posko, pembersihan kode mati). "Isi dari Jadwal" otomatis (shift dari jam perangkat): DITOLAK, tampilan saat ini dipertahankan.
+
+
 ## Audit menyeluruh (2 Nov 2026): hasil, perbaikan, dan risiko yang tersisa
 **Status: Selesai** — dijalankan sebagai Admin dan Posko di Chromium (Playwright), data uji: cadangan laporan 21 Okt + Excel November.
 Diuji tanpa galat: pembukaan 8 halaman x 2 peran (0 galat konsol/halaman, 0 permintaan gagal); alur Laporan Personel (manual & Isi
