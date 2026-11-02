@@ -567,7 +567,10 @@ ${catatanTak}
     const namaFile = `backup-avsec-semua-laporan-${isoHariIni(HARI_INI)}.json`;
     let keFolder = false;
     try { keFolder = await unduhKeFolderTersimpan(namaFile, blob); }
-    catch (e) { return; } // user membatalkan dialog pilih folder -- jangan diam2 unduh ke Downloads
+    catch (e) {
+      if (e && e.name === 'AbortError') return; // user membatalkan dialog pilih folder -- jangan diam2 unduh ke Downloads
+      toast('Gagal menyimpan ke folder cadangan (' + (e && e.name ? e.name : 'galat') + '). Berkas diunduh ke folder Downloads sebagai gantinya.', 'err');
+    }
     if (!keFolder) {
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = namaFile;
       document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -608,6 +611,9 @@ ${catatanTak}
     reader.onload = async () => {
       try {
         const d = JSON.parse(reader.result);
+        if (!d || typeof d !== 'object' || !['personel', 'fasilitas', 'logbook', 'kejadian'].some((k) => Array.isArray(d[k]))) {
+          $('hasilImpor').innerHTML = '<b style="color:#A82F24">Bukan berkas cadangan AVSEC (tidak memuat Personel, Fasilitas, Log Book, atau Kejadian).</b>'; input.value = ''; return;
+        }
         const hasil = { personel: 0, fasilitas: 0, logbook: 0, kejadian: 0, lewat: 0 };
         hasil.personel = timpaLS('savedReports', d.personel, (r) => r.tanggal && Array.isArray(r.kategoriKekuatan) && Array.isArray(r.posPenempatan), hasil, 'personel');
         hasil.fasilitas = timpaLS('savedFasilitas', d.fasilitas, (r) => r.tanggal && Array.isArray(r.posFasilitas), hasil, 'fasilitas');

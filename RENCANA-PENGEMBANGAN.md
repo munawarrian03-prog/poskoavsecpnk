@@ -12,6 +12,27 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 ---
 
+## Audit menyeluruh (2 Nov 2026): hasil, perbaikan, dan risiko yang tersisa
+**Status: Selesai** — dijalankan sebagai Admin dan Posko di Chromium (Playwright), data uji: cadangan laporan 21 Okt + Excel November.
+Diuji tanpa galat: pembukaan 8 halaman x 2 peran (0 galat konsol/halaman, 0 permintaan gagal); alur Laporan Personel (manual & Isi
+dari Jadwal, simpan, duplikat ditolak, edit, riwayat, Lihat, kategori tambah/geser/hapus, hapus, teks WA); PDF Personel/
+Fasilitas/Logbook/Kejadian/Rekap; Kejadian (simpan IndexedDB, nomor otomatis, daftar, edit, hapus, BAST); Rekap (filter, PDF,
+cadangkan, pulihkan: 43/40/39/2, impor ulang tak menggandakan); Jadwal Dinas (unggah, Harian, Tabel, Nama Kategori); sinkronisasi
+(offline -> antrian -> terkirim); gerbang PIN (peran, PIN salah, selalu ke Beranda, logout/ganti akun, idle 1 jam, Ganti PIN);
+uji XSS (muatan skrip di semua kolom teks laporan + nama di Excel -> 0 tereksekusi).
+Bug ditemukan dan DIPERBAIKI: (1) dinas malam hari terakhir bulan tidak memuat personel yang masuk besok <08:00 (selisih 21 vs 29)
+-> kini membaca jadwal bulan berikutnya bila ada, dan memberi peringatan bila belum diunggah; (2) Rekap > Cadangkan diam saja bila
+pemilih folder gagal (bukan batal) -> kini mengunduh ke Downloads + pesan; (3) Rekap > Pulihkan menampilkan "berhasil" untuk
+berkas asing -> kini ditolak dengan pesan; (4) Fasilitas/Logbook: pesan salah ("simpan Laporan Personel") bila laporan ada
+tetapi pos POSKO belum diisi nama -> pesan akurat; (5) Kejadian: semua galat simpan dilaporkan sebagai "penyimpanan penuh" ->
+pesan sesuai penyebab; (6) sw.js: versi cache dinaikkan v18 dan akses.js ditambahkan ke daftar cache awal; (7) netlify.toml:
+RENCANA-PENGEMBANGAN.md dan PETUNJUK-PASANG.txt tidak lagi dapat dibuka publik.
+RISIKO TERSISA (tidak diubah, perlu keputusan): PIN hanya pelindung tampilan (cek di browser; PIN cadangan POSKO2026/ADMIN2026
+tertulis di akses.js; URL+token Apps Script ada di sync.js yang publik) -> sebaiknya situs diberi proteksi sandi Netlify dan
+token diganti berkala; penyimpanan browser ±5 MB diperkirakan penuh dalam ±6 bulan (laporan ±0,75 MB/bulan + jadwal ±0,1 MB) ->
+rutin Cadangkan, pertimbangkan pindah ke IndexedDB/pengarsipan; kode mati (laci Pratinjau WA, carousel menu) belum dibersihkan.
+
+
 ## Menu topbar di bawah judul KAPUAS + urutan menu baru
 **Status: Selesai** (1 Nov 2026) — `shell.js`, `layout.css`
 Topbar dua baris: baris 1 logo, judul, chip tanggal, profil; baris 2 menu tab teks tepat di bawah judul (rata kiri dengan

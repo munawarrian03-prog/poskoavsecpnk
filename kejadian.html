@@ -1227,7 +1227,7 @@ async function simpan() {
     editingId = laporan.id = rec.id; dirty = false; updateBadge(); updateKirimState(); updateCount();
     toast((lama ? 'Laporan diperbarui (' + AVS.waktu(rec.diperbaruiPada) + ')' : 'Laporan berhasil disimpan') + (rec.fileNumber ? ' dengan nomor ' + rec.fileNumber : '') + '.', 'ok', 5500);
     switchPage('saved');
-  } catch (e) { toast('Gagal menyimpan: penyimpanan browser penuh atau diblokir.', 'err'); }
+  } catch (e) { console.error(e); toast('Gagal menyimpan: ' + ((e && e.name === 'QuotaExceededError') ? 'penyimpanan browser penuh.' : ('penyimpanan browser diblokir atau terjadi galat (' + ((e && e.message) || e) + ').')), 'err'); }
 }
 async function updateCount() {
   try { $('cntSaved').textContent = (await dbAll()).filter((r) => r.id !== KEY_DRAFT).length; } catch (e) { /* tanpa penyimpanan */ }

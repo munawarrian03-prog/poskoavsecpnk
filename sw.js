@@ -1,5 +1,5 @@
 // Naikkan versi ini setiap kali file aplikasi diubah agar browser memperbarui cache
-const CACHE_NAME = 'kekuatan-app-v17';
+const CACHE_NAME = 'kekuatan-app-v18';
 
 // Aset yang disimpan agar aplikasi tetap jalan saat offline
 const ASSETS_TO_CACHE = [
@@ -19,6 +19,7 @@ const ASSETS_TO_CACHE = [
   './kejadian.css',
   './shell.js',
   './data.js',
+  './akses.js',
   './sync.js',
   './beranda.js',
   './rekap.js',

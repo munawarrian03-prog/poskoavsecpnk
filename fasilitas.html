@@ -476,7 +476,8 @@ function saveReport() {
   const tanggal = $('tanggal').value, shift = $('shift').value, regu = $('regu').value;
   if (!tanggal || !shift || !regu) { toast('Harap lengkapi Tanggal, Shift, dan Regu!', 'err'); return; }
   const info = statusPersonel();
-  if (!info.ada || !info.nama) { toast('Simpan Laporan Personel untuk shift ini terlebih dahulu.', 'err'); return; }
+  if (!info.ada) { toast('Simpan Laporan Personel untuk shift ini terlebih dahulu.', 'err'); return; }
+  if (!info.nama) { toast('Laporan Personel sudah ada, tetapi pos POSKO belum diisi nama petugas (pembuat laporan). Lengkapi di Laporan Personel.', 'err'); return; }
   // Validasi keterangan wajib (Rusak / Tidak Digunakan / Dokumen Tidak Lengkap)
   const belumIsi = daftarKetKosong();
   if (belumIsi.length) { keKetKosong(); toast(`Keterangan wajib diisi untuk: ${belumIsi.slice(0, 2).join(', ')}${belumIsi.length > 2 ? ` (+${belumIsi.length - 2} lainnya)` : ''}.`, 'err'); return; }

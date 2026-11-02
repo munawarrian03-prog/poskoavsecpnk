@@ -1144,6 +1144,7 @@ function isiDariJadwal() {
   if (!r.grup) peringatan.push('Grup bertugas tidak dapat ditentukan dari jadwal (kode P/M ORGANIK tidak ditemukan). Regu tidak diubah.');
   if ($('regu').value && reguJadwal && $('regu').value !== reguJadwal) peringatan.push(`Regu di form (${esc($('regu').value)}) berbeda dari jadwal (${esc(reguJadwal)}). Menerapkan akan mengganti regu.`);
   if (r.tanpaNama.length) peringatan.push(`Kode belum punya nama kategori: ${r.tanpaNama.map((d) => esc(d).replace('|', ' · ')).join(', ')}. Beri nama di Jadwal Dinas, tombol "Nama Kategori".`);
+  if (r.tanpaBulanBerikut) peringatan.push('Ini hari terakhir bulan dan jadwal bulan berikutnya belum diunggah, jadi personel yang masuk besok sebelum 08:00 belum ikut terdaftar. Unggah jadwal bulan berikutnya lalu tekan "Isi dari Jadwal" lagi.');
   if (r.ganda.length) peringatan.push(`Nama muncul lebih dari sekali di jadwal shift ini: ${r.ganda.map(esc).join(', ')}.`);
   const jamShift = JAM_SHIFT[sh];
   const td = 'padding:5px 8px;border-bottom:1px solid #EEF1F6';

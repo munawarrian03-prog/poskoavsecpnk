@@ -167,7 +167,7 @@
   // Rencana Cuti belum ada, jadi tak ada yang ditandai cuti.
   const GRUP_TUGAS = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA'];
   const shiftDari = (m) => (parseInt(String(m).slice(0, 2), 10) < 12 ? 'pagi' : 'malam');
-  ns.bangunHari = function (dataBulan, ym) {
+  ns.bangunHari = function (dataBulan, ym, tanpaLanjut) {
     const [Y, M] = ym.split('-').map(Number), n = new Date(Y, M, 0).getDate();
     const pad = (x) => String(x).padStart(2, '0');
     const hari = {};
@@ -191,8 +191,16 @@
       });
     });
     const list = Object.values(hari).sort((a, b) => a.d.localeCompare(b.d));
+    // Hari terakhir bulan: personel yang masuk besok (tanggal 1 bulan berikutnya) sebelum 08:00 juga ikut dinas malam,
+    // jadi tanggal 1 bulan berikutnya dibaca dari jadwal bulan itu bila sudah diunggah.
+    let hariBerikut = null;
+    if (!tanpaLanjut) {
+      const dt = new Date(Y, M, 1), ymB = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}`;
+      const dataB = semuaData()[ymB];
+      if (dataB) { try { hariBerikut = ns.bangunHari(dataB, ymB, true)[0] || null; } catch (e) { hariBerikut = null; } }
+    }
     list.forEach((d, i) => {
-      const nx = list[i + 1];
+      const nx = list[i + 1] || hariBerikut;
       const have = new Set(d.malam.map((e) => e.n.toUpperCase()));
       if (nx) nx.pagi.forEach((e) => {
         if (have.has(e.n.toUpperCase())) return;
@@ -261,6 +269,11 @@
     const hari = ns.bangunHari(data, ym), day = hari.find((d) => d.d === tanggalISO);
     if (!day) return hasil;
     hasil.ada = true; hasil.grup = day.g[shift];
+    // Dinas malam di hari terakhir bulan butuh jadwal bulan berikutnya (yang masuk besok sebelum 08:00); beri tahu bila belum ada.
+    if (shift === 'malam' && hari[hari.length - 1].d === tanggalISO) {
+      const [Y, M] = ym.split('-').map(Number), dt = new Date(Y, M, 1);
+      hasil.tanpaBulanBerikut = !semuaData()[`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`];
+    }
     const g = day.g[shift];
     // Dinas pagi: hanya yang bertugas pagi. Dinas malam: yang bertugas malam, ditambah (aturan pengguna) personel dinas
     // pagi yang pulang LEBIH dari 20:00 dan personel esok hari yang masuk SEBELUM 08:00 (termasuk RDO) -- semuanya
