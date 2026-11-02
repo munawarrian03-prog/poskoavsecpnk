@@ -5,6 +5,13 @@
 // abjad otomatis dan membuang nama ganda.
 // Setelah diubah, upload ulang file ini saja ke hosting.
 // =====================================================
+// Disesuaikan dengan Jadwal Dinas November 2026 (sheet ROSTER ORGANIK, IASS, NEW IASS).
+// Tidak dimasukkan: kelompok A D M (ORGANIK) dan ADM PAS ID (IASS). Kelompok LALIN dimasukkan (= RDO).
+// Ejaan nama: bila jadwal Excel menulis nama singkat, pakai ejaan di sebelah kanan (kunci HURUF BESAR).
+const ALIAS_NAMA = { "HIKMAH N": "HIKMAH NURZAMAN" };
+// Personel kelompok yang diabaikan (A D M / ADM PAS ID) yang SUDAH diputuskan tetap diabaikan:
+// tidak lagi dimunculkan sebagai peringatan "berkode dinas" saat jadwal diunggah.
+const DIABAIKAN_TETAP = ["BARIR BAIHAQI"];
 const DAFTAR_PERSONEL = [
   "A KHOLID",
   "ABDUL HAMID",
@@ -14,13 +21,11 @@ const DAFTAR_PERSONEL = [
   "ANDRI NOVIARDI",
   "ANGGA",
   "ARIANO KHARISMA BARUS",
-  "ARIES DARTA",
   "ARIF DARMAWAN SAPUTRA",
   "ARIF G F",
   "ARIVA RAFAI",
   "ARRISHON BINTANG",
   "ARY ANSARY",
-  "BARIR BAIHAQI",
   "BARRY PRIMA P",
   "BELLA GALIH AGARTA",
   "BORNEOS SIHOMBING",
@@ -47,7 +52,6 @@ const DAFTAR_PERSONEL = [
   "HAVI ANUGRAH",
   "HERI HARDIANTO",
   "HESTI RAMADHANTI",
-  "HESTIN M",
   "HIKMAH NURZAMAN",
   "I WAYAN YUDHA U",
   "IFAN PERMANA SAPUTRA",
@@ -65,11 +69,10 @@ const DAFTAR_PERSONEL = [
   "M ARIEF HABIBI",
   "M GURUH SETYOAJI",
   "M NURCHOLIS ARDI",
+  "M ROZZAQ",
   "M. DIKA",
   "MAKEISYA NABILA P J",
-  "MARTHIN R.D.H",
   "MEI MUSTOFA",
-  "MIHARTI",
   "MUHAMMAD RAHMAD RISKI",
   "MURSYID",
   "NOERY INDAH SAYEKTI",
@@ -78,7 +81,6 @@ const DAFTAR_PERSONEL = [
   "PIPID FIDCKY BAFRI S",
   "PRASETYO H",
   "RADITIYA CANDRA AUGUST LUKITO",
-  "RENGGA INDOCIPTA P",
   "REZA BAHARI",
   "RIAN MUNAWAR",
   "RIDHO SITARA",
@@ -101,7 +103,7 @@ const DAFTAR_PERSONEL = [
   "TOMMY PRASETIYO",
   "TRI DESFIKA PURBA",
   "VELLY",
-  "WAHYU H",
+  "WAHYU HERLAMBANG",
   "WAHYU LESTARI",
   "WENDY ARMAYA",
   "YANUAR SENJAYA",

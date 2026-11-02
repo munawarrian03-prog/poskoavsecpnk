@@ -1,4 +1,4 @@
-/* ===== Laporan Personel: tabel kekuatan ringkas + penempatan 2 kolom ===== */
+/* ===== Laporan Personel: tabel kekuatan ringkas + penempatan 1 kolom bertingkat ===== */
 #pageSaved { flex: 1; min-height: 0; }
 .addwrap { flex: none; padding: 8px 14px; background: #F8FAFC; border-bottom: 1px solid #EEF1F6; }
 .addwrap #addPanel { background: transparent; border: none; padding: 0; }
@@ -19,7 +19,7 @@
 .kt-row input.bd { text-align: center; padding: 0; border: none; border-radius: 7px; font-weight: 800; pointer-events: none; }
 .kt-row input.bd.k { background: #FBE9E7; color: #A82F24; } .kt-row input.bd.k.z { background: #EEF1F6; color: #8A94A6; } .kt-row input.bd.h { background: #E4F3F4; color: #0F5F65; }
 #kekuatanContainer .kat-card.err input.bd.k { background: #F8C9C2; }
-.kt-row button.add { height: 28px; border: 1px dashed #9DB0C7; border-radius: 7px; background: transparent; color: var(--secondary); font: 700 10.5px 'Inter', sans-serif; cursor: pointer; }
+.kt-row button.add { height: 28px; border: 1px dashed #9DB0C7; border-radius: 7px; background: transparent; color: var(--secondary); font: 700 10.5px 'Montserrat', 'Inter', sans-serif; cursor: pointer; }
 .kt-row button.add:hover { background: #E4F3F4; }
 .abs-rows { display: flex; flex-direction: column; gap: 5px; padding: 6px 0 2px; }
 .dynamic-row[data-kind="absen"] { display: grid; grid-template-columns: 1fr 158px 26px; gap: 6px; margin: 0; align-items: center; }
@@ -27,18 +27,69 @@
 .dynamic-row[data-kind="absen"] input, .dynamic-row[data-kind="absen"] select { height: 28px; padding: 0 8px; font-size: 11.5px; }
 #kekuatanContainer .kat-edit { margin: 6px 0 2px; }
 
-/* Penempatan */
-#penempatanContainer { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+/* Penempatan -- satu kolom bertingkat dari atas ke bawah sesuai urutan Pos Penempatan
+   baku (bukan lagi 2 kolom kiri-kanan), supaya pos selalu dibaca dalam urutan yang sama
+   dengan daftar Pos Penempatan (lihat kategori.js: POS_BAWAAN). */
+#penempatanContainer { display: flex; flex-direction: column; gap: 8px; }
 #penempatanContainer .kat-card { padding: 0; margin: 0; background: #FAFBFD; border: 1px solid #E9EDF4; border-radius: 10px; box-shadow: none; }
 #penempatanContainer .kat-title { display: flex; justify-content: space-between; align-items: center; padding: 6px 9px; margin: 0; font-size: 10.5px; border-bottom: 1px solid #EEF1F6; }
 #penempatanContainer .kat-title b { background: #E4F3F4; color: #0F5F65; border-radius: 9px; padding: 0 7px; font-size: 10px; }
-#penempatanContainer .dynamic-row { display: grid; grid-template-columns: 16px 1fr 86px 24px; gap: 5px; margin: 0; padding: 3px 8px; align-items: center; }
+/* No. | Nama | Jabatan | Kategori | Jam | Hapus -- Kategori & Jam kini sebaris dgn
+   Nama/Jabatan (bukan baris tersendiri di bawahnya); Jabatan/Kategori/Jam disamakan
+   lebarnya (118px) supaya rapi & cukup utk jam tanpa patah baris (mis. "08:00–20:00"). */
+#penempatanContainer .dynamic-row { display: grid; grid-template-columns: 16px minmax(0,1fr) 118px 118px 118px 24px; gap: 6px; margin: 0; padding: 3px 8px; align-items: center; }
 #penempatanContainer .dynamic-row .no { font-size: 9.5px; font-weight: 800; color: #8A94A6; }
 #penempatanContainer .dynamic-row input, #penempatanContainer .dynamic-row select { height: 26px; padding: 0 7px; font-size: 11px; }
 #penempatanContainer .btn-remove { width: 24px; height: 24px; padding: 0; font-size: 10px; }
+#penempatanContainer .pos-kat { min-width: 0; height: 26px; padding: 0 6px; font-size: 10px; color: #475569; border: 1px solid #E3E8F0; border-radius: 6px; background: #fff; }
+#penempatanContainer .pos-jam { min-width: 0; height: 26px; padding: 0 7px; font-size: 10.5px; font-weight: 700; color: #5C6675; border: 1px solid #E3E8F0; border-radius: 6px; background: #FAFBFD; white-space: nowrap; }
+#penempatanContainer .pos-jam:not(:placeholder-shown) { color: #157A82; border-color: #BEE3E3; background: #F2FAFA; }
+/* Selektor Penggantian/Penambahan -- baris ke-2 per nama (entri ke-2 dst saja), grid-column
+   2/6 spy sejajar dgn lebar Nama+Jabatan+Kategori+Jam gabungan di atasnya. */
+#penempatanContainer .pos-jenis-wrap { grid-column: 2 / 6; display: flex; gap: 10px; margin-top: 1px; }
+#penempatanContainer .pos-jenis-wrap label { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: #8A94A6; cursor: pointer; }
+#penempatanContainer .pos-jenis-wrap label.aktif { color: #157A82; font-weight: 700; }
+#penempatanContainer .pos-jenis-wrap input[type="radio"] { width: 11px; height: 11px; accent-color: #157A82; margin: 0; }
 #penempatanContainer .btn-add { margin: 4px 8px 8px; padding: 4px 10px; font-size: 10.5px; }
 #penempatanContainer .status-nihil { margin: 6px 8px 0; }
 
 /* Daftar tersimpan */
 .jejak { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .jejak .upd { background: #FFF3DC; color: #8A5A0C; border: 1px solid #F0D9A8; border-radius: 10px; padding: 1px 8px; font-weight: 800; font-size: 10px; }
+
+/* Mode jadwal: daftar nama per kategori + pilihan pos */
+.kt-row input.bd.j { background: #fff; border: 1px solid #D7DEE8; color: var(--ink); }
+.kt-tag { display: inline-block; background: #FDF0D5; color: #8A5A0C; border-radius: 99px; padding: 0 7px; font-weight: 700; font-size: 9.5px; }
+ul.dft { list-style: none; margin: 6px 0 2px; padding: 0; }
+ul.dft li { display: grid; grid-template-columns: 22px minmax(0, 1fr) 150px; gap: 8px; align-items: center; padding: 2px 0; }
+ul.dft .n { color: #8A94A6; text-align: right; font-size: 12px; }
+ul.dft .who b { font-size: 12px; color: var(--ink); }
+ul.dft .who small { margin-left: 6px; color: #8A94A6; font-size: 10.5px; font-weight: 600; }
+ul.dft .who small.tg { color: #8A5A0C; background: #FDF0D5; border-radius: 99px; padding: 0 7px; font-weight: 700; }
+ul.dft select { height: 28px; border: 1px solid #D7DEE8; border-radius: 7px; font-size: 11.5px; width: 100%; background: #fff; }
+.abs-pick { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 6px 0 2px 24px; padding: 8px; background: #FDF0D5; border-radius: 8px; }
+.abs-pick select { height: 28px; border: 1px solid #D7DEE8; border-radius: 7px; font-size: 11.5px; min-width: 170px; background: #fff; }
+.abs-pick button { height: 28px; border: 0; border-radius: 7px; background: #157A82; color: #fff; font: 800 11px 'Montserrat','Inter'; padding: 0 12px; cursor: pointer; }
+.abs-pick button.b { background: #fff; color: #475569; border: 1px solid #D7DEE8; }
+
+/* Bilah atas Laporan Personel: kolom dirapatkan agar muat satu baris dan tidak bertumpuk */
+#toolbar { gap: 6px; padding: 0 8px; }
+#toolbar .tdiv { display: none; }
+#toolbar .seg button { padding: 6px 10px; }
+#toolbar .fld { gap: 5px; }
+#toolbar .fld select#shift { min-width: 160px; }
+#toolbar .fld select#regu { min-width: 104px; }
+#toolbar .fld input#tanggal { min-width: 108px; width: 108px; }
+#toolbar .tbtn { white-space: nowrap; flex: none; }
+#toolbar .seg { flex: none; }
+#toolbar #btnIsiJadwal { background: #E4F3F4; border-color: #B9DEE1; color: #0F5F65; }
+
+/* Penempatan ringkas (mode jadwal): nama, jabatan, jam dinas */
+.pos-ringkas { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto 28px; gap: 8px; align-items: center; padding: 3px 0; font-size: 12.5px; }
+.pos-ringkas .no { color: #8A94A6; text-align: right; font-size: 11.5px; font-weight: 700; }
+.pos-ringkas .nm2 { font-weight: 700; color: var(--ink); min-width: 0; overflow-wrap: anywhere; }
+.pos-ringkas .nm2 small { color: #8A94A6; font-weight: 600; font-size: 11px; margin-left: 4px; }
+.pos-ringkas .jm2 { color: #6B7A90; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.pos-ringkas .btn-remove { width: 24px; height: 24px; padding: 0; font-size: 11px; line-height: 1; }
+.pos-nihil { color: #8A94A6; font-style: italic; font-size: 12px; padding: 2px 0 4px 30px; }
+.btn-add.kecil { background: none; color: #8A94A6; font-size: 10.5px; padding: 2px 0; height: auto; box-shadow: none; border: none; text-decoration: underline; }

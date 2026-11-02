@@ -27,8 +27,8 @@
 
   function kop(judul, tglCetak) {
     return `<div style="display:flex;align-items:center;gap:10px;border-bottom:2.5px solid #9A5F12;padding-bottom:8px;margin-bottom:12px">
-<img src="Logo/AVS.png" style="height:34px">
-<div><div style="font-size:14pt;font-weight:800;color:#10243D">${esc(judul)}</div><div style="font-size:8pt;color:#5C6675;font-weight:600">AVSEC Bandara Supadio</div></div>
+<img src="Logo/AVS-kop.png" style="height:34px">
+<div><div style="font-size:16pt;font-weight:700;color:#10243D">${esc(judul)}</div><div style="font-size:8pt;color:#5C6675;font-weight:600">AVSEC Bandara Supadio</div></div>
 <div style="flex:1"></div>
 <div style="font-size:8pt;color:#5C6675;font-weight:700;text-align:right">${esc(tglCetak)}</div>
 </div>`;
@@ -73,9 +73,9 @@ ${box(`dari ${posDokCount} Pos Dokumen Lengkap`, dokLengkap, '#EEF1F6', '#475569
     if (!items.length) return '';
     const rows = items.map((it) => {
       const baik = Math.max(0, it.jumlah - it.rusak);
-      return `<tr><td style="padding:5px 6px;border-bottom:1px solid #F1F4F8">${esc(it.name)}</td><td style="padding:5px 6px;border-bottom:1px solid #F1F4F8;text-align:center">${it.jumlah}</td><td style="padding:5px 6px;border-bottom:1px solid #F1F4F8;text-align:center;color:#A82F24;font-weight:800">${it.rusak}</td><td style="padding:5px 6px;border-bottom:1px solid #F1F4F8;text-align:center;color:#2F6B2E;font-weight:800">${baik}</td></tr>`;
+      return `<tr${it.rusak > 0 ? ' style="background:#FFFBF2"' : ''}><td style="padding:5px 6px;border-bottom:1px solid #F1F4F8">${esc(it.name)}</td><td style="padding:5px 6px;border-bottom:1px solid #F1F4F8;text-align:center">${it.jumlah}</td><td style="padding:5px 6px;border-bottom:1px solid #F1F4F8;text-align:center;color:#A82F24;font-weight:800">${it.rusak}</td><td style="padding:5px 6px;border-bottom:1px solid #F1F4F8;text-align:center;color:#2F6B2E;font-weight:800">${baik}</td><td style="padding:5px 6px;border-bottom:1px solid #F1F4F8">${esc(it.keterangan) || '&mdash;'}</td></tr>`;
     }).join('');
-    return `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:6px"><tr><th style="text-align:left;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB">Item</th><th style="text-align:center;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB">Jumlah</th><th style="text-align:center;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB">Rusak</th><th style="text-align:center;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB">Baik</th></tr>${rows}</table>`;
+    return `<table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:6px"><tr><th style="text-align:left;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB">Item</th><th style="text-align:center;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB">Jumlah</th><th style="text-align:center;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB">Rusak</th><th style="text-align:center;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB">Baik</th><th style="text-align:left;font-size:7pt;font-weight:800;color:#8A94A6;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #E1E6EF;background:#F6F8FB">Keterangan</th></tr>${rows}</table>`;
   }
   function dokline(items) {
     const c = items.find((i) => i.bentuk === 'C'); if (!c) return '';
@@ -86,7 +86,7 @@ ${box(`dari ${posDokCount} Pos Dokumen Lengkap`, dokLengkap, '#EEF1F6', '#475569
   function posBlok(p, no) {
     const a = p.items.filter((i) => i.bentuk === 'A'), b = p.items.filter((i) => i.bentuk === 'B');
     return `<div class="fa-pdf-pos" style="page-break-inside:avoid;break-inside:avoid;margin-bottom:8px">
-<div style="color:#10243D;font-size:10pt;font-weight:800;padding-bottom:3px;margin:8px 0 6px;border-bottom:1.5px solid #E1E6EF">${no}. ${esc(p.name)}</div>
+<div style="color:#10243D;font-size:10pt;font-weight:800;padding-bottom:3px;margin:8px 0 6px;border-bottom:1.5px solid #E1E6EF">${no}. ${esc(root.AVS.namaPosFasilitasTerbaru(p.id, p.name))}</div>
 ${a.length ? tabelA(a) : ''}${b.length ? tabelB(b) : ''}${dokline(p.items)}
 </div>`;
   }
@@ -107,7 +107,7 @@ ${a.length ? tabelA(a) : ''}${b.length ? tabelB(b) : ''}${dokline(p.items)}
   // diambil SAAT PDF dibuat (live), bukan dibaca dari r itu sendiri.
   root.buildFasilitasPdfHTML = function (r, pembuat, tglCetak) {
     const posHtml = (r.posFasilitas || []).map((p, i) => posBlok(p, i + 1)).join('');
-    return `<div style="font-family:'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
+    return `<div style="font-family:'Montserrat', 'Inter',Arial,sans-serif;padding:18px;font-size:9.5pt;color:#000">
 ${kop('Laporan Fasilitas', tglCetak)}
 ${idList(r)}
 ${ringkasanBox(r)}
