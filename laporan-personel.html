@@ -276,10 +276,12 @@ function labelKategori(k) {
   return (k.mulai && k.selesai) ? `${nama} (${k.mulai} - ${k.selesai}) WIB` : nama;
 }
 function alasanText(p) {
+  if (!p.alasan) return 'alasan belum dipilih';
   return p.alasan === 'Lainnya' ? (rapikan(p.ket) || 'Lainnya') : p.alasan;
 }
 function normAbsen(p) {
   let alasan = p && p.alasan, ket = (p && p.ket) || '';
+  if (alasan === '') return { nama: (p && p.nama) || '', alasan: '', ket: '' };   // belum dipilih (T1: tidak ada alasan bawaan)
   if (!opsiAlasan.includes(alasan)) { ket = alasan || ''; alasan = 'Lainnya'; }   // data lama: alasan bebas
   return { nama: (p && p.nama) || '', alasan, ket };
 }
@@ -540,12 +542,12 @@ function kartuKekuatan(k, i) {
 
   let absenHTML = '';
   k.absen.forEach((p, pi) => {
-    const opts = opsiAlasan.map((o) => `<option value="${esc(o)}" ${p.alasan === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
+    const opts = `<option value="" ${p.alasan === '' ? 'selected' : ''} disabled>— pilih alasan —</option>` + opsiAlasan.map((o) => `<option value="${esc(o)}" ${p.alasan === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
     const custom = p.alasan === 'Lainnya' ? `<div class="cust"><input type="text" placeholder="Keterangan Lainnya..." value="${esc(p.ket)}" oninput="updateKet('${k.id}',${pi},this.value)"></div>` : '';
     absenHTML += `
 <div class="dynamic-row" data-kind="absen">
 <input type="text" class="nm" list="listPersonel" placeholder="Nama personel tidak hadir" value="${esc(p.nama)}" oninput="updateNamaAbsen('${k.id}',${pi},this.value)">
-<select onchange="updateAlasanAbsen('${k.id}',${pi},this.value)">${opts}</select>
+<select ${p.alasan === '' ? 'style="border-color:#C93B2E;color:#C93B2E"' : ''} onchange="updateAlasanAbsen('${k.id}',${pi},this.value)">${opts}</select>
 <button type="button" class="btn-remove" onclick="removeAbsen('${k.id}',${pi})">✕</button>${custom}
 </div>`;
   });
@@ -594,7 +596,7 @@ function addAbsen(cid) {
   const k = cari(cid); if (!k) return;
   if (k.jml === 0) { toast('Isi kolom Jumlah terlebih dahulu.', 'err'); return; }
   if (k.absen.length >= k.jml) { toast(`Personel kurang tidak boleh melebihi Jumlah (${k.jml}).`, 'err'); return; }
-  k.absen.push({ nama: '', alasan: opsiAlasan[0], ket: '' });
+  k.absen.push({ nama: '', alasan: '', ket: '' });
   markDirty(); renderKekuatan();
 }
 function removeAbsen(cid, pi) {
@@ -842,7 +844,15 @@ function konfirmasi(aksi, info, tanggal, shift, regu) {
   if (!daftar.length) return true;
   return confirm(`Sebelum ${aksi}, perhatikan:\n\n• ${daftar.join('\n• ')}\n\nTetap lanjutkan?`);
 }
+// T1: tidak ada alasan bawaan. Simpan/salin/kirim ditolak selama ada nama tidak hadir tanpa alasan.
+function alasanBelumDipilih() {
+  const nama = [];
+  kategoriKekuatan.forEach((k) => (k.absen || []).filter(adaNama).forEach((a) => { if (!a.alasan) nama.push(rapikan(a.nama)); }));
+  if (nama.length) toast('Pilih alasan tidak hadir untuk: ' + nama.join(', ') + '.', 'err');
+  return nama.length > 0;
+}
 function copyReport() {
+  if (alasanBelumDipilih()) return;
   if (!konfirmasi('menyalin laporan', hitung(), $('tanggal').value, $('shift').value, $('regu').value)) return;
   copyText(generateReportText()).then((ok) => toast(ok ? 'Laporan berhasil disalin!' : 'Gagal menyalin. Blok teks pratinjau lalu salin manual.', ok ? 'ok' : 'err'));
 }
@@ -852,6 +862,7 @@ function bukaWA(text) {
   toast('WhatsApp dibuka. Pilih grup/kontak lalu kirim. Jika kolom pesan kosong, tempel dengan Ctrl+V (teks sudah disalin).', 'ok');
 }
 function kirimWA() {
+  if (alasanBelumDipilih()) return;
   if (!konfirmasi('mengirim laporan', hitung(), $('tanggal').value, $('shift').value, $('regu').value)) return;
   bukaWA(generateReportText());
 }
@@ -948,6 +959,7 @@ function tutupLihat() { $('drawerLihat').classList.remove('open'); }
 function saveReport() {
   const tanggal = $('tanggal').value, shift = $('shift').value, regu = $('regu').value;
   if (!tanggal || !shift || !regu) { toast('Harap lengkapi Tanggal, Shift, dan Regu!', 'err'); return; }
+  if (alasanBelumDipilih()) return;
   const info = calculateTotals();
   if (info.issues.length && !confirm(`Ada catatan pada laporan ini:\n\n• ${info.issues.join('\n• ')}\n\nTetap simpan?`)) return;
 
@@ -1242,7 +1254,7 @@ function bukaAbsenPicker(cid) {
 }
 function tandaiTidakHadir(cid) {
   const k = cari(cid), sel = $('ap_' + cid); if (!k || !sel || !sel.value) return;
-  k.absen.push({ nama: sel.value, alasan: opsiAlasan[0], ket: '' });
+  k.absen.push({ nama: sel.value, alasan: '', ket: '' });
   absenPicker = null; markDirty(); renderKekuatan(); generateReportText();
 }
 

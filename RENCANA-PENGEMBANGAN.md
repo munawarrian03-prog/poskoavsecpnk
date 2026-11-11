@@ -23,13 +23,13 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 
 
 ## Inventaris temuan audit: pencatatan & rekap ketidakhadiran, serta anomali data/halaman (dicatat 10 Nov 2026)
-**Status: Direncanakan, BELUM ADA yang dikerjakan.** Hasil audit baca-kode + uji hitung `statPersonelRentang`/`statPersonel` + uji buka 9 halaman x 2 peran.
+**Status: T1 selesai (11 Nov); lainnya belum dikerjakan.** Hasil audit baca-kode + uji hitung `statPersonelRentang`/`statPersonel` + uji buka 9 halaman x 2 peran.
 Hanya temuan yang berasal dari kode zip yang dipertahankan.
 
 ### A. Ketidakhadiran personel (urut prioritas)
 | Kode | Temuan | Dampak | Usulan |
 |---|---|---|---|
-| T1 | Alasan bawaan tiap nama tidak hadir = "Cuti Tahunan" (`opsiAlasan[0]`) | Lupa mengganti -> sakit/izin tercatat cuti, statistik salah tanpa peringatan | Kosongkan alasan bawaan; wajib pilih sebelum Simpan |
+| T1 | **SELESAI 11 Nov 2026.** Alasan bawaan tiap nama tidak hadir dulu "Cuti Tahunan" | Dulu: lupa mengganti -> statistik salah tanpa peringatan | Sekarang: kotak alasan kosong ("— pilih alasan —", merah); Simpan, Salin, dan Kirim WA ditolak selama ada nama tidak hadir tanpa alasan (pesan menyebut namanya). Laporan lama tidak berubah (36 laporan lama dibuka ulang: alasan utuh). Cache sw v19 |
 | T2 | Rekap memecah satu orang karena ejaan nama beda (uji: HIKMAH N dan HIKMAH NURZAMAN = 2 orang, 1 hari masing-masing) | Total hari per orang terlalu kecil; laporan lama memakai nama lama | Satukan nama di `data.js` lewat `ALIAS_NAMA` |
 | T3 | Keterangan "Lainnya" tidak tampil di Rekap (tabel dan donat hanya "Lainnya"); hanya terlihat di kartu Beranda dan laporan | Informasi hilang saat direkap | Tampilkan `ket` di Rekap dan PDF Rekap |
 | T4 | Dinas malam lintas hari: orang yang masuk esok <08:00 ikut dihitung di laporan Malam tanggal D dan di laporan Pagi D+1; absen -> rekap mencatat 2 hari (dedup hanya untuk tanggal sama) | Hitung ganda 1 absen | KEPUTUSAN PENGGUNA: dihitung 1 hari atau 2 hari. Belum diputuskan |
