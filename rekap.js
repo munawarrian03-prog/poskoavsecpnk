@@ -214,7 +214,14 @@ ${catatanTak}
     return Object.keys(counts)
       .sort((a, b) => D.ALASAN.indexOf(a) - D.ALASAN.indexOf(b))
       .map((alasan) => { const w = WARNA_ALASAN[alasan] || '#B9C4D6'; return `<span class="tag" style="background:${w}1A;color:${w}">${E(alasan)} (${counts[alasan]})</span>`; })
-      .join(' ');
+      .join(' ') + ketLainnya(tanggalArray, true);
+  }
+  // T3: keterangan bebas milik alasan "Lainnya" (dipotong wajar agar tabel tidak terlalu tinggi)
+  function ketLainnya(tanggalArray, html) {
+    const set = []; (tanggalArray || []).forEach((x) => { const k = String(x.ket || '').trim(); if (x.alasan === 'Lainnya' && k && !set.includes(k)) set.push(k); });
+    if (!set.length) return '';
+    const teks = set.map((k) => (k.length > 60 ? k.slice(0, 57) + '...' : k)).join('; ');
+    return html ? `<div class="kecil" style="font-size:11px;color:#5D6B80;margin-top:2px">Lainnya: ${E(teks)}</div>` : teks;
   }
   // Group tanggal[] per alasan (tanggal digabung, urut ASC), urutan grup sesuai ALASAN standar
   function kelompokkanTanggal(tanggalArray) {

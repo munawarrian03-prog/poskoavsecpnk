@@ -138,7 +138,8 @@
   function alasanTeks(tanggalArray) {
     const counts = {};
     (tanggalArray || []).forEach((item) => { counts[item.alasan] = (counts[item.alasan] || 0) + 1; });
-    return Object.keys(counts).sort((a, b) => ALASAN_URUT.indexOf(a) - ALASAN_URUT.indexOf(b)).map((a) => `${esc(a)} (${counts[a]})`).join(', ');
+    const ket = []; (tanggalArray || []).forEach((x) => { const k = String(x.ket || '').trim(); if (x.alasan === 'Lainnya' && k && !ket.includes(k)) ket.push(k.length > 60 ? k.slice(0, 57) + '...' : k); });   // T3
+    return Object.keys(counts).sort((a, b) => ALASAN_URUT.indexOf(a) - ALASAN_URUT.indexOf(b)).map((a) => `${esc(a)} (${counts[a]})`).join(', ') + (ket.length ? `<br><span style="font-size:7pt">Lainnya: ${esc(ket.join('; '))}</span>` : '');
   }
   function tanggalPerAlasanTeks(tanggalArray) {
     const grouped = {};

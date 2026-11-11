@@ -394,6 +394,9 @@ function peringatanKategoriWaktu(kat, pos, shift) {
     const t = tertanda[k.id] || 0;
     if (t > hadir[k.id]) out.push(`${labelKategori(k)}: ${t} orang di Penempatan memakai kategori ini, tetapi yang hadir di Kekuatan hanya ${hadir[k.id]}.`);
   });
+  const lihatNama = {};   // T7: nama yang sama ditandai tidak hadir di lebih dari satu kategori
+  (kat || []).forEach((k) => (k.absen || []).filter(adaNama).forEach((a) => { const n = normNama(a.nama); (lihatNama[n] || (lihatNama[n] = { nama: rapikan(a.nama), kat: [] })).kat.push(labelKategori(k)); }));
+  Object.values(lihatNama).forEach((o) => { if (o.kat.length > 1) out.push(`${o.nama} ditandai tidak hadir di lebih dari satu kategori (${o.kat.join(', ')}). Pastikan ini benar.`); });
   if (valid && bertanda === valid) {
     const seg = selisihRentangWaktu(rincianHadirWaktu(kat, shift), rincianPenempatanWaktu(pos, kat, shift), shift);
     if (seg.length) out.push(`Total Hadir dan Penempatan berbeda pada rentang waktu: ${seg.join('; ')}.`);
@@ -544,9 +547,14 @@ function kartuKekuatan(k, i) {
   k.absen.forEach((p, pi) => {
     const opts = `<option value="" ${p.alasan === '' ? 'selected' : ''} disabled>— pilih alasan —</option>` + opsiAlasan.map((o) => `<option value="${esc(o)}" ${p.alasan === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
     const custom = p.alasan === 'Lainnya' ? `<div class="cust"><input type="text" placeholder="Keterangan Lainnya..." value="${esc(p.ket)}" oninput="updateKet('${k.id}',${pi},this.value)"></div>` : '';
+    // T6: di mode jadwal, nama yang berasal dari daftar kategori dikunci (hanya alasan yang bisa diubah). Salah pilih -> hapus baris (✕).
+    const terkunci = Array.isArray(k.daftar) && adaNama(p) && k.daftar.some((x) => normNama(x.nama) === normNama(p.nama));
+    const inputNama = terkunci
+      ? `<span class="nm" style="font-weight:700;font-size:12px;padding:0 2px" title="Nama dari Jadwal Dinas. Salah pilih orang? Hapus baris lalu tandai yang benar.">${esc(rapikan(p.nama))}</span>`
+      : `<input type="text" class="nm" list="listPersonel" placeholder="Nama personel tidak hadir" value="${esc(p.nama)}" ${gayaNamaLuarJadwal(p.nama)} oninput="updateNamaAbsen('${k.id}',${pi},this.value)" onchange="renderKekuatan()">`;
     absenHTML += `
 <div class="dynamic-row" data-kind="absen">
-<input type="text" class="nm" list="listPersonel" placeholder="Nama personel tidak hadir" value="${esc(p.nama)}" oninput="updateNamaAbsen('${k.id}',${pi},this.value)">
+${inputNama}
 <select ${p.alasan === '' ? 'style="border-color:#C93B2E;color:#C93B2E"' : ''} onchange="updateAlasanAbsen('${k.id}',${pi},this.value)">${opts}</select>
 <button type="button" class="btn-remove" onclick="removeAbsen('${k.id}',${pi})">✕</button>${custom}
 </div>`;
@@ -730,7 +738,7 @@ function renderPenempatan() {
       rows += `
 <div class="dynamic-row" data-kind="pos">
 <span class="no">${pIdx + 1}</span>
-<input type="text" class="nm" list="listPersonel" placeholder="Nama personel" value="${esc(p.nama)}" oninput="updateNamaPos(${posIdx},${pIdx},this.value)" onchange="renderKekuatan()">
+<input type="text" class="nm" list="listPersonel" placeholder="Nama personel" value="${esc(p.nama)}" ${gayaNamaLuarJadwal(p.nama)} oninput="updateNamaPos(${posIdx},${pIdx},this.value)" onchange="renderKekuatan();renderPenempatan()">
 <select onchange="updatePeranPos(${posIdx},${pIdx},this.value)">${opts}</select>
 <select class="pos-kat" onchange="updateKategoriPos(${posIdx},${pIdx},this.value)">${opsiKategoriPos(p.kategoriId)}</select>
 <input type="text" class="pos-jam" placeholder="Jam" value="${esc(p.jam)}" title="Jam bertugas (opsional) -- terisi otomatis saat pilih Kategori, tetap bisa diedit manual" oninput="updateJamPos(${posIdx},${pIdx},this.value)">
@@ -1261,6 +1269,13 @@ function tandaiTidakHadir(cid) {
 /* ---------- Inisialisasi ---------- */
 // Saran nama: bila Jadwal Dinas bulan laporan sudah diunggah, nama diambil dari sana (A D M dan ADM PAS ID
 // diabaikan, ejaan lewat ALIAS_NAMA); bila belum, memakai personel.js sebagai cadangan.
+// T6: nama yang diketik manual dan TIDAK ada di daftar saran (Jadwal Dinas bulan itu / personel.js) diberi bingkai kuning
+// supaya salah ketik terlihat sebelum masuk ke Rekap. Tetap boleh disimpan (mis. pengganti di luar jadwal).
+let namaSaran = new Set();
+function gayaNamaLuarJadwal(nama) {
+  if (!adaNama({ nama }) || !namaSaran.size || namaSaran.has(normNama(nama))) return '';
+  return 'style="border-color:#D98A22;background:#FFF7E6" title="Nama ini tidak ada di Jadwal Dinas bulan ini. Pastikan ejaannya sama dengan jadwal."';
+}
 function isiDaftarPersonel() {
   const ym = ($('tanggal') && $('tanggal').value ? $('tanggal').value : tanggalLokalISO(new Date())).slice(0, 7);
   const dariJadwal = (window.AVS && AVS.JadwalSumber) ? AVS.JadwalSumber.daftarNamaSaran(ym) : null;
@@ -1268,6 +1283,7 @@ function isiDaftarPersonel() {
   const seen = new Set(), list = [];
   sumber.forEach((n) => { const t = rapikan(n), k = t.toUpperCase(); if (t && !seen.has(k)) { seen.add(k); list.push(t); } });
   list.sort((a, b) => a.localeCompare(b, 'id'));
+  namaSaran = new Set(list.map((n) => normNama(n)));
   $('listPersonel').innerHTML = list.map((n) => `<option value="${esc(n)}">`).join('');
   if (!list.length) toast('Daftar personel (personel.js) tidak terbaca. Saran nama tidak tersedia.', 'err');
   if (!KAT_BAWAAN.length) toast('Daftar kategori (kategori.js) tidak terbaca.', 'err');

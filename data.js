@@ -10,7 +10,11 @@
   const ALASAN = ['Cuti Tahunan', 'Sakit', 'Izin', 'Dinas Luar', 'Cuti Alasan Penting', 'Cuti Melahirkan', 'Tanpa Keterangan', 'Lainnya'];
   const REGU = ['A', 'B', 'C', 'D'];
   const rapikan = (s) => String(s == null ? '' : s).trim().replace(/\s+/g, ' ');
-  const kunciNama = (s) => rapikan(s).toUpperCase();
+  // T2: satu orang bisa tertulis dengan ejaan berbeda di laporan lama. Rekap/Beranda menyatukan lewat tabel alias ini
+  // (kunci = ejaan lama HURUF BESAR, nilai = ejaan baku sesuai Jadwal Dinas). Data laporan tidak diubah.
+  const ALIAS_NAMA = { 'HIKMAH N': 'HIKMAH NURZAMAN', 'ROZZAQ': 'M ROZZAQ', 'ROZAK': 'M ROZZAQ', 'PIPID FIDCKY BAFRI SADA': 'PIPID FIDCKY BAFRI S' };
+  const namaKanon = (s) => { const r = rapikan(s); return ALIAS_NAMA[r.toUpperCase()] || r; };
+  const kunciNama = (s) => namaKanon(s).toUpperCase();
   const reguKey = (s) => { const m = String(s || '').trim().match(/^([A-Za-z])/); return m ? m[1].toUpperCase() : '?'; };
   const alasanKat = (p) => (p && ALASAN.includes(p.alasan)) ? p.alasan : 'Lainnya';
   const hariBulan = (y, m) => new Date(y, m + 1, 0).getDate();
@@ -33,28 +37,28 @@
     // orang-hari: dulu kelompokkan setiap baris tidak hadir menurut hari+nama, pilih alasan/regu dari shift paling awal
     const grupHari = new Map();   // kunci: 'd|NAMA' -> { d, nama, alasan, rk, urutanShift }
     (list || []).forEach((r) => {
-      const t = pecah(r && r.tanggal); if (!t || t.y !== y || t.m !== m) return;
+      const t = pecah(r && r.tanggal); if (!t) return;
+      const dalamBulan = t.y === y && t.m === m;
       const rk = reguKey(r.regu);
-      if (regu !== 'all' && rk !== regu) { shifts.add(t.d + '|' + shiftKey(r.shift) + '|x'); return; }
-      laporan++; shifts.add(t.d + '|' + shiftKey(r.shift));
-      const urutanShift = shiftKey(r.shift) === 'P' ? 0 : 1;
+      if (regu !== 'all' && rk !== regu) { if (dalamBulan) shifts.add(t.d + '|' + shiftKey(r.shift) + '|x'); return; }
+      if (dalamBulan) { laporan++; shifts.add(t.d + '|' + shiftKey(r.shift)); }
       (r.kategoriKekuatan || []).forEach((k) => {
         if (!k) return;
-        const jml = Math.max(0, parseInt(k.jml, 10) || 0);
-        const valid = (k.absen || []).filter((p) => rapikan(p && p.nama) !== '');
-        totalJml += jml; totalHadir += Math.max(0, jml - valid.length);
-        valid.forEach((p) => {
-          const a = alasanKat(p);
+        const tl = telaahKategori(r, k);
+        if (dalamBulan) { totalJml += tl.jml; totalHadir += tl.hadir; }
+        tl.absen.forEach((p) => {
+          const ta = pecah(p.tgl); if (!ta || ta.y !== y || ta.m !== m) return;   // T4: bisa jatuh ke tanggal/bulan lain
+          const a = p.alasan;
           if (mode === 'kejadian') {
-            tidakHadir++; perHari[t.d - 1]++;
+            tidakHadir++; perHari[ta.d - 1]++;
             alasan[a] = (alasan[a] || 0) + 1;
             if (perRegu[rk] !== undefined) perRegu[rk]++;
             const key = kunciNama(p.nama); let o = orang.get(key);
-            if (!o) { o = { nama: rapikan(p.nama), jumlah: 0, alasan: {}, regu: {} }; orang.set(key, o); }
+            if (!o) { o = { nama: p.nama, jumlah: 0, alasan: {}, regu: {} }; orang.set(key, o); }
             o.jumlah++; o.alasan[a] = (o.alasan[a] || 0) + 1; o.regu[rk] = (o.regu[rk] || 0) + 1;
           } else {
-            const gk = t.d + '|' + kunciNama(p.nama); let g = grupHari.get(gk);
-            if (!g || urutanShift < g.urutanShift) grupHari.set(gk, { d: t.d, nama: rapikan(p.nama), alasan: a, rk, urutanShift });
+            const gk = ta.d + '|' + kunciNama(p.nama); const g = grupHari.get(gk);
+            if (!g || p.urutanShift < g.urutanShift) grupHari.set(gk, { d: ta.d, nama: p.nama, alasan: a, rk, urutanShift: p.urutanShift });
           }
         });
       });
@@ -83,6 +87,27 @@
 
   const pad2 = (n) => String(n).padStart(2, '0');
   const fmtISO = (y, m, d) => `${y}-${pad2(m + 1)}-${pad2(d)}`;
+
+  /* ---------- T4/T5: orang "masuk esok sebelum 08:00" dan "pulang lewat 20:00" dihitung di shift PAGI ---------- */
+  // Di laporan Malam, daftar nama kategori memuat tanda (field `tag`) untuk dua kelompok itu. Bila mereka tidak hadir,
+  // ketidakhadirannya dihitung di Pagi: 'masuk esok' -> Pagi tanggal D+1, 'pulang' -> Pagi tanggal D. Jumlah/Hadir mereka
+  // juga dikeluarkan dari laporan Malam supaya tidak terhitung dua kali (mereka sudah dihitung di laporan Pagi).
+  // Hanya berlaku di Rekap/Beranda; laporan tersimpan tidak diubah. Laporan tanpa tanda (lama/manual) berperilaku seperti biasa.
+  function tambahHari(iso, n) { const t = pecah(iso); const d = new Date(t.y, t.m, t.d + n); return fmtISO(d.getFullYear(), d.getMonth(), d.getDate()); }
+  const jenisTag = (tag) => (/masuk esok/i.test(tag || '') ? 'esok' : /^pulang/i.test(tag || '') ? 'pulang' : '');
+  function telaahKategori(r, k) {
+    const jml = Math.max(0, parseInt(k && k.jml, 10) || 0), valid = ((k && k.absen) || []).filter((p) => rapikan(p && p.nama) !== '');
+    const malam = shiftKey(r.shift) === 'M', tags = new Map(); let bertanda = 0;
+    if (malam) ((k && k.daftar) || []).forEach((x) => { const j = x && jenisTag(x.tag); if (j) { tags.set(kunciNama(x.nama), j); bertanda++; } });
+    const jmlEf = Math.max(0, jml - bertanda), lain = [], pindah = [], urut = malam ? 1 : 0;
+    valid.forEach((p) => {
+      const j = malam ? (tags.get(kunciNama(p.nama)) || '') : '', dasar = { nama: namaKanon(p.nama), alasan: alasanKat(p), ket: rapikan(p.ket) };
+      if (j === 'esok') pindah.push(Object.assign(dasar, { tgl: tambahHari(r.tanggal, 1), urutanShift: 0 }));
+      else if (j === 'pulang') pindah.push(Object.assign(dasar, { tgl: r.tanggal, urutanShift: 0 }));
+      else lain.push(Object.assign(dasar, { tgl: r.tanggal, urutanShift: urut }));
+    });
+    return { jml: jmlEf, hadir: Math.max(0, jmlEf - lain.length), absen: lain.concat(pindah) };
+  }
   const HARI_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const BULAN_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
@@ -275,17 +300,18 @@
     let laporanTersimpan = 0, totalJml = 0, totalHadir = 0;
     const perRegu = { A: 0, B: 0, C: 0, D: 0 }, shiftAda = new Set();
     (list || []).forEach((r) => {
-      const tgl = r && r.tanggal; if (!dalamRentang(tgl, startISO, endISO)) return;
+      const tgl = r && r.tanggal; if (!pecah(tgl)) return;
+      const dalam = dalamRentang(tgl, startISO, endISO);
       const rk = reguKey(r.regu);
       if (regu !== 'all' && rk !== regu) return;
-      laporanTersimpan++; shiftAda.add(tgl + '|' + shiftKey(r.shift));
-      const urutanShift = shiftKey(r.shift) === 'P' ? 0 : 1;
+      if (dalam) { laporanTersimpan++; shiftAda.add(tgl + '|' + shiftKey(r.shift)); }
       (r.kategoriKekuatan || []).forEach((k) => {
-        const jml = Math.max(0, parseInt(k.jml, 10) || 0), valid = (k.absen || []).filter((p) => rapikan(p && p.nama) !== '');
-        totalJml += jml; totalHadir += Math.max(0, jml - valid.length);
-        valid.forEach((p) => {
-          const gk = tgl + '|' + kunciNama(p.nama); const g = grup.get(gk);
-          if (!g || urutanShift < g.urutanShift) grup.set(gk, { tgl, nama: rapikan(p.nama), alasan: alasanKat(p), rk, urutanShift });
+        const tl = telaahKategori(r, k || {});
+        if (dalam) { totalJml += tl.jml; totalHadir += tl.hadir; }
+        tl.absen.forEach((p) => {
+          if (!dalamRentang(p.tgl, startISO, endISO)) return;   // T4: 'masuk esok' dihitung di tanggal D+1 (Pagi)
+          const gk = p.tgl + '|' + kunciNama(p.nama); const g = grup.get(gk);
+          if (!g || p.urutanShift < g.urutanShift) grup.set(gk, { tgl: p.tgl, nama: p.nama, alasan: p.alasan, ket: p.alasan === 'Lainnya' ? p.ket : '', rk, urutanShift: p.urutanShift });
         });
       });
     });
@@ -294,7 +320,7 @@
       if (perRegu[g.rk] !== undefined) perRegu[g.rk]++;
       const key = kunciNama(g.nama); let o = orang.get(key);
       if (!o) { o = { nama: g.nama, regu: g.rk, jumlah: 0, tanggal: [] }; orang.set(key, o); }
-      o.jumlah++; o.tanggal.push({ tgl: g.tgl, alasan: g.alasan });
+      o.jumlah++; o.tanggal.push({ tgl: g.tgl, alasan: g.alasan, ket: g.ket || '' });
     });
     const dominanAlasan = (arr) => { const c = {}; arr.forEach((x) => { c[x.alasan] = (c[x.alasan] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]; };
     const daftar = Array.from(orang.values()).map((o) => ({ nama: o.nama, regu: o.regu, jumlah: o.jumlah, alasan: dominanAlasan(o.tanggal), tanggal: o.tanggal.sort((a, b) => b.tgl.localeCompare(a.tgl)) }))

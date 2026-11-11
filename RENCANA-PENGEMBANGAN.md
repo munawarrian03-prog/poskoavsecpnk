@@ -16,26 +16,26 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 1. **Proteksi sandi situs** (Netlify Pro berbayar atau alternatif gratis: Cloudflare Access / Edge Function sandi). Sampai diputuskan,
    PIN hanya pelindung tampilan dan token Apps Script di `sync.js` dapat dibaca publik; PIN cadangan di `akses.js` sebaiknya diganti.
 2. **Kapasitas penyimpanan browser** (±5 MB, diperkirakan penuh ±6 bulan): rutin Cadangkan; opsi pengarsipan otomatis / pindah ke IndexedDB.
-3. Temuan T1-T7 dan A1-A2 (bagian "Inventaris temuan audit" di bawah): menunggu perintah; T4/T5 sudah diputuskan 11 Nov (absen orang bertanda masuk esok/pulang 21:00 dihitung di shift Pagi), menunggu perintah kerjakan.
+3. Temuan T1-T7 dan A1-A2 (bagian "Inventaris temuan audit" di bawah): menunggu perintah; T1-T7 SELESAI 11 Nov; tersisa A1 dan A2.
 4. Usulan masukan lain dari audit belum dikerjakan (simpan draft otomatis, salin laporan sebelumnya di Fasilitas, Rencana Cuti,
    rentang Rekap awal bulan, pengingat Cadangkan, tombol salin/kirim WA untuk draft, indikator sinkronisasi di Pantau, aturan akses
    Admin ke halaman Posko, pembersihan kode mati). "Isi dari Jadwal" otomatis (shift dari jam perangkat): DITOLAK, tampilan saat ini dipertahankan.
 
 
 ## Inventaris temuan audit: pencatatan & rekap ketidakhadiran, serta anomali data/halaman (dicatat 10 Nov 2026)
-**Status: T1 selesai (11 Nov); lainnya belum dikerjakan.** Hasil audit baca-kode + uji hitung `statPersonelRentang`/`statPersonel` + uji buka 9 halaman x 2 peran.
+**Status: T1-T7 SELESAI (11 Nov 2026, cache sw v20); A1 dan A2 belum dikerjakan.** Hasil audit baca-kode + uji hitung `statPersonelRentang`/`statPersonel` + uji buka 9 halaman x 2 peran.
 Hanya temuan yang berasal dari kode zip yang dipertahankan.
 
 ### A. Ketidakhadiran personel (urut prioritas)
 | Kode | Temuan | Dampak | Usulan |
 |---|---|---|---|
 | T1 | **SELESAI 11 Nov 2026.** Alasan bawaan tiap nama tidak hadir dulu "Cuti Tahunan" | Dulu: lupa mengganti -> statistik salah tanpa peringatan | Sekarang: kotak alasan kosong ("— pilih alasan —", merah); Simpan, Salin, dan Kirim WA ditolak selama ada nama tidak hadir tanpa alasan (pesan menyebut namanya). Laporan lama tidak berubah (36 laporan lama dibuka ulang: alasan utuh). Cache sw v19 |
-| T2 | Rekap memecah satu orang karena ejaan nama beda (uji: HIKMAH N dan HIKMAH NURZAMAN = 2 orang, 1 hari masing-masing) | Total hari per orang terlalu kecil; laporan lama memakai nama lama | Satukan nama di `data.js` lewat `ALIAS_NAMA` |
-| T3 | Keterangan "Lainnya" tidak tampil di Rekap (tabel dan donat hanya "Lainnya"); hanya terlihat di kartu Beranda dan laporan | Informasi hilang saat direkap | Tampilkan `ket` di Rekap dan PDF Rekap |
-| T4 | **KEPUTUSAN PENGGUNA 11 Nov 2026 (belum dikerjakan).** Dinas malam lintas hari: orang bertanda "masuk esok, sebelum 08:00" dan "pulang 21:00" (pagi yang pulang lewat 20:00) ikut tampil di laporan Malam. Dulu rekap bisa mencatat 1 absen sebagai 2 hari | Hitung ganda 1 absen | **ATURAN BARU:** bila orang bertanda itu dicatat tidak hadir, ketidakhadirannya dihitung pada **shift Pagi**, bukan Malam. Masuk esok (<08:00) -> Pagi tanggal D+1; pulang >20:00 -> Pagi tanggal D. Berlaku di Rekap, Beranda, dan PDF Rekap saja (laporan tersimpan tidak diubah). Tanda dibaca dari `kategoriKekuatan[].daftar[].tag` (sudah ikut tersimpan di laporan). Bila orang yang sama juga dicatat di laporan Pagi tanggal itu, dihitung 1 kali (aturan orang-per-hari yang ada). Laporan lama tanpa tag: perilaku lama |
-| T5 | **Ikut keputusan T4 (belum dikerjakan).** Persentase kehadiran memakai Jumlah yang memuat orang yang sama di dua laporan | Persentase bergeser sedikit | Jumlah dan Hadir orang bertanda dihitung pada shift Pagi (sama seperti T4), sehingga tidak dihitung dua kali. Ikut dikerjakan bersama T4 |
-| T6 | Kolom nama pada baris tidak hadir bebas diketik (mode jadwal) | Nama berubah -> nama asli muncul lagi di daftar; salah ketik masuk rekap | Kunci kolom nama di mode jadwal |
-| T7 | Tidak ada pemeriksaan satu orang absen di dua kategori pada laporan yang sama | Angka Kurang berlebih (rekap sudah menggabung) | Peringatan saat menandai |
+| T2 | **SELESAI 11 Nov 2026.** Satu orang terpecah di Rekap karena ejaan nama beda | Total hari per orang terlalu kecil | Tabel alias `ALIAS_NAMA` di `data.js` (dipakai Rekap, Beranda, PDF): HIKMAH N -> HIKMAH NURZAMAN; ROZZAQ dan ROZAK -> M ROZZAQ; PIPID FIDCKY BAFRI SADA -> PIPID FIDCKY BAFRI S. Data laporan tidak diubah. Menambah alias baru = menambah satu baris di tabel itu. DIMAS dan WAHYU H belum ada padanan pasti, tidak dimasukkan |
+| T3 | **SELESAI 11 Nov 2026.** Keterangan "Lainnya" hilang di Rekap | Informasi hilang | Tabel Rekap dan PDF Rekap menampilkan "Lainnya: <keterangan>" di bawah alasan (dipotong 60 karakter); donat tetap satu irisan |
+| T4 | **SELESAI 11 Nov 2026.** Orang bertanda "masuk esok, sebelum 08:00" / "pulang 21:00" yang tidak hadir dihitung di shift Pagi | Dulu hitung ganda | `telaahKategori()` di `data.js`: masuk esok -> Pagi D+1, pulang -> Pagi D; dedup per orang-per-hari; lintas bulan benar (31 Okt Malam -> 1 Nov). Rekap, Beranda, PDF Rekap. Laporan tersimpan tidak diubah; laporan tanpa tag berperilaku lama. Catatan: regu pada hitungan per-regu mengikuti regu laporan Malam |
+| T5 | **SELESAI 11 Nov 2026** (bersama T4). Persentase kehadiran | Dulu orang bertanda dihitung dua kali | Jumlah dan Hadir laporan Malam dikurangi orang bertanda; mereka dihitung lewat laporan Pagi. Batasan: bila laporan Pagi tujuan belum dibuat, mereka belum terhitung |
+| T6 | **SELESAI 11 Nov 2026.** Kolom nama baris tidak hadir | Dulu nama bisa diketik ulang | Di mode jadwal nama dikunci (teks), hanya alasan bisa diubah; salah pilih -> hapus baris. Nama yang diketik manual (kolom tidak hadir mode manual dan "+ tambah manual") berbingkai kuning bila tidak ada di daftar jadwal/personel.js. Mode manual tetap boleh mengetik |
+| T7 | **SELESAI 11 Nov 2026.** Satu orang tidak hadir di dua kategori | Dulu tanpa pemeriksaan | Masuk Catatan Pemeriksaan: "NAMA ditandai tidak hadir di lebih dari satu kategori (...)"; Simpan meminta konfirmasi (peringatan, bukan penolakan) |
 
 ### B. Anomali lain pada kode/halaman (temuan dari data cadangan 21 Okt DIABAIKAN atas keputusan pengguna 11 Nov: bukan bagian kode)
 | Kode | Temuan | Keterangan |
