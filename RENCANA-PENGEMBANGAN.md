@@ -16,42 +16,34 @@ dikerjakan, sudah ada jejak diskusi & keputusannya di sini.
 1. **Proteksi sandi situs** (Netlify Pro berbayar atau alternatif gratis: Cloudflare Access / Edge Function sandi). Sampai diputuskan,
    PIN hanya pelindung tampilan dan token Apps Script di `sync.js` dapat dibaca publik; PIN cadangan di `akses.js` sebaiknya diganti.
 2. **Kapasitas penyimpanan browser** (±5 MB, diperkirakan penuh ±6 bulan): rutin Cadangkan; opsi pengarsipan otomatis / pindah ke IndexedDB.
-3. Temuan T1-T7 dan A1-A8 (bagian "Inventaris temuan audit" di bawah): menunggu perintah; T4/T5 menunggu keputusan pengguna.
+3. Temuan T1-T7 dan A1-A2 (bagian "Inventaris temuan audit" di bawah): menunggu perintah; T4/T5 menunggu keputusan pengguna.
 4. Usulan masukan lain dari audit belum dikerjakan (simpan draft otomatis, salin laporan sebelumnya di Fasilitas, Rencana Cuti,
    rentang Rekap awal bulan, pengingat Cadangkan, tombol salin/kirim WA untuk draft, indikator sinkronisasi di Pantau, aturan akses
    Admin ke halaman Posko, pembersihan kode mati). "Isi dari Jadwal" otomatis (shift dari jam perangkat): DITOLAK, tampilan saat ini dipertahankan.
 
 
 ## Inventaris temuan audit: pencatatan & rekap ketidakhadiran, serta anomali data/halaman (dicatat 10 Nov 2026)
-**Status: Direncanakan, BELUM ADA yang dikerjakan.** Hasil audit baca-kode + uji hitung `statPersonelRentang`/`statPersonel` +
-pemeriksaan data cadangan 21 Okt (43 laporan personel, 40 fasilitas, 39 logbook, 2 kejadian) + uji buka 9 halaman x 2 peran.
+**Status: Direncanakan, BELUM ADA yang dikerjakan.** Hasil audit baca-kode + uji hitung `statPersonelRentang`/`statPersonel` + uji buka 9 halaman x 2 peran.
+Hanya temuan yang berasal dari kode zip yang dipertahankan.
 
 ### A. Ketidakhadiran personel (urut prioritas)
 | Kode | Temuan | Dampak | Usulan |
 |---|---|---|---|
 | T1 | Alasan bawaan tiap nama tidak hadir = "Cuti Tahunan" (`opsiAlasan[0]`) | Lupa mengganti -> sakit/izin tercatat cuti, statistik salah tanpa peringatan | Kosongkan alasan bawaan; wajib pilih sebelum Simpan |
-| T2 | Rekap memecah satu orang karena ejaan nama beda (uji: HIKMAH N dan HIKMAH NURZAMAN = 2 orang, 1 hari masing-masing) | Total hari per orang terlalu kecil; laporan lama memakai nama lama | Satukan nama di `data.js` lewat `ALIAS_NAMA` (dipakai juga untuk nama tak dikenal pada A3) |
+| T2 | Rekap memecah satu orang karena ejaan nama beda (uji: HIKMAH N dan HIKMAH NURZAMAN = 2 orang, 1 hari masing-masing) | Total hari per orang terlalu kecil; laporan lama memakai nama lama | Satukan nama di `data.js` lewat `ALIAS_NAMA` |
 | T3 | Keterangan "Lainnya" tidak tampil di Rekap (tabel dan donat hanya "Lainnya"); hanya terlihat di kartu Beranda dan laporan | Informasi hilang saat direkap | Tampilkan `ket` di Rekap dan PDF Rekap |
 | T4 | Dinas malam lintas hari: orang yang masuk esok <08:00 ikut dihitung di laporan Malam tanggal D dan di laporan Pagi D+1; absen -> rekap mencatat 2 hari (dedup hanya untuk tanggal sama) | Hitung ganda 1 absen | KEPUTUSAN PENGGUNA: dihitung 1 hari atau 2 hari. Belum diputuskan |
 | T5 | Persentase kehadiran memakai Jumlah yang memuat orang yang sama di dua laporan | Persentase bergeser sedikit | Ikut diputuskan bersama T4 |
 | T6 | Kolom nama pada baris tidak hadir bebas diketik (mode jadwal) | Nama berubah -> nama asli muncul lagi di daftar; salah ketik masuk rekap | Kunci kolom nama di mode jadwal |
 | T7 | Tidak ada pemeriksaan satu orang absen di dua kategori pada laporan yang sama | Angka Kurang berlebih (rekap sudah menggabung) | Peringatan saat menandai |
 
-### B. Anomali lain pada data dan halaman
+### B. Anomali lain pada kode/halaman (temuan dari data cadangan 21 Okt DIABAIKAN atas keputusan pengguna 11 Nov: bukan bagian kode)
 | Kode | Temuan | Keterangan |
 |---|---|---|
-| A1 | 1 laporan personel (21 Okt Malam, Regu C) Jumlah semua kategori 0 tetapi 14 orang ditempatkan | KOREKSI 11 Nov: Simpan sebenarnya memberi peringatan "Penempatan kelebihan N orang dari total hadir. Tetap simpan?" dan laporan lolos karena pengguna menyetujui. Bukan celah; tetap menjadi anomali data (Kehadiran shift itu terbaca 0) |
-| A9 | Setelah "Isi dari Jadwal" lalu Shift/Tanggal diganti, isi laporan tidak ikut berubah dan tidak ada peringatan (uji: Pagi diganti Malam, kategori IASS PAGI tetap) | Risiko label shift tidak cocok dengan isi. Usulan: peringatan atau tawaran "Isi ulang dari Jadwal" saat Tanggal/Shift diubah |
-| A2 | Nama kategori di laporan lama beragam (19 variasi: "ORGANIK (SHIFT PAGI/MALAM)", "PERSONIL RDO MALAM", "IASS P", "SECWAN ORGANIK", dll.) | Bukan galat (nama dibekukan di laporan), tetapi ringkasan per kategori lintas bulan tidak bisa digabung tanpa pemetaan |
-| A3 | 5 nama pada laporan lama tidak ada di `personel.js`: PIPID FIDCKY BAFRI SADA (jadwal: ...BAFRI S), DIMAS, WAHYU H, ROZZAQ, ROZAK | Kemungkinan ejaan/alias ganda orang yang sama; dipecah oleh Rekap seperti T2 |
-| A4 | Cakupan: 1 shift personel kosong (30 Sep Pagi, awal data) dan 3 laporan personel tanpa Fasilitas, 4 tanpa Log Book | Wajar untuk awal pemakaian; Beranda sudah memberi "Shift Belum Lengkap/Kepatuhan Grup" |
-| A5 | 31 dari 39 Log Book tanpa catatan serah terima, 1 Log Book (13 Okt) tanpa kegiatan | Isian serah terima opsional; pertimbangkan pengingat |
-| A6 | Laporan Kejadian 23 Sep: nomor kosong dan tidak dikunci, status WA "akhir"; Kejadian 16 Okt bernomor OOSC/LK/2/X/26 | Nomor kosong menandakan draf lama tanpa penomoran otomatis; cek sebelum dikirim |
-| A7 | Fasilitas: 40 butir "Rusak tetapi Digunakan" dan 120 "Baik tetapi Tidak Digunakan" | Kombinasi sah, tetapi layak ditinjau (semuanya sudah berketerangan: 0 bermasalah tanpa keterangan) |
-| A8 | Akun Admin dapat membuka halaman Posko (Laporan Personel/Fasilitas/Log Book/Kejadian) lewat alamat langsung | Sudah tercatat di Keputusan tertunda (aturan akses Admin) |
+| A2 | Setelah "Isi dari Jadwal" lalu Shift/Tanggal diganti, isi laporan tidak ikut berubah dan tidak ada peringatan (uji: Pagi diganti Malam, kategori IASS PAGI tetap) | Risiko label shift tidak cocok dengan isi. Usulan: peringatan atau tawaran "Isi ulang dari Jadwal" saat Tanggal/Shift diubah |
+| A1 | Akun Admin dapat membuka halaman Posko (Laporan Personel/Fasilitas/Log Book/Kejadian) lewat alamat langsung | Sudah tercatat di Keputusan tertunda (aturan akses Admin) |
 
-Hasil bersih: tidak ada duplikat tanggal+shift, tidak ada regu bentrok antar modul, tidak ada absen > Jumlah, tidak ada orang absen
-sekaligus ditempatkan, tidak ada nama ganda antar pos, 0 galat konsol/halaman/permintaan gagal, 0 id ganda, 0 luapan horizontal,
+Hasil bersih: 0 galat konsol/halaman/permintaan gagal, 0 id ganda, 0 luapan horizontal,
 0 teks NaN/undefined pada 9 halaman x 2 peran.
 
 ---
