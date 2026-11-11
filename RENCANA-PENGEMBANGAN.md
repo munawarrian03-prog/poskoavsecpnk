@@ -40,7 +40,8 @@ pemeriksaan data cadangan 21 Okt (43 laporan personel, 40 fasilitas, 39 logbook,
 ### B. Anomali lain pada data dan halaman
 | Kode | Temuan | Keterangan |
 |---|---|---|
-| A1 | 1 laporan personel (21 Okt Malam, Regu C) Jumlah semua kategori 0 tetapi 14 orang ditempatkan | Laporan lolos Simpan walau kekuatan kosong; Kehadiran Rekap terlihat 0 untuk shift itu. Usulan: tolak/peringatkan Simpan bila total Jumlah 0 sedangkan ada penempatan |
+| A1 | 1 laporan personel (21 Okt Malam, Regu C) Jumlah semua kategori 0 tetapi 14 orang ditempatkan | KOREKSI 11 Nov: Simpan sebenarnya memberi peringatan "Penempatan kelebihan N orang dari total hadir. Tetap simpan?" dan laporan lolos karena pengguna menyetujui. Bukan celah; tetap menjadi anomali data (Kehadiran shift itu terbaca 0) |
+| A9 | Setelah "Isi dari Jadwal" lalu Shift/Tanggal diganti, isi laporan tidak ikut berubah dan tidak ada peringatan (uji: Pagi diganti Malam, kategori IASS PAGI tetap) | Risiko label shift tidak cocok dengan isi. Usulan: peringatan atau tawaran "Isi ulang dari Jadwal" saat Tanggal/Shift diubah |
 | A2 | Nama kategori di laporan lama beragam (19 variasi: "ORGANIK (SHIFT PAGI/MALAM)", "PERSONIL RDO MALAM", "IASS P", "SECWAN ORGANIK", dll.) | Bukan galat (nama dibekukan di laporan), tetapi ringkasan per kategori lintas bulan tidak bisa digabung tanpa pemetaan |
 | A3 | 5 nama pada laporan lama tidak ada di `personel.js`: PIPID FIDCKY BAFRI SADA (jadwal: ...BAFRI S), DIMAS, WAHYU H, ROZZAQ, ROZAK | Kemungkinan ejaan/alias ganda orang yang sama; dipecah oleh Rekap seperti T2 |
 | A4 | Cakupan: 1 shift personel kosong (30 Sep Pagi, awal data) dan 3 laporan personel tanpa Fasilitas, 4 tanpa Log Book | Wajar untuk awal pemakaian; Beranda sudah memberi "Shift Belum Lengkap/Kepatuhan Grup" |
