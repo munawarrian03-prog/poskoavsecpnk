@@ -1,7 +1,7 @@
 {
   "id": "./index.html",
-  "name": "Sistem Pelaporan AVSEC Supadio",
-  "short_name": "Avsec Supadio",
+  "name": "KAPUAS Supadio",
+  "short_name": "KAPUAS Supadio",
   "description": "Rekap, laporan personel, dan laporan kejadian Aviation Security Bandara Supadio",
   "lang": "id",
   "start_url": "./index.html",

@@ -10,7 +10,11 @@
   const ALASAN = ['Cuti Tahunan', 'Sakit', 'Izin', 'Dinas Luar', 'Cuti Alasan Penting', 'Cuti Melahirkan', 'Tanpa Keterangan', 'Lainnya'];
   const REGU = ['A', 'B', 'C', 'D'];
   const rapikan = (s) => String(s == null ? '' : s).trim().replace(/\s+/g, ' ');
-  const kunciNama = (s) => rapikan(s).toUpperCase();
+  // T2: satu orang bisa tertulis dengan ejaan berbeda di laporan lama. Rekap/Beranda menyatukan lewat tabel alias ini
+  // (kunci = ejaan lama HURUF BESAR, nilai = ejaan baku sesuai Jadwal Dinas). Data laporan tidak diubah.
+  const ALIAS_NAMA = { 'HIKMAH N': 'HIKMAH NURZAMAN', 'ROZZAQ': 'M ROZZAQ', 'ROZAK': 'M ROZZAQ', 'PIPID FIDCKY BAFRI SADA': 'PIPID FIDCKY BAFRI S' };
+  const namaKanon = (s) => { const r = rapikan(s); return ALIAS_NAMA[r.toUpperCase()] || r; };
+  const kunciNama = (s) => namaKanon(s).toUpperCase();
   const reguKey = (s) => { const m = String(s || '').trim().match(/^([A-Za-z])/); return m ? m[1].toUpperCase() : '?'; };
   const alasanKat = (p) => (p && ALASAN.includes(p.alasan)) ? p.alasan : 'Lainnya';
   const hariBulan = (y, m) => new Date(y, m + 1, 0).getDate();
@@ -18,6 +22,10 @@
   const cmpBulan = (y, m, h) => (y * 12 + m) - (h.getFullYear() * 12 + h.getMonth());   // <0 lampau, 0 berjalan, >0 depan
   const hariBerjalan = (y, m, h) => { const c = cmpBulan(y, m, h); return c < 0 ? hariBulan(y, m) : c === 0 ? h.getDate() : 0; };
   const shiftKey = (s) => (/malam/i.test(String(s || '')) ? 'M' : 'P');
+  // Nama pos TERKINI (bukan nama beku di laporan) -- dipakai statFasilitas/statFasilitasRentang
+  // supaya Rekap/Beranda ikut pindah nama otomatis kalau pos di-rename. Jatuh ke nama beku kalau
+  // AVS/daftar pos belum dimuat di halaman ybs (lihat shell.js: AVS.namaPosFasilitasTerbaru).
+  const namaPosTerkini = (p) => (root.AVS && typeof root.AVS.namaPosFasilitasTerbaru === 'function') ? root.AVS.namaPosFasilitasTerbaru(p.id, p.name) : p.name;
 
   // mode: 'kejadian' (bawaan, satu baris personel tidak hadir = satu hitungan, seperti sebelumnya)
   //    atau 'orang-hari' (satu orang yang tidak hadir di lebih dari satu shift pada HARI YANG SAMA
@@ -29,28 +37,28 @@
     // orang-hari: dulu kelompokkan setiap baris tidak hadir menurut hari+nama, pilih alasan/regu dari shift paling awal
     const grupHari = new Map();   // kunci: 'd|NAMA' -> { d, nama, alasan, rk, urutanShift }
     (list || []).forEach((r) => {
-      const t = pecah(r && r.tanggal); if (!t || t.y !== y || t.m !== m) return;
+      const t = pecah(r && r.tanggal); if (!t) return;
+      const dalamBulan = t.y === y && t.m === m;
       const rk = reguKey(r.regu);
-      if (regu !== 'all' && rk !== regu) { shifts.add(t.d + '|' + shiftKey(r.shift) + '|x'); return; }
-      laporan++; shifts.add(t.d + '|' + shiftKey(r.shift));
-      const urutanShift = shiftKey(r.shift) === 'P' ? 0 : 1;
+      if (regu !== 'all' && rk !== regu) { if (dalamBulan) shifts.add(t.d + '|' + shiftKey(r.shift) + '|x'); return; }
+      if (dalamBulan) { laporan++; shifts.add(t.d + '|' + shiftKey(r.shift)); }
       (r.kategoriKekuatan || []).forEach((k) => {
         if (!k) return;
-        const jml = Math.max(0, parseInt(k.jml, 10) || 0);
-        const valid = (k.absen || []).filter((p) => rapikan(p && p.nama) !== '');
-        totalJml += jml; totalHadir += Math.max(0, jml - valid.length);
-        valid.forEach((p) => {
-          const a = alasanKat(p);
+        const tl = telaahKategori(r, k);
+        if (dalamBulan) { totalJml += tl.jml; totalHadir += tl.hadir; }
+        tl.absen.forEach((p) => {
+          const ta = pecah(p.tgl); if (!ta || ta.y !== y || ta.m !== m) return;   // T4: bisa jatuh ke tanggal/bulan lain
+          const a = p.alasan;
           if (mode === 'kejadian') {
-            tidakHadir++; perHari[t.d - 1]++;
+            tidakHadir++; perHari[ta.d - 1]++;
             alasan[a] = (alasan[a] || 0) + 1;
             if (perRegu[rk] !== undefined) perRegu[rk]++;
             const key = kunciNama(p.nama); let o = orang.get(key);
-            if (!o) { o = { nama: rapikan(p.nama), jumlah: 0, alasan: {}, regu: {} }; orang.set(key, o); }
+            if (!o) { o = { nama: p.nama, jumlah: 0, alasan: {}, regu: {} }; orang.set(key, o); }
             o.jumlah++; o.alasan[a] = (o.alasan[a] || 0) + 1; o.regu[rk] = (o.regu[rk] || 0) + 1;
           } else {
-            const gk = t.d + '|' + kunciNama(p.nama); let g = grupHari.get(gk);
-            if (!g || urutanShift < g.urutanShift) grupHari.set(gk, { d: t.d, nama: rapikan(p.nama), alasan: a, rk, urutanShift });
+            const gk = ta.d + '|' + kunciNama(p.nama); const g = grupHari.get(gk);
+            if (!g || p.urutanShift < g.urutanShift) grupHari.set(gk, { d: ta.d, nama: p.nama, alasan: a, rk, urutanShift: p.urutanShift });
           }
         });
       });
@@ -79,6 +87,27 @@
 
   const pad2 = (n) => String(n).padStart(2, '0');
   const fmtISO = (y, m, d) => `${y}-${pad2(m + 1)}-${pad2(d)}`;
+
+  /* ---------- T4/T5: orang "masuk esok sebelum 08:00" dan "pulang lewat 20:00" dihitung di shift PAGI ---------- */
+  // Di laporan Malam, daftar nama kategori memuat tanda (field `tag`) untuk dua kelompok itu. Bila mereka tidak hadir,
+  // ketidakhadirannya dihitung di Pagi: 'masuk esok' -> Pagi tanggal D+1, 'pulang' -> Pagi tanggal D. Jumlah/Hadir mereka
+  // juga dikeluarkan dari laporan Malam supaya tidak terhitung dua kali (mereka sudah dihitung di laporan Pagi).
+  // Hanya berlaku di Rekap/Beranda; laporan tersimpan tidak diubah. Laporan tanpa tanda (lama/manual) berperilaku seperti biasa.
+  function tambahHari(iso, n) { const t = pecah(iso); const d = new Date(t.y, t.m, t.d + n); return fmtISO(d.getFullYear(), d.getMonth(), d.getDate()); }
+  const jenisTag = (tag) => (/masuk esok/i.test(tag || '') ? 'esok' : /^pulang/i.test(tag || '') ? 'pulang' : '');
+  function telaahKategori(r, k) {
+    const jml = Math.max(0, parseInt(k && k.jml, 10) || 0), valid = ((k && k.absen) || []).filter((p) => rapikan(p && p.nama) !== '');
+    const malam = shiftKey(r.shift) === 'M', tags = new Map(); let bertanda = 0;
+    if (malam) ((k && k.daftar) || []).forEach((x) => { const j = x && jenisTag(x.tag); if (j) { tags.set(kunciNama(x.nama), j); bertanda++; } });
+    const jmlEf = Math.max(0, jml - bertanda), lain = [], pindah = [], urut = malam ? 1 : 0;
+    valid.forEach((p) => {
+      const j = malam ? (tags.get(kunciNama(p.nama)) || '') : '', dasar = { nama: namaKanon(p.nama), alasan: alasanKat(p), ket: rapikan(p.ket) };
+      if (j === 'esok') pindah.push(Object.assign(dasar, { tgl: tambahHari(r.tanggal, 1), urutanShift: 0 }));
+      else if (j === 'pulang') pindah.push(Object.assign(dasar, { tgl: r.tanggal, urutanShift: 0 }));
+      else lain.push(Object.assign(dasar, { tgl: r.tanggal, urutanShift: urut }));
+    });
+    return { jml: jmlEf, hadir: Math.max(0, jmlEf - lain.length), absen: lain.concat(pindah) };
+  }
   const HARI_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const BULAN_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
@@ -133,14 +162,18 @@
       const t = pecah(r && r.tanggal); if (!t || t.y !== y || t.m !== m) return;
       laporan++;
       (r.posFasilitas || []).forEach((p) => (p.items || []).forEach((it) => {
-        let jenis = null;
-        if (it.bentuk === 'A' && it.kondisi === 'Rusak') jenis = 'Rusak';
-        else if (it.bentuk === 'A' && it.status === 'Tidak Digunakan') jenis = 'Tidak Digunakan';
-        else if (it.bentuk === 'B' && (it.rusak || 0) > 0) jenis = 'Rusak';
-        if (!jenis) return;
-        const key = (p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
-        if (!e) { e = { item: rapikan(it.name), pos: rapikan(p.name), jumlah: 0, jenis: {} }; bermasalah.set(key, e); }
-        e.jumlah++; e.jenis[jenis] = (e.jenis[jenis] || 0) + 1;
+        // Rusak & Tidak Digunakan dihitung terpisah, sama seperti ringkasLaporan di fasilitas.html.
+        const jenisList = [];
+        if (it.bentuk === 'A') {
+          if (it.kondisi === 'Rusak') jenisList.push('Rusak');
+          if (it.status === 'Tidak Digunakan') jenisList.push('Tidak Digunakan');
+        } else if (it.bentuk === 'B' && (it.rusak || 0) > 0) {
+          jenisList.push('Rusak');
+        }
+        if (!jenisList.length) return;
+        const key = (p.id || p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
+        if (!e) { e = { item: rapikan(it.name), pos: rapikan(namaPosTerkini(p)), jumlah: 0, jenis: {} }; bermasalah.set(key, e); }
+        e.jumlah += jenisList.length; jenisList.forEach((jenis) => { e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; });
       }));
     });
     const dominan = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0][0];
@@ -177,6 +210,47 @@
     return `*LAPORAN BELUM LENGKAP*\n*AVSEC BANDARA SUPADIO*\n\n${BULAN_ID[m]} ${y} — mohon segera dilengkapi:\n\n${baris}\n\nTerima kasih.`;
   }
 
+  // Status 3-tingkat (Terisi/Proses/Belum Terisi) per shift per jenis laporan, GABUNGAN 3 jenis
+  // (Personel/Fasilitas/Log Book) -- dipakai halaman "Pantau Posko". Batas akhir shift sama dengan
+  // shiftKosongGabungan (Pagi berakhir 20:00 hari itu, Malam berakhir 08:00 hari berikutnya), TANPA
+  // tenggang: begitu lewat batas dan belum ada laporan, langsung dianggap "belum" (bukan "proses").
+  // kejadianList/bastList bersifat OPSIONAL (tidak wajib terisi, beda dari 3 jenis lain
+  // di atas) -- kalau tidak diisi (undefined), kolomnya tidak dihitung sama sekali.
+  // BAST tidak punya field `shift` (lihat kejadian-bast.js) -- baris Pagi/Malam-nya
+  // ditentukan dari JAM `waktu`: sebelum 20:00 = Pagi, 20:00 ke atas = Malam.
+  function statusPantauPosko(personelList, fasilitasList, logbookList, y, m, hariIni, kejadianList, bastList) {
+    hariIni = hariIni || new Date();
+    const bikinSet = (list) => { const s = new Set(); (list || []).forEach((r) => { const t = pecah(r && r.tanggal); if (t && t.y === y && t.m === m) s.add(t.d + '|' + shiftKey(r.shift)); }); return s; };
+    const bikinSetBast = (list) => {
+      const s = new Set();
+      (list || []).forEach((r) => {
+        const t = pecah(r && r.tanggal); if (!t || t.y !== y || t.m !== m) return;
+        const jam = parseInt(String(r.waktu || '0').split(':')[0], 10) || 0;
+        s.add(t.d + '|' + (jam < 20 ? 'P' : 'M'));
+      });
+      return s;
+    };
+    const adaP = bikinSet(personelList), adaF = bikinSet(fasilitasList), adaL = bikinSet(logbookList);
+    const adaK = kejadianList !== undefined ? bikinSet(kejadianList) : null;
+    const adaB = bastList !== undefined ? bikinSetBast(bastList) : null;
+    const batas = hariBerjalan(y, m, hariIni), now = hariIni.getTime(), out = [];
+    const status = (ada, akhir) => ada ? 'terisi' : (now < akhir ? 'proses' : 'belum');
+    for (let d = 1; d <= batas; d++) {
+      [['P', 'Pagi', 20, 0, 0], ['M', 'Malam', 8, 0, 1]].forEach(([k, label, jam, menit, tambahHari]) => {
+        const akhir = new Date(y, m, d + tambahHari, jam, menit, 0, 0).getTime();
+        const key = d + '|' + k;
+        const baris = {
+          tanggal: fmtISO(y, m, d), hari: HARI_ID[new Date(y, m, d).getDay()], shift: label,
+          personel: status(adaP.has(key), akhir), fasilitas: status(adaF.has(key), akhir), logbook: status(adaL.has(key), akhir)
+        };
+        if (adaK) baris.kejadian = adaK.has(key) ? 'terisi' : 'nihil';
+        if (adaB) baris.bast = adaB.has(key) ? 'terisi' : 'nihil';
+        out.push(baris);
+      });
+    }
+    return out.reverse();
+  }
+
   /* =====================================================
      Tahap 4 — "Lihat Semua Rekap": statistik berbasis RENTANG TANGGAL
      bebas (bukan per-bulan seperti statPersonel/statKejadian di atas).
@@ -187,27 +261,36 @@
      ===================================================== */
   function dalamRentang(tgl, startISO, endISO) { return tgl && tgl >= startISO && tgl <= endISO; }
 
-  // Granularitas tren otomatis: harian jika rentang <= 60 hari, mingguan jika lebih.
+  // Granularitas tren otomatis: harian (<= 31 hari), mingguan (<= 92 hari / ~3 bulan), bulanan (lebih dari itu).
   function bucketRentang(startISO, endISO) {
     const s = pecah(startISO), e = pecah(endISO);
     const sd = new Date(s.y, s.m, s.d), ed = new Date(e.y, e.m, e.d);
     const totalHari = Math.round((ed - sd) / 86400000) + 1;
-    const mingguan = totalHari > 60;
+    const iso = (d) => fmtISO(d.getFullYear(), d.getMonth(), d.getDate());
+    const granularitas = totalHari <= 31 ? 'harian' : totalHari <= 92 ? 'mingguan' : 'bulanan';
     const buckets = [];
-    if (!mingguan) {
-      for (let i = 0; i < totalHari; i++) { const d = new Date(sd); d.setDate(d.getDate() + i); buckets.push({ mulai: fmtISO(d.getFullYear(), d.getMonth(), d.getDate()), akhir: fmtISO(d.getFullYear(), d.getMonth(), d.getDate()), label: String(d.getDate()) }); }
-    } else {
+    if (granularitas === 'harian') {
+      for (let i = 0; i < totalHari; i++) { const d = new Date(sd); d.setDate(d.getDate() + i); buckets.push({ mulai: iso(d), akhir: iso(d), label: String(d.getDate()) }); }
+    } else if (granularitas === 'mingguan') {
       let cur = new Date(sd), idx = 1;
       while (cur <= ed) {
         const mulai = new Date(cur), akhir = new Date(cur); akhir.setDate(akhir.getDate() + 6); if (akhir > ed) akhir.setTime(ed.getTime());
-        buckets.push({ mulai: fmtISO(mulai.getFullYear(), mulai.getMonth(), mulai.getDate()), akhir: fmtISO(akhir.getFullYear(), akhir.getMonth(), akhir.getDate()), label: 'Mg' + idx });
+        buckets.push({ mulai: iso(mulai), akhir: iso(akhir), label: 'Mg' + idx });
         cur.setDate(cur.getDate() + 7); idx++;
       }
+    } else {
+      const lintasTahun = sd.getFullYear() !== ed.getFullYear();
+      let cur = new Date(sd.getFullYear(), sd.getMonth(), 1);
+      while (cur <= ed) {
+        const mulai = cur < sd ? new Date(sd) : new Date(cur), akhir = new Date(cur.getFullYear(), cur.getMonth() + 1, 0); if (akhir > ed) akhir.setTime(ed.getTime());
+        buckets.push({ mulai: iso(mulai), akhir: iso(akhir), label: BULAN_ID[cur.getMonth()].slice(0, 3) + (lintasTahun ? " '" + String(cur.getFullYear()).slice(2) : '') });
+        cur.setMonth(cur.getMonth() + 1);
+      }
     }
-    return { mingguan, totalHari, buckets };
+    return { granularitas, totalHari, buckets };
   }
   function isiBucket(buckets, tanggalList) {
-    return buckets.map((b) => ({ label: b.label, jumlah: tanggalList.filter((t) => t >= b.mulai && t <= b.akhir).length }));
+    return buckets.map((b) => ({ label: b.label, mulai: b.mulai, akhir: b.akhir, jumlah: tanggalList.filter((t) => t >= b.mulai && t <= b.akhir).length }));
   }
 
   // Ketidakhadiran personel, per orang per hari, GABUNGAN seluruh rentang (bukan per bulan).
@@ -217,17 +300,18 @@
     let laporanTersimpan = 0, totalJml = 0, totalHadir = 0;
     const perRegu = { A: 0, B: 0, C: 0, D: 0 }, shiftAda = new Set();
     (list || []).forEach((r) => {
-      const tgl = r && r.tanggal; if (!dalamRentang(tgl, startISO, endISO)) return;
+      const tgl = r && r.tanggal; if (!pecah(tgl)) return;
+      const dalam = dalamRentang(tgl, startISO, endISO);
       const rk = reguKey(r.regu);
       if (regu !== 'all' && rk !== regu) return;
-      laporanTersimpan++; shiftAda.add(tgl + '|' + shiftKey(r.shift));
-      const urutanShift = shiftKey(r.shift) === 'P' ? 0 : 1;
+      if (dalam) { laporanTersimpan++; shiftAda.add(tgl + '|' + shiftKey(r.shift)); }
       (r.kategoriKekuatan || []).forEach((k) => {
-        const jml = Math.max(0, parseInt(k.jml, 10) || 0), valid = (k.absen || []).filter((p) => rapikan(p && p.nama) !== '');
-        totalJml += jml; totalHadir += Math.max(0, jml - valid.length);
-        valid.forEach((p) => {
-          const gk = tgl + '|' + kunciNama(p.nama); const g = grup.get(gk);
-          if (!g || urutanShift < g.urutanShift) grup.set(gk, { tgl, nama: rapikan(p.nama), alasan: alasanKat(p), rk, urutanShift });
+        const tl = telaahKategori(r, k || {});
+        if (dalam) { totalJml += tl.jml; totalHadir += tl.hadir; }
+        tl.absen.forEach((p) => {
+          if (!dalamRentang(p.tgl, startISO, endISO)) return;   // T4: 'masuk esok' dihitung di tanggal D+1 (Pagi)
+          const gk = p.tgl + '|' + kunciNama(p.nama); const g = grup.get(gk);
+          if (!g || p.urutanShift < g.urutanShift) grup.set(gk, { tgl: p.tgl, nama: p.nama, alasan: p.alasan, ket: p.alasan === 'Lainnya' ? p.ket : '', rk, urutanShift: p.urutanShift });
         });
       });
     });
@@ -236,50 +320,113 @@
       if (perRegu[g.rk] !== undefined) perRegu[g.rk]++;
       const key = kunciNama(g.nama); let o = orang.get(key);
       if (!o) { o = { nama: g.nama, regu: g.rk, jumlah: 0, tanggal: [] }; orang.set(key, o); }
-      o.jumlah++; o.tanggal.push({ tgl: g.tgl, alasan: g.alasan });
+      o.jumlah++; o.tanggal.push({ tgl: g.tgl, alasan: g.alasan, ket: g.ket || '' });
     });
     const dominanAlasan = (arr) => { const c = {}; arr.forEach((x) => { c[x.alasan] = (c[x.alasan] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]; };
     const daftar = Array.from(orang.values()).map((o) => ({ nama: o.nama, regu: o.regu, jumlah: o.jumlah, alasan: dominanAlasan(o.tanggal), tanggal: o.tanggal.sort((a, b) => b.tgl.localeCompare(a.tgl)) }))
       .sort((a, b) => b.jumlah - a.jumlah || a.nama.localeCompare(b.nama, 'id'));
     const tidakHadir = grup.size, orangTerlibat = orang.size;
     const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, Array.from(grup.values()).map((g) => g.tgl));
-    return { tidakHadir, orangTerlibat, kehadiran: totalJml > 0 ? (totalHadir / totalJml) * 100 : null, laporanTersimpan, shiftAda: shiftAda.size, perRegu, daftar, tren, granularitas: bk.mingguan ? 'mingguan' : 'harian' };
+    return { tidakHadir, orangTerlibat, kehadiran: totalJml > 0 ? (totalHadir / totalJml) * 100 : null, laporanTersimpan, shiftAda: shiftAda.size, perRegu, daftar, tren, granularitas: bk.granularitas };
   }
 
   // Fasilitas bermasalah, GABUNGAN seluruh rentang.
   function statFasilitasRentang(list, startISO, endISO, regu) {
     regu = regu || 'all';
     const bermasalah = new Map(); let laporanTersimpan = 0, totalMasalah = 0, tidakDigunakan = 0, dokTotal = 0, dokLengkap = 0;
-    const shiftAda = new Set();
+    const shiftAda = new Set(); const tanggalMasalah = []; // satu entri per kejadian masalah -> dipakai utk tren
     (list || []).forEach((r) => {
       const tgl = r && r.tanggal; if (!dalamRentang(tgl, startISO, endISO)) return;
       if (regu !== 'all' && reguKey(r.regu) !== regu) return;
       laporanTersimpan++; shiftAda.add(tgl + '|' + shiftKey(r.shift));
       (r.posFasilitas || []).forEach((p) => (p.items || []).forEach((it) => {
         if (it.bentuk === 'C') { dokTotal++; if (it.lengkap) dokLengkap++; return; }
-        let jenis = null;
-        if (it.bentuk === 'A' && it.kondisi === 'Rusak') jenis = 'Rusak';
-        else if (it.bentuk === 'A' && it.status === 'Tidak Digunakan') jenis = 'Tidak Digunakan';
-        else if (it.bentuk === 'B' && (it.rusak || 0) > 0) jenis = 'Rusak';
-        if (!jenis) return;
-        totalMasalah++; if (jenis === 'Tidak Digunakan') tidakDigunakan++;
-        const key = (p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
-        if (!e) { e = { item: rapikan(it.name), pos: rapikan(p.name), jumlah: 0, jenis: {}, tanggal: [] }; bermasalah.set(key, e); }
-        e.jumlah++; e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; e.tanggal.push(tgl);
+        // Bentuk A: Rusak & Tidak Digunakan dihitung TERPISAH (satu item bisa kena keduanya
+        // sekaligus) — samakan dengan lencana kartu Laporan Tersimpan (ringkasLaporan di
+        // fasilitas.html) supaya Total Masalah di rekap cocok dengan yang tersimpan.
+        const jenisList = [];
+        if (it.bentuk === 'A') {
+          if (it.kondisi === 'Rusak') jenisList.push('Rusak');
+          if (it.status === 'Tidak Digunakan') jenisList.push('Tidak Digunakan');
+        } else if (it.bentuk === 'B' && (it.rusak || 0) > 0) {
+          jenisList.push('Rusak');
+        }
+        if (!jenisList.length) return;
+        totalMasalah += jenisList.length;
+        jenisList.forEach(() => tanggalMasalah.push(tgl));
+        const key = (p.id || p.name || '') + '|' + (it.name || ''); let e = bermasalah.get(key);
+        if (!e) { e = { item: rapikan(it.name), pos: rapikan(namaPosTerkini(p)), jumlah: 0, jenis: {}, tanggal: [], catatan: [] }; bermasalah.set(key, e); }
+        e.jumlah += jenisList.length; e.tanggal.push(tgl);
+        jenisList.forEach((jenis) => { e.jenis[jenis] = (e.jenis[jenis] || 0) + 1; if (jenis === 'Tidak Digunakan') tidakDigunakan++; });
+        // Satu KEMUNCULAN (satu laporan) = satu baris catatan mentah (sebelum digabung oleh
+        // gabungkanCatatan di bawah) -- Kondisi & Status ditampilkan berdampingan utk kemunculan
+        // yang sama (lihat tabelFasilitas di rekap.js). Bentuk B (hitungan unit) tidak punya
+        // konsep Status per-unit -> '-'. `urutanShift` dipakai cuma utk mengurutkan kemunculan
+        // Pagi sebelum Malam pada tanggal yang sama saat digabung, tidak ikut ditampilkan.
+        e.catatan.push({
+          tanggal: tgl,
+          urutanShift: shiftKey(r.shift) === 'P' ? 0 : 1,
+          kondisi: it.bentuk === 'A' ? (it.kondisi || '-') : 'Rusak',
+          status: it.bentuk === 'A' ? (it.status || '-') : '-',
+          keterangan: rapikan(it.keterangan) || ''
+        });
       }));
     });
     const dominan = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0][0];
-    const daftar = Array.from(bermasalah.values()).map((e) => ({ item: e.item, pos: e.pos, jumlah: e.jumlah, jenis: dominan(e.jenis), tanggal: e.tanggal.sort().reverse() })).sort((a, b) => b.jumlah - a.jumlah || a.item.localeCompare(b.item, 'id'));
-    return { totalMasalah, tidakDigunakan, dokTotal, dokLengkap, dokPct: dokTotal > 0 ? Math.round(dokLengkap / dokTotal * 100) : null, laporanTersimpan, shiftAda: shiftAda.size, daftar };
+    // H+1 kalender (atau hari yang sama -- shift Pagi & Malam di tanggal yang sama) sejak
+    // akhir grup sebelumnya. Dipakai supaya rentang tanggal cuma menggabung kemunculan yang
+    // BENAR-BENAR tanpa jeda hari -- kalau alat itu sempat "Baik"/tidak dilaporkan bermasalah
+    // di tengah-tengah (mis. bermasalah tgl 1, baik tgl 2-3, bermasalah lagi tgl 4 dgn
+    // keterangan sama persis), itu HARUS jadi dua baris terpisah ("1 Okt 26" & "4 Okt 26"),
+    // bukan "1-4 Okt 26" yang menyiratkan bermasalah terus-menerus.
+    function tanpaJedaHari(isoAkhir, isoBerikutnya) {
+      return (new Date(isoBerikutnya) - new Date(isoAkhir)) / 86400000 <= 1;
+    }
+    // Gabungkan catatan BERURUTAN (hasil urut tanggal+shift naik) yang Kondisi/Status/
+    // Keterangan-nya PERSIS SAMA jadi satu baris rentang tanggal (mis. "1-4 Okt 26"), bukan
+    // satu baris per laporan -- begitu salah satu dari ketiganya berubah, atau ada jeda hari
+    // (lihat tanpaJedaHari di atas), mulai baris baru. Tidak pernah menggabung lintas bulan
+    // (biar label rentang tanggalnya tetap benar -- lihat labelRentang di rekap.js yang
+    // mengasumsikan satu bulan). Hasil akhir diurutkan terbaru dulu, konsisten dgn urutan
+    // sebelum ada penggabungan ini.
+    function gabungkanCatatan(list) {
+      const urut = list.slice().sort((a, b) => (a.tanggal + a.urutanShift).localeCompare(b.tanggal + b.urutanShift));
+      const grup = [];
+      urut.forEach((c) => {
+        const last = grup[grup.length - 1];
+        const bulanSama = last && last.akhir.slice(0, 7) === c.tanggal.slice(0, 7);
+        const nilaiSama = last && last.kondisi === c.kondisi && last.status === c.status && last.keterangan === c.keterangan;
+        const berurutan = last && tanpaJedaHari(last.akhir, c.tanggal);
+        if (last && bulanSama && nilaiSama && berurutan) { last.akhir = c.tanggal; last.kali++; }
+        else grup.push({ mulai: c.tanggal, akhir: c.tanggal, kondisi: c.kondisi, status: c.status, keterangan: c.keterangan, kali: 1 });
+      });
+      return grup.reverse();
+    }
+    const daftar = Array.from(bermasalah.values()).map((e) => ({ item: e.item, pos: e.pos, jumlah: e.jumlah, jenis: dominan(e.jenis), tanggal: e.tanggal.sort().reverse(), catatan: gabungkanCatatan(e.catatan) })).sort((a, b) => b.jumlah - a.jumlah || a.item.localeCompare(b.item, 'id'));
+    const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, tanggalMasalah);
+    return { totalMasalah, tidakDigunakan, dokTotal, dokLengkap, dokPct: dokTotal > 0 ? Math.round(dokLengkap / dokTotal * 100) : null, laporanTersimpan, shiftAda: shiftAda.size, daftar, tren, granularitas: bk.granularitas };
   }
 
   // Kejadian, GABUNGAN seluruh rentang (tidak dibedakan regu — Kejadian tidak mencatat regu).
+  // Store 'laporan' (IndexedDB) memuat DUA jenis laporan (dibedakan field `jenis`): Laporan
+  // Kejadian (LK) dan Berita Acara Serah Terima (BAST) — keduanya dihitung & didaftar TERPISAH
+  // supaya BAST tidak ikut mencemari statistik "Laporan Kejadian" (LK tidak punya field `jenis`
+  // pada data lama, jadi dianggap LK bila field itu kosong).
   function statKejadianRentang(list, startISO, endISO) {
-    const daftar = (list || []).filter((r) => dalamRentang(r && r.tanggal, startISO, endISO))
-      .sort((a, b) => String(b.tanggal).localeCompare(String(a.tanggal)) || String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
-      .map((r) => ({ id: r.id, tanggal: r.tanggal, judul: rapikan(r.caseInfo) || '(tanpa informasi kasus)', lokasi: rapikan(r.tempat) || rapikan(r.lokasi) || '-', fileNumber: rapikan(r.fileNumber) }));
-    const bk = bucketRentang(startISO, endISO), tren = isiBucket(bk.buckets, daftar.map((x) => x.tanggal));
-    return { jumlah: daftar.length, daftar, tren, granularitas: bk.mingguan ? 'mingguan' : 'harian' };
+    const semua = (list || []).filter((r) => dalamRentang(r && r.tanggal, startISO, endISO));
+    const urutkan = (a, b) => String(b.tanggal).localeCompare(String(a.tanggal)) || String(b.savedAt || '').localeCompare(String(a.savedAt || ''));
+    const daftarLK = semua.filter((r) => (r.jenis || 'LK') !== 'BAST').sort(urutkan)
+      .map((r) => ({ id: r.id, tanggal: r.tanggal, judul: rapikan(r.caseInfo) || '(tanpa informasi kasus)', shift: rapikan(r.shift) || '-', lokasiKejadian: rapikan(r.lokasiKejadian) || '-', fileNumber: rapikan(r.fileNumber) }));
+    const daftarBAST = semua.filter((r) => r.jenis === 'BAST').sort(urutkan)
+      .map((r) => ({ id: r.id, tanggal: r.tanggal, kategori: r.kategori || '', pihakSatu: rapikan(r.pihakSatu && r.pihakSatu.nama), pihakDua: rapikan(r.pihakDua && r.pihakDua.nama), nomorBast: rapikan(r.nomorBast) }));
+    const bk = bucketRentang(startISO, endISO);
+    const trenLK = isiBucket(bk.buckets, daftarLK.map((x) => x.tanggal));
+    const trenBAST = isiBucket(bk.buckets, daftarBAST.map((x) => x.tanggal));
+    return {
+      granularitas: bk.granularitas,
+      lk: { jumlah: daftarLK.length, daftar: daftarLK, tren: trenLK },
+      bast: { jumlah: daftarBAST.length, daftar: daftarBAST, tren: trenBAST }
+    };
   }
 
   // Kepatuhan pelaporan shift, GABUNGAN 3 jenis (Personel/Fasilitas/Log Book), seluruh rentang.
@@ -289,7 +436,7 @@
     const s = pecah(startISO), e = pecah(endISO);
     const bikinSet = (list) => { const set = new Set(); (list || []).forEach((r) => { if (dalamRentang(r && r.tanggal, startISO, endISO)) set.add(r.tanggal + '|' + shiftKey(r.shift)); }); return set; };
     const adaP = bikinSet(personelList), adaF = bikinSet(fasilitasList), adaL = bikinSet(logbookList);
-    const now = hariIni.getTime(), daftar = [], cur = new Date(s.y, s.m, s.d), akhir = new Date(e.y, e.m, e.d);
+    const now = hariIni.getTime(), daftar = [], semuaShift = [], cur = new Date(s.y, s.m, s.d), akhir = new Date(e.y, e.m, e.d);
     let cP = 0, cF = 0, cL = 0, totalDinilai = 0;
     while (cur <= akhir) {
       const y = cur.getFullYear(), m = cur.getMonth(), d = cur.getDate();
@@ -298,6 +445,7 @@
         if (now - akhirShift < 12 * 3600000) return;   // belum jatuh tempo (jeda 12 jam std) -> tidak dinilai sama sekali
         totalDinilai++;
         const tgl = fmtISO(y, m, d), key = tgl + '|' + k, kurang = [];
+        semuaShift.push({ tanggal: tgl, shift: label }); // SEMUA shift yg dinilai (lengkap maupun belum) -- dipakai utk kepatuhan PER REGU
         if (!adaP.has(key)) { kurang.push('Personel'); cP++; }
         if (!adaF.has(key)) { kurang.push('Fasilitas'); cF++; }
         if (!adaL.has(key)) { kurang.push('Log Book'); cL++; }
@@ -306,8 +454,9 @@
       cur.setDate(cur.getDate() + 1);
     }
     daftar.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
-    return { total: totalDinilai, personelBelum: cP, fasilitasBelum: cF, logbookBelum: cL, daftar };
+    return { total: totalDinilai, personelBelum: cP, fasilitasBelum: cF, logbookBelum: cL, daftar, semuaShift };
   }
+
 
   function statKejadian(list, y, m, hariIni) {
     hariIni = hariIni || new Date();
@@ -374,7 +523,7 @@
     });
   }
 
-  const API = { ALASAN, REGU, reguKey, statPersonel, statKejadian, statFasilitas, rekapBulan, ringkasTahun, bacaPersonel, bacaFasilitas, bacaLogbook, bacaKejadian, hariBulan, cmpBulan, geser, shiftKosong, teksPengingatKosong, shiftSebelumnya, shiftKosongGabungan, teksPengingatKosongGabungan, statPersonelRentang, statFasilitasRentang, statKejadianRentang, kepatuhanRentang, bucketRentang };
+  const API = { ALASAN, REGU, reguKey, statPersonel, statKejadian, statFasilitas, rekapBulan, ringkasTahun, bacaPersonel, bacaFasilitas, bacaLogbook, bacaKejadian, hariBulan, cmpBulan, geser, shiftKosong, teksPengingatKosong, shiftSebelumnya, shiftKosongGabungan, teksPengingatKosongGabungan, statusPantauPosko, statPersonelRentang, statFasilitasRentang, statKejadianRentang, kepatuhanRentang, bucketRentang };
   root.AVS_DATA = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
 })(typeof window !== 'undefined' ? window : globalThis);
